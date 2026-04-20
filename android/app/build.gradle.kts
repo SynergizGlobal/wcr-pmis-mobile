@@ -15,8 +15,10 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
-    kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_17.toString()
+    kotlin {
+        compilerOptions {
+            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+        }
     }
 
     defaultConfig {
@@ -25,25 +27,6 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
-    }
-
-    flavorDimensions += "env"
-    productFlavors {
-        create("dev") {
-            dimension = "env"
-            applicationId = "com.synergizglobal.wcrpmis.mobile.dev"
-            resValue("string", "app_name", "WCR PMIS Dev")
-        }
-        create("staging") {
-            dimension = "env"
-            applicationId = "com.synergizglobal.wcrpmis.mobile.staging"
-            resValue("string", "app_name", "WCR PMIS Staging")
-        }
-        create("prod") {
-            dimension = "env"
-            applicationId = "com.synergizglobal.wcrpmis.mobile"
-            resValue("string", "app_name", "WCR PMIS")
-        }
     }
 
     buildTypes {
