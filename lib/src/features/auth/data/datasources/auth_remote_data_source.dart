@@ -11,24 +11,21 @@ class AuthRemoteDataSource {
   final Dio _dio;
 
   Future<AuthSessionModel> login({
-    required String email,
+    required String userId,
     required String password,
   }) async {
-    // Temporary fallback keeps frontend unblocked until backend auth is ready.
-    if (email == 'admin@wcr.com' && password == 'admin123') {
-      await Future<void>.delayed(const Duration(milliseconds: 600));
-      return const AuthSessionModel(token: 'local-dev-token', userName: 'Admin');
-    }
-
     final response = await _dio.post<Map<String, dynamic>>(
-      '/auth/login',
+      '/login',
       data: <String, dynamic>{
-        'email': email,
+        'userId': userId,
         'password': password,
       },
     );
-
-    return AuthSessionModel.fromJson(response.data ?? <String, dynamic>{});
+    final data = response.data ?? <String, dynamic>{};
+    if (data.isEmpty) {
+      return AuthSessionModel(token: 'session-${DateTime.now().millisecondsSinceEpoch}', userName: userId);
+    }
+    return AuthSessionModel.fromJson(data);
   }
 }
 

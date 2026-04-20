@@ -8,9 +8,9 @@ class LoginUseCase {
   final AuthRepository _repository;
 
   Future<Result<AuthSession>> call({
-    required String email,
+    required String userId,
     required String password,
   }) {
-    return _repository.login(email: email, password: password);
+    return _repository.login(userId: userId, password: password);
   }
 }

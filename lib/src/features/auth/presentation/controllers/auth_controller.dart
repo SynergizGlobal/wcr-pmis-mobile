@@ -13,11 +13,11 @@ class AuthController extends StateNotifier<AsyncValue<AuthSession?>> {
   final LoginUseCase _loginUseCase;
 
   Future<String?> login({
-    required String email,
+    required String userId,
     required String password,
   }) async {
     state = const AsyncLoading<AuthSession?>();
-    final result = await _loginUseCase(email: email, password: password);
+    final result = await _loginUseCase(userId: userId, password: password);
     return result.fold(
       (failure) {
         state = const AsyncData<AuthSession?>(null);

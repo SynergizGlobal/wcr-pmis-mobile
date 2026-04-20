@@ -3,7 +3,7 @@ import 'package:wcr_pmis_mobile/src/features/auth/domain/entities/auth_session.d
 
 abstract class AuthRepository {
   Future<Result<AuthSession>> login({
-    required String email,
+    required String userId,
     required String password,
   });
 }

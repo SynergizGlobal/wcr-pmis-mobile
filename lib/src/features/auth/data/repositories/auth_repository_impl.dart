@@ -14,11 +14,11 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<Result<AuthSession>> login({
-    required String email,
+    required String userId,
     required String password,
   }) async {
     try {
-      final session = await _remoteDataSource.login(email: email, password: password);
+      final session = await _remoteDataSource.login(userId: userId, password: password);
       return Right<Failure, AuthSession>(session);
     } on DioException catch (error) {
       final responseData = error.response?.data;
