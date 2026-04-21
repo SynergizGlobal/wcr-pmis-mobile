@@ -16,14 +16,11 @@ class AuthRemoteDataSource {
   }) async {
     final response = await _dio.post<Map<String, dynamic>>(
       '/login',
-      data: <String, dynamic>{
-        'userId': userId,
-        'password': password,
-      },
+      data: <String, dynamic>{'userId': userId, 'password': password},
     );
-    final data = response.data ?? <String, dynamic>{};
+    final Map<String, dynamic> data = response.data ?? <String, dynamic>{};
     if (data.isEmpty) {
-      return AuthSessionModel(token: 'session-${DateTime.now().millisecondsSinceEpoch}', userName: userId);
+      return AuthSessionModel(userId: userId, userName: userId);
     }
     return AuthSessionModel.fromJson(data);
   }

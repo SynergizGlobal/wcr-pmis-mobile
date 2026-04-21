@@ -18,7 +18,10 @@ class AuthRepositoryImpl implements AuthRepository {
     required String password,
   }) async {
     try {
-      final session = await _remoteDataSource.login(userId: userId, password: password);
+      final session = await _remoteDataSource.login(
+        userId: userId,
+        password: password,
+      );
       return Right<Failure, AuthSession>(session);
     } on DioException catch (error) {
       final responseData = error.response?.data;
@@ -27,7 +30,9 @@ class AuthRepositoryImpl implements AuthRepository {
         serverMessage = responseData['message'] as String?;
       }
       final message =
-          serverMessage ?? error.message ?? 'Unable to login, please try again.';
+          serverMessage ??
+          error.message ??
+          'Unable to login, please try again.';
       return Left<Failure, AuthSession>(Failure(message));
     } catch (_) {
       return const Left<Failure, AuthSession>(

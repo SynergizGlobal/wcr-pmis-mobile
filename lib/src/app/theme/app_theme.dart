@@ -3,8 +3,11 @@ import 'package:flutter/material.dart';
 class AppTheme {
   const AppTheme._();
 
+  /// Brand primary (slightly darker than #3C467B).
+  static const Color brandPrimary = Color(0xFF2E3562);
+
   static ThemeData get light {
-    final colorScheme = ColorScheme.fromSeed(seedColor: const Color(0x003C467B));
+    final colorScheme = ColorScheme.fromSeed(seedColor: brandPrimary);
     return ThemeData(
       useMaterial3: true,
       colorScheme: colorScheme,
@@ -28,7 +31,9 @@ class AppTheme {
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           minimumSize: const Size.fromHeight(54),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
         ),
       ),
       appBarTheme: AppBarTheme(
@@ -45,9 +50,6 @@ class AppTheme {
       seedColor: const Color(0xFF6AA1FF),
       brightness: Brightness.dark,
     );
-    return ThemeData(
-      useMaterial3: true,
-      colorScheme: colorScheme,
-    );
+    return ThemeData(useMaterial3: true, colorScheme: colorScheme);
   }
 }

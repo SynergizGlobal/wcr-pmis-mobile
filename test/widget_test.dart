@@ -10,7 +10,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:wcr_pmis_mobile/src/app/app.dart';
 import 'package:wcr_pmis_mobile/src/app/config/app_config.dart';
 import 'package:wcr_pmis_mobile/src/app/config/app_config_provider.dart';
-import 'package:wcr_pmis_mobile/src/app/config/app_flavor.dart';
 
 void main() {
   testWidgets('renders login screen', (WidgetTester tester) async {
@@ -19,7 +18,6 @@ void main() {
         overrides: <Override>[
           appConfigProvider.overrideWithValue(
             const AppConfig(
-              flavor: AppFlavor.dev,
               appName: 'WCR PMIS Dev',
               baseUrl: 'https://api.example.com',
             ),

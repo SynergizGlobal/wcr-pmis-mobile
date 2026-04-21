@@ -1,14 +1,36 @@
 import 'package:equatable/equatable.dart';
 
+/// Logged-in user session (matches `/login` JSON; token optional for future).
 class AuthSession extends Equatable {
   const AuthSession({
-    required this.token,
+    this.token = '',
+    required this.userId,
     required this.userName,
+    this.emailId = '',
+    this.userRoleNameFk = '',
+    this.userTypeFk = '',
+    this.departmentFk = '',
+    this.designation = '',
   });
 
   final String token;
+  final String userId;
   final String userName;
+  final String emailId;
+  final String userRoleNameFk;
+  final String userTypeFk;
+  final String departmentFk;
+  final String designation;
 
   @override
-  List<Object?> get props => <Object?>[token, userName];
+  List<Object?> get props => <Object?>[
+    token,
+    userId,
+    userName,
+    emailId,
+    userRoleNameFk,
+    userTypeFk,
+    departmentFk,
+    designation,
+  ];
 }

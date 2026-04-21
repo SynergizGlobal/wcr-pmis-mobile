@@ -8,9 +8,7 @@ void bootstrap(AppConfig config) {
   WidgetsFlutterBinding.ensureInitialized();
   runApp(
     ProviderScope(
-      overrides: <Override>[
-        appConfigProvider.overrideWithValue(config),
-      ],
+      overrides: <Override>[appConfigProvider.overrideWithValue(config)],
       child: const App(),
     ),
   );
