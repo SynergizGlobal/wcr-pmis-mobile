@@ -36,9 +36,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     if (!mounted) {
       return;
     }
-    if (ref.read(authControllerProvider).valueOrNull != null) {
-      return;
-    }
     final AuthLocalSnapshot snapshot = await ref
         .read(authLocalDataSourceProvider)
         .readSnapshot();
@@ -50,6 +47,21 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       _userIdController.text = snapshot.userId ?? '';
       _passwordController.text = snapshot.password ?? '';
     });
+    if (!snapshot.rememberMe) {
+      return;
+    }
+    final Failure? failure = await ref
+        .read(authControllerProvider.notifier)
+        .tryAutoLoginIfRemembered();
+    if (!mounted || failure == null) {
+      return;
+    }
+    await AppDialog.show(
+      context: context,
+      title: failure.code ?? 'Login Failed',
+      message: failure.message,
+      type: AppDialogType.error,
+    );
   }
 
   @override
@@ -307,10 +319,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                   }
                                 },
                               ),
-                              const Expanded(
+                              Expanded(
                                 child: Text(
                                   'Remember me',
-                                  style: TextStyle(color: Colors.black),
+                                  style: TextStyle(color: colorScheme.onSurface),
                                 ),
                               ),
                             ],
@@ -327,9 +339,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                   type: AppDialogType.info,
                                 );
                               },
-                              child: const Text(
+                              child: Text(
                                 'Forgot password?',
-                                style: TextStyle(color: Colors.black),
+                                style: TextStyle(color: palette.actionLink),
                               ),
                             ),
                           ),

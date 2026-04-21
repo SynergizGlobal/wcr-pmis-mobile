@@ -84,7 +84,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
 
   String _titleForSection(_HomeSection section) {
     return switch (section) {
-      _HomeSection.home => 'Home',
+      _HomeSection.home => 'Western Central Railways',
       _HomeSection.updateForms => 'Update Forms',
       _HomeSection.reports => 'Reports',
       _HomeSection.documents => 'Documents',
@@ -107,6 +107,16 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(pageTitle),
+        leading: Padding(
+          padding: const EdgeInsets.all(8),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: Image.asset(
+              'assets/app_icon.png',
+              fit: BoxFit.cover,
+            ),
+          ),
+        ),
         actions: <Widget>[
           Padding(
             padding: const EdgeInsets.only(right: 12),
