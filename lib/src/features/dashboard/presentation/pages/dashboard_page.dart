@@ -3,10 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:wcr_pmis_mobile/src/app/config/app_config.dart';
 import 'package:wcr_pmis_mobile/src/app/config/app_config_provider.dart';
+import 'package:wcr_pmis_mobile/src/app/theme/app_theme.dart';
 import 'package:wcr_pmis_mobile/src/features/auth/domain/entities/auth_session.dart';
 import 'package:wcr_pmis_mobile/src/features/auth/presentation/controllers/auth_controller.dart';
-import 'package:wcr_pmis_mobile/src/features/auth/presentation/pages/login_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/providers/dashboard_message_provider.dart';
+import 'package:wcr_pmis_mobile/src/features/profile/presentation/pages/profile_page.dart';
 
 enum _HomeSection { home, updateForms, reports, documents, quickLinks, admin, rfi }
 
@@ -40,11 +41,12 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
   }
 
   Future<void> _openMoreMenu() async {
+    final ColorScheme colorScheme = Theme.of(context).colorScheme;
     final _HomeSection? result = await showModalBottomSheet<_HomeSection>(
       context: context,
       useSafeArea: true,
       showDragHandle: true,
-      backgroundColor: Colors.white,
+      backgroundColor: colorScheme.surface,
       builder: (BuildContext context) {
         return Padding(
           padding: const EdgeInsets.fromLTRB(12, 0, 12, 18),
@@ -70,11 +72,12 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
   }
 
   Widget _moreItem(_HomeSection section, IconData icon) {
+    final ColorScheme colorScheme = Theme.of(context).colorScheme;
     return ListTile(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      leading: Icon(icon),
+      leading: Icon(icon, color: colorScheme.onSurface),
       title: Text(_titleForSection(section)),
-      trailing: const Icon(Icons.chevron_right_rounded),
+      trailing: Icon(Icons.chevron_right_rounded, color: colorScheme.onSurface),
       onTap: () => Navigator.of(context).pop(section),
     );
   }
@@ -97,20 +100,31 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     final String message = ref.watch(dashboardMessageProvider);
     final AuthSession? session = ref.watch(authControllerProvider).valueOrNull;
     final String pageTitle = _titleForSection(_section);
+    final AppPalette palette =
+        Theme.of(context).extension<AppPalette>() ?? AppPalette.light;
+    final String initial = _avatarInitial(session);
 
     return Scaffold(
       appBar: AppBar(
         title: Text(pageTitle),
         actions: <Widget>[
-          IconButton(
-            tooltip: 'Log out',
-            onPressed: () async {
-              await ref.read(authControllerProvider.notifier).logout();
-              if (context.mounted) {
-                context.goNamed(LoginPage.routeName);
-              }
-            },
-            icon: const Icon(Icons.logout_rounded),
+          Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(24),
+              onTap: () => context.pushNamed(ProfilePage.routeName),
+              child: CircleAvatar(
+                radius: 18,
+                backgroundColor: palette.avatarFill,
+                child: Text(
+                  initial,
+                  style: TextStyle(
+                    color: palette.avatarText,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ),
           ),
         ],
       ),
@@ -196,6 +210,16 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         title: 'RFI',
       ),
     };
+  }
+
+  String _avatarInitial(AuthSession? session) {
+    final String source =
+        (session?.userName.trim().isNotEmpty ?? false)
+            ? session!.userName.trim()
+            : (session?.userId.isNotEmpty ?? false)
+            ? session!.userId
+            : 'U';
+    return source.substring(0, 1).toUpperCase();
   }
 }
 

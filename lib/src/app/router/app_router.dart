@@ -6,6 +6,7 @@ import 'package:wcr_pmis_mobile/src/features/auth/domain/entities/auth_session.d
 import 'package:wcr_pmis_mobile/src/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:wcr_pmis_mobile/src/features/auth/presentation/pages/login_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/dashboard_page.dart';
+import 'package:wcr_pmis_mobile/src/features/profile/presentation/pages/profile_page.dart';
 
 final goRouterRefreshProvider = Provider<GoRouterRefresh>((ref) {
   final GoRouterRefresh notifier = GoRouterRefresh();
@@ -31,6 +32,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       if (!loggedIn && loc == DashboardPage.routePath) {
         return LoginPage.routePath;
       }
+      if (!loggedIn && loc == ProfilePage.routePath) {
+        return LoginPage.routePath;
+      }
       if (loggedIn && loc == LoginPage.routePath) {
         return DashboardPage.routePath;
       }
@@ -48,6 +52,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         name: DashboardPage.routeName,
         builder: (BuildContext context, GoRouterState state) =>
             const DashboardPage(),
+      ),
+      GoRoute(
+        path: ProfilePage.routePath,
+        name: ProfilePage.routeName,
+        builder: (BuildContext context, GoRouterState state) =>
+            const ProfilePage(),
       ),
     ],
   );

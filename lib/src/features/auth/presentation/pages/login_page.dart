@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:wcr_pmis_mobile/src/app/theme/app_theme.dart';
 import 'package:wcr_pmis_mobile/src/core/result/failure.dart';
 import 'package:wcr_pmis_mobile/src/core/widgets/app_dialog.dart';
 import 'package:wcr_pmis_mobile/src/features/auth/data/datasources/auth_local_data_source.dart';
@@ -94,11 +95,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     );
     final bool isLoading = authState.isLoading;
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
-    const Color screenBackground = Color(0xFFA4B7D4);
-    const Color titleColor = Color(0xFF111111);
-    const Color secondaryText = Color(0xFF5D677A);
-    const Color actionBlue = Color(0xFF1229D9);
-    const Color buttonColor = Color(0xFF565DA8);
+    final AppPalette palette =
+        Theme.of(context).extension<AppPalette>() ?? AppPalette.light;
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
     final bool hasUsername = _userIdController.text.trim().isNotEmpty;
     final bool hasPassword = _passwordController.text.isNotEmpty;
     final bool canSubmit = hasUsername && hasPassword && !isLoading;
@@ -108,7 +107,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         width: double.infinity,
         height: double.infinity,
         decoration: BoxDecoration(
-          color: screenBackground,
+          color: palette.loginBackground,
         ),
         child: SafeArea(
           child: Center(
@@ -146,7 +145,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                             style: Theme.of(context).textTheme.headlineSmall
                                 ?.copyWith(
                                   fontWeight: FontWeight.w700,
-                                  color: titleColor,
+                                  color: palette.loginTitle,
                                 ),
                             textAlign: TextAlign.center,
                           ),
@@ -154,30 +153,32 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                           Text(
                             'Login to continue to WCR PMIS',
                             style: Theme.of(context).textTheme.bodyMedium
-                                ?.copyWith(color: secondaryText),
+                                ?.copyWith(color: palette.loginSecondaryText),
                             textAlign: TextAlign.center,
                           ),
                           const SizedBox(height: 22),
                           TextFormField(
                             controller: _userIdController,
                             onChanged: (_) => setState(() {}),
-                            style: const TextStyle(color: Colors.black),
-                            cursorColor: Colors.black,
+                            style: TextStyle(color: colorScheme.onSurface),
+                            cursorColor: colorScheme.onSurface,
                             decoration: InputDecoration(
                               hintText: 'Username',
                               hintStyle: TextStyle(
-                                color: secondaryText,
+                                color: palette.loginSecondaryText,
                               ),
                               prefixIcon: Icon(
                                 Icons.person_outline_rounded,
-                                color: secondaryText,
+                                color: palette.loginSecondaryText,
                               ),
                               filled: true,
-                              fillColor: Colors.white,
+                              fillColor: Theme.of(context).colorScheme.surface,
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(14),
                                 borderSide: BorderSide(
-                                  color: Colors.white,
+                                  color: isDark
+                                      ? colorScheme.outlineVariant
+                                      : Colors.white,
                                 ),
                               ),
                               enabledBorder: OutlineInputBorder(
@@ -185,7 +186,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                 borderSide: BorderSide(
                                   color: _userIdController.text.trim().isNotEmpty
                                       ? colorScheme.primary
-                                      : Colors.white,
+                                      : (isDark
+                                          ? colorScheme.outlineVariant
+                                          : Colors.white),
                                   width: _userIdController.text.trim().isNotEmpty
                                       ? 1.4
                                       : 1.0,
@@ -211,16 +214,16 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                             controller: _passwordController,
                             obscureText: _obscurePassword,
                             onChanged: (_) => setState(() {}),
-                            style: const TextStyle(color: Colors.black),
-                            cursorColor: Colors.black,
+                            style: TextStyle(color: colorScheme.onSurface),
+                            cursorColor: colorScheme.onSurface,
                             decoration: InputDecoration(
                               hintText: 'Password',
                               hintStyle: TextStyle(
-                                color: secondaryText,
+                                color: palette.loginSecondaryText,
                               ),
                               prefixIcon: Icon(
                                 Icons.lock_outline_rounded,
-                                color: secondaryText,
+                                color: palette.loginSecondaryText,
                               ),
                               suffixIcon: IconButton(
                                 onPressed: () {
@@ -235,11 +238,13 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                 ),
                               ),
                               filled: true,
-                              fillColor: Colors.white,
+                              fillColor: Theme.of(context).colorScheme.surface,
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(14),
                                 borderSide: BorderSide(
-                                  color: Colors.white,
+                                  color: isDark
+                                      ? colorScheme.outlineVariant
+                                      : Colors.white,
                                 ),
                               ),
                               enabledBorder: OutlineInputBorder(
@@ -247,7 +252,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                 borderSide: BorderSide(
                                   color: _passwordController.text.isNotEmpty
                                       ? colorScheme.primary
-                                      : Colors.white,
+                                      : (isDark
+                                          ? colorScheme.outlineVariant
+                                          : Colors.white),
                                   width: _passwordController.text.isNotEmpty
                                       ? 1.4
                                       : 1.0,
@@ -274,7 +281,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                               Checkbox(
                                 value: _rememberMe,
                                 side: BorderSide(
-                                  color: secondaryText.withValues(alpha: 0.8),
+                                  color: palette.loginSecondaryText.withValues(
+                                    alpha: 0.8,
+                                  ),
                                   width: 1.4,
                                 ),
                                 shape: RoundedRectangleBorder(
@@ -320,7 +329,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                               },
                               child: const Text(
                                 'Forgot password?',
-                                style: TextStyle(color: actionBlue),
+                                style: TextStyle(color: Colors.black),
                               ),
                             ),
                           ),
@@ -328,10 +337,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                           ElevatedButton(
                             onPressed: canSubmit ? _submit : null,
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: buttonColor,
+                              backgroundColor: palette.loginButton,
                               foregroundColor: Colors.white,
                               minimumSize: const Size.fromHeight(45),
-                              disabledBackgroundColor: buttonColor.withValues(
+                              disabledBackgroundColor: palette.loginButton.withValues(
                                 alpha: 0.70,
                               ),
                               disabledForegroundColor: Colors.white70,
