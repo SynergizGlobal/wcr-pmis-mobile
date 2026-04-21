@@ -186,23 +186,23 @@ class AppTheme {
       ),
       appBarTheme: AppBarTheme(
         centerTitle: true,
-        backgroundColor: colorScheme.primary,
-        foregroundColor: colorScheme.onPrimary,
+        backgroundColor: colorScheme.surface,
+        foregroundColor: colorScheme.onSurface,
         elevation: 0,
       ),
       navigationBarTheme: NavigationBarThemeData(
-        backgroundColor: colorScheme.primary,
-        indicatorColor: colorScheme.onPrimary.withValues(alpha: 0.22),
+        backgroundColor: colorScheme.surface,
+        indicatorColor: colorScheme.primary.withValues(alpha: 0.24),
         labelTextStyle: WidgetStateProperty.resolveWith<TextStyle?>((states) {
           return TextStyle(
-            color: colorScheme.onPrimary,
+            color: colorScheme.onSurface,
             fontWeight: states.contains(WidgetState.selected)
                 ? FontWeight.w700
                 : FontWeight.w500,
           );
         }),
         iconTheme: WidgetStateProperty.resolveWith<IconThemeData?>((states) {
-          return IconThemeData(color: colorScheme.onPrimary);
+          return IconThemeData(color: colorScheme.onSurface);
         }),
       ),
       extensions: const <ThemeExtension<dynamic>>[AppPalette.dark],
