@@ -124,7 +124,13 @@ class AppTheme {
         centerTitle: true,
         backgroundColor: colorScheme.primary,
         foregroundColor: colorScheme.onPrimary,
-        elevation: 0,
+        toolbarHeight: 66,
+        elevation: 6,
+        shadowColor: Colors.black.withValues(alpha: 0.20),
+        surfaceTintColor: Colors.transparent,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(bottom: Radius.circular(22)),
+        ),
       ),
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: colorScheme.primary,
@@ -188,7 +194,13 @@ class AppTheme {
         centerTitle: true,
         backgroundColor: colorScheme.surface,
         foregroundColor: colorScheme.onSurface,
-        elevation: 0,
+        toolbarHeight: 66,
+        elevation: 6,
+        shadowColor: Colors.black.withValues(alpha: 0.30),
+        surfaceTintColor: Colors.transparent,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(bottom: Radius.circular(22)),
+        ),
       ),
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: colorScheme.surface,

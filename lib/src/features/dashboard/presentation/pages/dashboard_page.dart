@@ -152,32 +152,58 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
           ),
         ),
       ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _selectedIndex,
-        onDestinationSelected: _onBottomSelected,
-        labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-        destinations: const <NavigationDestination>[
-          NavigationDestination(
-            icon: Icon(Icons.home_outlined),
-            selectedIcon: Icon(Icons.home_rounded),
-            label: 'Home',
+      bottomNavigationBar: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: <BoxShadow>[
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.20),
+                  blurRadius: 16,
+                  offset: const Offset(0, 6),
+                ),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(24),
+              child: Container(
+                color: Theme.of(context).colorScheme.primary,
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                child: Row(
+                  children: <Widget>[
+                    _bottomItem(
+                      index: 0,
+                      label: 'Home',
+                      icon: Icons.home_outlined,
+                      selectedIcon: Icons.home_rounded,
+                    ),
+                    _bottomItem(
+                      index: 1,
+                      label: 'Update Forms',
+                      icon: Icons.edit_document,
+                      selectedIcon: Icons.edit_document,
+                    ),
+                    _bottomItem(
+                      index: 2,
+                      label: 'Reports',
+                      icon: Icons.bar_chart_rounded,
+                      selectedIcon: Icons.bar_chart_rounded,
+                    ),
+                    _bottomItem(
+                      index: 3,
+                      label: 'More',
+                      icon: Icons.grid_view_rounded,
+                      selectedIcon: Icons.grid_view_rounded,
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
-          NavigationDestination(
-            icon: Icon(Icons.edit_document),
-            selectedIcon: Icon(Icons.edit_document),
-            label: 'Update Forms',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.bar_chart_rounded),
-            selectedIcon: Icon(Icons.bar_chart_rounded),
-            label: 'Reports',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.grid_view_rounded),
-            selectedIcon: Icon(Icons.grid_view_rounded),
-            label: 'More',
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -230,6 +256,61 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
             ? session!.userId
             : 'U';
     return source.substring(0, 1).toUpperCase();
+  }
+
+  Widget _bottomItem({
+    required int index,
+    required String label,
+    required IconData icon,
+    required IconData selectedIcon,
+  }) {
+    final bool selected = _selectedIndex == index;
+    final ColorScheme colorScheme = Theme.of(context).colorScheme;
+    return Expanded(
+      child: InkWell(
+        borderRadius: BorderRadius.circular(20),
+        onTap: () => _onBottomSelected(index),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 2),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 180),
+                curve: Curves.easeOut,
+                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 9),
+                decoration: BoxDecoration(
+                  color: selected
+                      ? colorScheme.onPrimary.withValues(alpha: 0.22)
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Icon(
+                  selected ? selectedIcon : icon,
+                  color: colorScheme.onPrimary,
+                  size: 22,
+                ),
+              ),
+              const SizedBox(height: 7),
+              SizedBox(
+                height: 18,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    style: TextStyle(
+                      color: colorScheme.onPrimary,
+                      fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 
