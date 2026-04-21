@@ -122,9 +122,24 @@ class AppTheme {
       ),
       appBarTheme: AppBarTheme(
         centerTitle: true,
-        backgroundColor: colorScheme.surface,
-        foregroundColor: colorScheme.onSurface,
+        backgroundColor: colorScheme.primary,
+        foregroundColor: colorScheme.onPrimary,
         elevation: 0,
+      ),
+      navigationBarTheme: NavigationBarThemeData(
+        backgroundColor: colorScheme.primary,
+        indicatorColor: colorScheme.onPrimary.withValues(alpha: 0.20),
+        labelTextStyle: WidgetStateProperty.resolveWith<TextStyle?>((states) {
+          return TextStyle(
+            color: colorScheme.onPrimary,
+            fontWeight: states.contains(WidgetState.selected)
+                ? FontWeight.w700
+                : FontWeight.w500,
+          );
+        }),
+        iconTheme: WidgetStateProperty.resolveWith<IconThemeData?>((states) {
+          return IconThemeData(color: colorScheme.onPrimary);
+        }),
       ),
       extensions: const <ThemeExtension<dynamic>>[AppPalette.light],
     );
@@ -171,9 +186,24 @@ class AppTheme {
       ),
       appBarTheme: AppBarTheme(
         centerTitle: true,
-        backgroundColor: colorScheme.surface,
-        foregroundColor: colorScheme.onSurface,
+        backgroundColor: colorScheme.primary,
+        foregroundColor: colorScheme.onPrimary,
         elevation: 0,
+      ),
+      navigationBarTheme: NavigationBarThemeData(
+        backgroundColor: colorScheme.primary,
+        indicatorColor: colorScheme.onPrimary.withValues(alpha: 0.22),
+        labelTextStyle: WidgetStateProperty.resolveWith<TextStyle?>((states) {
+          return TextStyle(
+            color: colorScheme.onPrimary,
+            fontWeight: states.contains(WidgetState.selected)
+                ? FontWeight.w700
+                : FontWeight.w500,
+          );
+        }),
+        iconTheme: WidgetStateProperty.resolveWith<IconThemeData?>((states) {
+          return IconThemeData(color: colorScheme.onPrimary);
+        }),
       ),
       extensions: const <ThemeExtension<dynamic>>[AppPalette.dark],
     );
