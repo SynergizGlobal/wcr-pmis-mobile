@@ -1,0 +1,34 @@
+import 'dart:io';
+
+import 'package:cookie_jar/cookie_jar.dart';
+import 'package:dio_cookie_manager/dio_cookie_manager.dart';
+import 'package:path_provider/path_provider.dart';
+
+class SessionCookieManager {
+  SessionCookieManager._(this.cookieJar, this.persistDirPath);
+
+  final PersistCookieJar cookieJar;
+  final String persistDirPath;
+
+  CookieManager asInterceptor() => CookieManager(cookieJar);
+
+  static Future<SessionCookieManager> create() async {
+    final Directory appDocDir = await getApplicationDocumentsDirectory();
+    final String cookiePath = '${appDocDir.path}/wcr_pmis_cookies';
+    final PersistCookieJar jar = PersistCookieJar(
+      ignoreExpires: false,
+      storage: FileStorage(cookiePath),
+    );
+    return SessionCookieManager._(jar, cookiePath);
+  }
+
+  Future<void> clearSessionCookies() async {
+    final Uri base = Uri.parse('http://115.124.125.227:8444');
+    await cookieJar.delete(base);
+  }
+
+  Future<List<Cookie>> currentCookiesForBase() async {
+    final Uri base = Uri.parse('http://115.124.125.227:8444');
+    return cookieJar.loadForRequest(base);
+  }
+}

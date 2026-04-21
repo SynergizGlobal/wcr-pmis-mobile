@@ -1,6 +1,9 @@
 import 'dart:convert';
 
+import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:wcr_pmis_mobile/src/core/network/dio_client.dart';
+import 'package:wcr_pmis_mobile/src/core/network/session_cookie_manager.dart';
 import 'package:wcr_pmis_mobile/src/core/result/failure.dart';
 import 'package:wcr_pmis_mobile/src/core/result/result.dart';
 import 'package:wcr_pmis_mobile/src/features/auth/data/datasources/auth_local_data_source.dart';
@@ -14,13 +17,15 @@ final loginUseCaseProvider = Provider<LoginUseCase>((ref) {
 });
 
 class AuthController extends StateNotifier<AsyncValue<AuthSession?>> {
-  AuthController(this._loginUseCase, this._local)
+  AuthController(this._loginUseCase, this._local, this._dio, this._cookieManager)
     : super(const AsyncData<AuthSession?>(null)) {
     Future<void>.microtask(_restoreFromDisk);
   }
 
   final LoginUseCase _loginUseCase;
   final AuthLocalDataSource _local;
+  final Dio _dio;
+  final SessionCookieManager? _cookieManager;
 
   Future<void> _restoreFromDisk() async {
     final AuthLocalSnapshot snap = await _local.readSnapshot();
@@ -71,6 +76,14 @@ class AuthController extends StateNotifier<AsyncValue<AuthSession?>> {
   }
 
   Future<void> logout() async {
+    try {
+      await _dio.post('/logout');
+    } catch (_) {
+      // Ignore server-side logout failures and still clear local session.
+    }
+    if (_cookieManager != null) {
+      await _cookieManager.clearSessionCookies();
+    }
     await _local.clearAll();
     state = const AsyncData<AuthSession?>(null);
   }
@@ -81,5 +94,7 @@ final authControllerProvider =
       return AuthController(
         ref.watch(loginUseCaseProvider),
         ref.watch(authLocalDataSourceProvider),
+        ref.watch(dioProvider),
+        ref.watch(sessionCookieManagerProvider).valueOrNull,
       );
     });

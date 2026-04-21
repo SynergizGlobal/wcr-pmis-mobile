@@ -5,10 +5,16 @@ import 'package:pretty_dio_logger/pretty_dio_logger.dart';
 import 'package:wcr_pmis_mobile/src/app/config/app_config_provider.dart';
 import 'package:wcr_pmis_mobile/src/core/constants/api_constants.dart';
 import 'package:wcr_pmis_mobile/src/core/network/network_connectivity.dart';
+import 'package:wcr_pmis_mobile/src/core/network/session_cookie_manager.dart';
+
+final sessionCookieManagerProvider = FutureProvider<SessionCookieManager>((ref) {
+  return SessionCookieManager.create();
+});
 
 final dioProvider = Provider<Dio>((ref) {
   final appConfig = ref.watch(appConfigProvider);
   final networkConnectivity = ref.watch(networkConnectivityProvider);
+  final sessionCookieManager = ref.watch(sessionCookieManagerProvider).valueOrNull;
   final dio = Dio(
     BaseOptions(
       baseUrl: appConfig.baseUrl,
@@ -43,6 +49,9 @@ final dioProvider = Provider<Dio>((ref) {
       },
     ),
   );
+  if (sessionCookieManager != null) {
+    dio.interceptors.add(sessionCookieManager.asInterceptor());
+  }
 
   return dio;
 });
