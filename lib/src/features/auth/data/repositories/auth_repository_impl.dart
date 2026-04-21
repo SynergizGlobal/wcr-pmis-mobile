@@ -26,14 +26,18 @@ class AuthRepositoryImpl implements AuthRepository {
     } on DioException catch (error) {
       final responseData = error.response?.data;
       String? serverMessage;
+      String? serverCode;
       if (responseData is Map<String, dynamic>) {
-        serverMessage = responseData['message'] as String?;
+        serverCode = responseData['error']?.toString();
+        serverMessage =
+            responseData['errorMessage']?.toString() ??
+            responseData['message']?.toString();
       }
       final message =
           serverMessage ??
           error.message ??
           'Unable to login, please try again.';
-      return Left<Failure, AuthSession>(Failure(message));
+      return Left<Failure, AuthSession>(Failure(message, code: serverCode));
     } catch (_) {
       return const Left<Failure, AuthSession>(
         Failure('Something went wrong. Please try again.'),

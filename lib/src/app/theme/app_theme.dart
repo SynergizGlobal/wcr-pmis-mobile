@@ -3,11 +3,16 @@ import 'package:flutter/material.dart';
 class AppTheme {
   const AppTheme._();
 
-  /// Brand primary (slightly darker than #3C467B).
-  static const Color brandPrimary = Color(0xFF2E3562);
+  /// Brand primary: #50589C.
+  static const Color brandPrimary = Color(0xFF50589C);
 
   static ThemeData get light {
-    final colorScheme = ColorScheme.fromSeed(seedColor: brandPrimary);
+    final colorScheme = ColorScheme.fromSeed(
+      seedColor: brandPrimary,
+    ).copyWith(
+      primary: brandPrimary,
+      onPrimary: Colors.white,
+    );
     return ThemeData(
       useMaterial3: true,
       colorScheme: colorScheme,

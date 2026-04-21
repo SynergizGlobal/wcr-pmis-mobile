@@ -42,7 +42,7 @@ class AuthController extends StateNotifier<AsyncValue<AuthSession?>> {
     state = AsyncData<AuthSession?>(session);
   }
 
-  Future<String?> login({
+  Future<Failure?> login({
     required String userId,
     required String password,
     required bool rememberMe,
@@ -52,10 +52,10 @@ class AuthController extends StateNotifier<AsyncValue<AuthSession?>> {
       userId: userId,
       password: password,
     );
-    return result.fold<Future<String?>>(
+    return result.fold<Future<Failure?>>(
       (Failure failure) async {
         state = const AsyncData<AuthSession?>(null);
-        return failure.message;
+        return failure;
       },
       (AuthSession session) async {
         state = AsyncData<AuthSession?>(session);
