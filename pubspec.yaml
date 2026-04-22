@@ -66,6 +66,7 @@ flutter:
   uses-material-design: true
   assets:
     - assets/
+    - assets/update_forms_icons/
 
 flutter_launcher_icons:
   android: true

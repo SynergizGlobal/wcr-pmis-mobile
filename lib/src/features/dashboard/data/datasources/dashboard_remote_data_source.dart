@@ -38,6 +38,17 @@ class DashboardRemoteDataSource {
     return _normalizeResponse(response.data);
   }
 
+  Future<Map<String, dynamic>> fetchUpdateForms() async {
+    final response = await _dio.get<dynamic>(
+      '/forms/api/getUpdateForms',
+      queryParameters: <String, String>{
+        '_t': DateTime.now().millisecondsSinceEpoch.toString(),
+      },
+      options: _requestOptions,
+    );
+    return _normalizeResponse(response.data);
+  }
+
   Map<String, dynamic> _normalizeResponse(dynamic data) {
     if (data is Map<String, dynamic>) {
       return data;

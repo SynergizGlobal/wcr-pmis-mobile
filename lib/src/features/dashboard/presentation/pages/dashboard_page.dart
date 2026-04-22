@@ -8,8 +8,10 @@ import 'package:wcr_pmis_mobile/src/core/widgets/app_dialog.dart';
 import 'package:wcr_pmis_mobile/src/features/auth/domain/entities/auth_session.dart';
 import 'package:wcr_pmis_mobile/src/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/domain/entities/home_dashboard_data.dart';
+import 'package:wcr_pmis_mobile/src/features/dashboard/domain/entities/update_form_item.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/project_details_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/providers/home_dashboard_provider.dart';
+import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/providers/update_forms_provider.dart';
 import 'package:wcr_pmis_mobile/src/features/profile/presentation/pages/profile_page.dart';
 import 'package:wcr_pmis_mobile/src/features/settings/presentation/providers/dashboard_view_mode_provider.dart';
 
@@ -29,12 +31,14 @@ class _DashboardCardSpec {
     this.icon,
     this.leftPlaceholder,
     this.rightPlaceholder,
+    this.payload,
   });
 
   final String title;
   final IconData? icon;
   final Widget? leftPlaceholder;
   final Widget? rightPlaceholder;
+  final Object? payload;
 }
 
 class DashboardPage extends ConsumerStatefulWidget {
@@ -129,6 +133,9 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     final AsyncValue<HomeDashboardData> homeDataAsync = ref.watch(
       homeDashboardProvider,
     );
+    final AsyncValue<List<UpdateFormItem>> updateFormsAsync = ref.watch(
+      updateFormsProvider,
+    );
     final DashboardViewMode viewMode = ref.watch(dashboardViewModeProvider);
     final String pageTitle = _titleForSection(_section);
     final AppPalette palette =
@@ -183,6 +190,12 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                 ? _buildHomeSection(
                     viewKey: ValueKey<String>('home-${viewMode.name}'),
                     homeDataAsync: homeDataAsync,
+                    viewMode: viewMode,
+                  )
+                : _section == _HomeSection.updateForms
+                ? _buildUpdateFormsSection(
+                    viewKey: ValueKey<String>('update-forms-${viewMode.name}'),
+                    updateFormsAsync: updateFormsAsync,
                     viewMode: viewMode,
                   )
                 : _sectionCardsScreen(
@@ -254,21 +267,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
   List<_DashboardCardSpec> _cardsForSection(_HomeSection section) {
     return switch (section) {
       _HomeSection.home => const <_DashboardCardSpec>[],
-      _HomeSection.updateForms => <_DashboardCardSpec>[
-        _DashboardCardSpec(
-          title: 'Daily Status Update',
-          icon: Icons.event_note_rounded,
-        ),
-        _DashboardCardSpec(
-          title: 'Inspection Details',
-          leftPlaceholder: _pill('NEW'),
-        ),
-        _DashboardCardSpec(title: 'Compliance Form', icon: Icons.rule_rounded),
-        _DashboardCardSpec(
-          title: 'Progress Entry',
-          rightPlaceholder: _pill('DUE'),
-        ),
-      ],
+      _HomeSection.updateForms => const <_DashboardCardSpec>[],
       _HomeSection.reports => <_DashboardCardSpec>[
         _DashboardCardSpec(
           title: 'Monthly Summary',
@@ -423,6 +422,62 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     );
   }
 
+  Widget _buildUpdateFormsSection({
+    Key? viewKey,
+    required AsyncValue<List<UpdateFormItem>> updateFormsAsync,
+    required DashboardViewMode viewMode,
+  }) {
+    return updateFormsAsync.when(
+      data: (List<UpdateFormItem> forms) {
+        final List<_DashboardCardSpec> cards = forms
+            .map(
+              (UpdateFormItem item) => _DashboardCardSpec(
+                title: item.formName,
+                payload: item,
+                icon: null,
+                leftPlaceholder: _updateFormAssetIcon(item),
+              ),
+            )
+            .toList();
+        if (cards.isEmpty) {
+          return ListView(
+            key: viewKey,
+            children: const <Widget>[
+              AppActionCard(title: 'No update forms available right now.'),
+            ],
+          );
+        }
+        return _sectionCardsScreen(
+          viewKey: viewKey,
+          cards: cards,
+          viewMode: viewMode,
+        );
+      },
+      loading: () => ListView(
+        key: viewKey,
+        children: const <Widget>[
+          Center(
+            child: Padding(
+              padding: EdgeInsets.symmetric(vertical: 32),
+              child: CircularProgressIndicator(),
+            ),
+          ),
+        ],
+      ),
+      error: (Object error, StackTrace _) => ListView(
+        key: viewKey,
+        children: <Widget>[
+          AppActionCard(
+            title: 'Unable to load update forms',
+            icon: Icons.wifi_off_rounded,
+            rightPlaceholder: const Icon(Icons.refresh_rounded),
+            onTap: () => ref.invalidate(updateFormsProvider),
+          ),
+        ],
+      ),
+    );
+  }
+
   List<_DashboardCardSpec> _homeTypeCardsFromData(HomeDashboardData data) {
     final List<_DashboardCardSpec> cards = <_DashboardCardSpec>[];
     for (final HomeProjectType type in data.projectTypes) {
@@ -524,8 +579,10 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
             icon: card.icon,
             leftPlaceholder: card.leftPlaceholder,
             rightPlaceholder: card.rightPlaceholder,
-            showLeading: _section != _HomeSection.home,
-            onTap: () => _onCardTap(card.title),
+            showLeading:
+                _section != _HomeSection.home &&
+                (card.leftPlaceholder != null || card.icon != null),
+            onTap: () => _onCardTap(card),
           );
         },
       );
@@ -546,21 +603,29 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
           icon: card.icon,
           leftPlaceholder: card.leftPlaceholder,
           rightPlaceholder: card.rightPlaceholder,
-          showLeading: _section != _HomeSection.home,
+          showLeading:
+              _section != _HomeSection.home &&
+              (card.leftPlaceholder != null || card.icon != null),
           titleMaxLines: 2,
-          onTap: () => _onCardTap(card.title),
+          onTap: () => _onCardTap(card),
         );
       },
     );
   }
 
-  Future<void> _onCardTap(String title) async {
+  Future<void> _onCardTap(_DashboardCardSpec card) async {
+    final String title = card.title;
     if (_section == _HomeSection.home) {
       final String projectTypeName = title.replaceFirst(
         RegExp(r'\s*\(\d+\)$'),
         '',
       );
       context.pushNamed(ProjectDetailsPage.routeName, extra: projectTypeName);
+      return;
+    }
+    if (_section == _HomeSection.updateForms &&
+        card.payload is UpdateFormItem) {
+      await _onUpdateFormTap(card.payload! as UpdateFormItem);
       return;
     }
     await AppDialog.show(
@@ -571,23 +636,140 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     );
   }
 
-  Widget _pill(String text) {
+  Future<void> _onUpdateFormTap(UpdateFormItem form) async {
+    final List<UpdateFormSubItem> subMenus = form.orderedSubMenus;
+    if (subMenus.isEmpty) {
+      await AppDialog.show(
+        context: context,
+        title: form.formName,
+        message: '${form.formName} navigation will be connected next.',
+        type: AppDialogType.info,
+      );
+      return;
+    }
+
+    final UpdateFormSubItem? selected =
+        await showModalBottomSheet<UpdateFormSubItem>(
+          context: context,
+          useSafeArea: true,
+          showDragHandle: true,
+          builder: (BuildContext context) {
+            return Padding(
+              padding: const EdgeInsets.fromLTRB(12, 0, 12, 18),
+              child: ListView.separated(
+                shrinkWrap: true,
+                itemCount: subMenus.length,
+                separatorBuilder: (_, _) => const SizedBox(height: 4),
+                itemBuilder: (BuildContext context, int index) {
+                  final UpdateFormSubItem sub = subMenus[index];
+                  return ListTile(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    title: Text(sub.formName),
+                    trailing: const Icon(Icons.chevron_right_rounded),
+                    onTap: () => Navigator.of(context).pop(sub),
+                  );
+                },
+              ),
+            );
+          },
+        );
+    if (!mounted || selected == null) {
+      return;
+    }
+    await AppDialog.show(
+      context: context,
+      title: selected.formName,
+      message: '${selected.formName} navigation will be connected next.',
+      type: AppDialogType.info,
+    );
+  }
+
+  Widget? _updateFormAssetIcon(UpdateFormItem item) {
+    final String formId = item.formId.trim();
+    final String key = _normalizeFormKey(item.formName);
+    final String? assetPath = switch (formId) {
+      '38' => 'assets/update_forms_icons/projects.png',
+      '9' => 'assets/update_forms_icons/works.png',
+      '10' => 'assets/update_forms_icons/contracts_tenders.png',
+      '17' => 'assets/update_forms_icons/design_drawing.png',
+      '6' => 'assets/update_forms_icons/issues.png',
+      '1391' => 'assets/update_forms_icons/dms.png',
+      '43' => 'assets/update_forms_icons/land_acquisition.png',
+      '1240' => 'assets/update_forms_icons/utility_shifting.png',
+      '40' => 'assets/update_forms_icons/validate_data.png',
+      _ => _assetPathFromFormNameKey(key),
+    };
+    if (assetPath == null) {
+      return null;
+    }
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      width: 38,
+      height: 38,
       decoration: BoxDecoration(
-        color: colorScheme.primary.withValues(alpha: 0.16),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(11),
+        color: colorScheme.surface,
+        border: Border.all(
+          color: colorScheme.outlineVariant.withValues(alpha: 0.9),
+        ),
       ),
-      child: Text(
-        text,
-        style: TextStyle(
-          color: colorScheme.primary,
-          fontWeight: FontWeight.w700,
-          fontSize: 11,
+      child: Padding(
+        padding: const EdgeInsets.all(3),
+        child: Image.asset(
+          assetPath,
+          fit: BoxFit.contain,
+          errorBuilder:
+              (BuildContext context, Object error, StackTrace? trace) {
+                return Icon(Icons.widgets_outlined, color: colorScheme.primary);
+              },
         ),
       ),
     );
+  }
+
+  String _normalizeFormKey(String value) {
+    return value
+        .trim()
+        .toLowerCase()
+        .replaceAll('&', ' ')
+        .replaceAll('/', ' ')
+        .replaceAll(RegExp(r'\s+'), ' ');
+  }
+
+  String? _assetPathFromFormNameKey(String key) {
+    if (key.contains('execution') && (key.contains('monitor') || key.contains('moniter'))) {
+      return 'assets/update_forms_icons/execution_monitoring.png';
+    }
+    if (key.contains('projects')) {
+      return 'assets/update_forms_icons/projects.png';
+    }
+    if (key.contains('works')) {
+      return 'assets/update_forms_icons/works.png';
+    }
+    if (key.contains('contracts') || key.contains('tenders')) {
+      return 'assets/update_forms_icons/contracts_tenders.png';
+    }
+    if (key.contains('design') || key.contains('drawing')) {
+      return 'assets/update_forms_icons/design_drawing.png';
+    }
+    if (key.contains('issues')) {
+      return 'assets/update_forms_icons/issues.png';
+    }
+    if (key.contains('dms')) {
+      return 'assets/update_forms_icons/dms.png';
+    }
+    if (key.contains('land') && key.contains('acquisition')) {
+      return 'assets/update_forms_icons/land_acquisition.png';
+    }
+    if (key.contains('utility') && key.contains('shifting')) {
+      return 'assets/update_forms_icons/utility_shifting.png';
+    }
+    if (key.contains('validate') && key.contains('data')) {
+      return 'assets/update_forms_icons/validate_data.png';
+    }
+    return null;
   }
 
   String _avatarInitial(AuthSession? session) {
