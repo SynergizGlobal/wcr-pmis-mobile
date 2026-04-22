@@ -106,29 +106,37 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(pageTitle),
+        leadingWidth: 64,
+        title: Text(
+          pageTitle,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w600,
+            fontSize: 18,
+            color: Theme.of(context).appBarTheme.foregroundColor,
+          ),
+        ),
         leading: Padding(
-          padding: const EdgeInsets.all(8),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: Image.asset(
-              'assets/app_icon.png',
-              fit: BoxFit.cover,
-            ),
+          padding: const EdgeInsets.only(left: 10, top: 8, bottom: 8, right: 4),
+          child: Image.asset(
+            'assets/app_icon.png',
+            fit: BoxFit.contain,
           ),
         ),
         actions: <Widget>[
           Padding(
             padding: const EdgeInsets.only(right: 12),
             child: InkWell(
-              borderRadius: BorderRadius.circular(24),
+              borderRadius: BorderRadius.circular(29),
               onTap: () => context.pushNamed(ProfilePage.routeName),
               child: CircleAvatar(
-                radius: 18,
+                radius: 24,
                 backgroundColor: palette.avatarFill,
                 child: Text(
                   initial,
                   style: TextStyle(
+                    fontSize: 22,
                     color: palette.avatarText,
                     fontWeight: FontWeight.w700,
                   ),

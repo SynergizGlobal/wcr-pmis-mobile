@@ -123,7 +123,7 @@ class AppTheme {
       appBarTheme: AppBarTheme(
         centerTitle: true,
         backgroundColor: colorScheme.primary,
-        foregroundColor: colorScheme.onPrimary,
+        foregroundColor: Colors.white,
         toolbarHeight: 66,
         elevation: 6,
         shadowColor: Colors.black.withValues(alpha: 0.20),
