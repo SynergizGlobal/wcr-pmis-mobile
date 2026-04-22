@@ -6,16 +6,18 @@ import 'package:wcr_pmis_mobile/src/features/auth/domain/entities/auth_session.d
 import 'package:wcr_pmis_mobile/src/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:wcr_pmis_mobile/src/features/auth/presentation/pages/login_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/dashboard_page.dart';
+import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/project_details_page.dart';
 import 'package:wcr_pmis_mobile/src/features/profile/presentation/pages/profile_page.dart';
+import 'package:wcr_pmis_mobile/src/features/settings/presentation/pages/settings_page.dart';
 
 final goRouterRefreshProvider = Provider<GoRouterRefresh>((ref) {
   final GoRouterRefresh notifier = GoRouterRefresh();
-  ref.listen<AsyncValue<AuthSession?>>(
-    authControllerProvider,
-    (AsyncValue<AuthSession?>? previous, AsyncValue<AuthSession?> next) {
-      notifier.notifyAuthChanged();
-    },
-  );
+  ref.listen<AsyncValue<AuthSession?>>(authControllerProvider, (
+    AsyncValue<AuthSession?>? previous,
+    AsyncValue<AuthSession?> next,
+  ) {
+    notifier.notifyAuthChanged();
+  });
   return notifier;
 });
 
@@ -33,6 +35,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         return LoginPage.routePath;
       }
       if (!loggedIn && loc == ProfilePage.routePath) {
+        return LoginPage.routePath;
+      }
+      if (!loggedIn && loc == SettingsPage.routePath) {
+        return LoginPage.routePath;
+      }
+      if (!loggedIn && loc == ProjectDetailsPage.routePath) {
         return LoginPage.routePath;
       }
       if (loggedIn && loc == LoginPage.routePath) {
@@ -58,6 +66,22 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         name: ProfilePage.routeName,
         builder: (BuildContext context, GoRouterState state) =>
             const ProfilePage(),
+      ),
+      GoRoute(
+        path: SettingsPage.routePath,
+        name: SettingsPage.routeName,
+        builder: (BuildContext context, GoRouterState state) =>
+            const SettingsPage(),
+      ),
+      GoRoute(
+        path: ProjectDetailsPage.routePath,
+        name: ProjectDetailsPage.routeName,
+        builder: (BuildContext context, GoRouterState state) {
+          final String projectTypeName = state.extra is String
+              ? state.extra! as String
+              : 'Project';
+          return ProjectDetailsPage(projectTypeName: projectTypeName);
+        },
       ),
     ],
   );

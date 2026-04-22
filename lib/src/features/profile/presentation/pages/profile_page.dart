@@ -3,10 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:wcr_pmis_mobile/src/app/theme/app_theme.dart';
-import 'package:wcr_pmis_mobile/src/app/theme/theme_mode_provider.dart';
+import 'package:wcr_pmis_mobile/src/core/widgets/app_action_card.dart';
 import 'package:wcr_pmis_mobile/src/features/auth/domain/entities/auth_session.dart';
 import 'package:wcr_pmis_mobile/src/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:wcr_pmis_mobile/src/features/auth/presentation/pages/login_page.dart';
+import 'package:wcr_pmis_mobile/src/features/settings/presentation/pages/settings_page.dart';
 
 class ProfilePage extends ConsumerWidget {
   const ProfilePage({super.key});
@@ -17,7 +18,6 @@ class ProfilePage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final AuthSession? session = ref.watch(authControllerProvider).valueOrNull;
-    final ThemeMode themeMode = ref.watch(themeModeProvider);
     final AppPalette palette =
         Theme.of(context).extension<AppPalette>() ?? AppPalette.light;
     final String initial = _resolveInitial(session);
@@ -77,7 +77,11 @@ class ProfilePage extends ConsumerWidget {
                     ],
                   ),
                   const SizedBox(height: 12),
-                  _themeSelector(context, ref, themeMode),
+                  AppActionCard(
+                    title: 'Settings',
+                    icon: Icons.settings_outlined,
+                    onTap: () => context.pushNamed(SettingsPage.routeName),
+                  ),
                 ],
               ),
             ),
@@ -142,83 +146,6 @@ class ProfilePage extends ConsumerWidget {
             ? session!.userId
             : 'U';
     return source.substring(0, 1).toUpperCase();
-  }
-
-  Widget _themeSelector(
-    BuildContext context,
-    WidgetRef ref,
-    ThemeMode currentMode,
-  ) {
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Text(
-              'Theme',
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: 10),
-            Container(
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                borderRadius: BorderRadius.circular(30),
-              ),
-              padding: const EdgeInsets.all(4),
-              child: Row(
-                children: <Widget>[
-                  _themeOption(context, ref, currentMode, ThemeMode.system, 'System'),
-                  _themeOption(context, ref, currentMode, ThemeMode.light, 'Light'),
-                  _themeOption(context, ref, currentMode, ThemeMode.dark, 'Dark'),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _themeOption(
-    BuildContext context,
-    WidgetRef ref,
-    ThemeMode currentMode,
-    ThemeMode mode,
-    String label,
-  ) {
-    final bool selected = currentMode == mode;
-    final ColorScheme colorScheme = Theme.of(context).colorScheme;
-    return Expanded(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 2),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(24),
-          onTap: () => ref.read(themeModeProvider.notifier).setMode(mode),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 180),
-            curve: Curves.easeOut,
-            height: 40,
-            decoration: BoxDecoration(
-              color: selected ? colorScheme.primary : Colors.transparent,
-              borderRadius: BorderRadius.circular(22),
-            ),
-            alignment: Alignment.center,
-            child: Text(
-              label,
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-                color: selected ? colorScheme.onPrimary : colorScheme.onSurface,
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
   }
 
   Widget _infoCard(

@@ -1,0 +1,302 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:wcr_pmis_mobile/src/core/widgets/app_select_sheet_field.dart';
+import 'package:wcr_pmis_mobile/src/features/dashboard/domain/entities/home_dashboard_data.dart';
+import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/providers/project_details_provider.dart';
+
+class ProjectDetailsPage extends ConsumerStatefulWidget {
+  const ProjectDetailsPage({super.key, required this.projectTypeName});
+
+  static const String routeName = 'project-details';
+  static const String routePath = '/project-details';
+
+  final String projectTypeName;
+
+  @override
+  ConsumerState<ProjectDetailsPage> createState() => _ProjectDetailsPageState();
+}
+
+class _ProjectDetailsPageState extends ConsumerState<ProjectDetailsPage>
+    with SingleTickerProviderStateMixin {
+  String? _selectedProject;
+  final ScrollController _horizontalScrollController = ScrollController();
+  late final AnimationController _arrowBounceController;
+  bool _isAtTableEnd = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _horizontalScrollController.addListener(_handleHorizontalScroll);
+    _arrowBounceController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 700),
+    )..repeat(reverse: true);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _handleHorizontalScroll();
+    });
+  }
+
+  @override
+  void dispose() {
+    _horizontalScrollController.removeListener(_handleHorizontalScroll);
+    _horizontalScrollController.dispose();
+    _arrowBounceController.dispose();
+    super.dispose();
+  }
+
+  void _handleHorizontalScroll() {
+    if (!_horizontalScrollController.hasClients) {
+      return;
+    }
+    final bool atEnd =
+        _horizontalScrollController.position.pixels >=
+        _horizontalScrollController.position.maxScrollExtent - 1;
+    if (atEnd != _isAtTableEnd && mounted) {
+      setState(() {
+        _isAtTableEnd = atEnd;
+      });
+    }
+  }
+
+  Future<void> _toggleTableSide() async {
+    if (!_horizontalScrollController.hasClients) {
+      return;
+    }
+    final double target = _isAtTableEnd
+        ? 0
+        : _horizontalScrollController.position.maxScrollExtent;
+    await _horizontalScrollController.animateTo(
+      target,
+      duration: const Duration(milliseconds: 420),
+      curve: Curves.easeOutCubic,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final AsyncValue<ProjectDetailsData> detailsAsync = ref.watch(
+      projectDetailsProvider(widget.projectTypeName),
+    );
+    final String heading =
+        'Overall Status of Major Items in ${widget.projectTypeName} Projects';
+
+    return Scaffold(
+      appBar: AppBar(title: const Text('Project Details')),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: detailsAsync.when(
+            data: (ProjectDetailsData data) => _content(context, heading, data),
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (Object error, StackTrace _) => Center(
+              child: Text(
+                'Unable to load project details.\n$error',
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _content(
+    BuildContext context,
+    String heading,
+    ProjectDetailsData data,
+  ) {
+    final bool hasProjects = data.projectNames.isNotEmpty;
+    final List<String> dropdownItems = hasProjects
+        ? data.projectNames
+        : <String>[];
+    if (!hasProjects) {
+      _selectedProject = null;
+    } else if (_selectedProject == null ||
+        !dropdownItems.contains(_selectedProject)) {
+      _selectedProject = dropdownItems.first;
+    }
+
+    final List<ProjectMajorItem> visibleItems =
+        !hasProjects || _selectedProject == null
+        ? <ProjectMajorItem>[]
+        : data.items
+              .where(
+                (ProjectMajorItem item) => item.projectName == _selectedProject,
+              )
+              .toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Text(
+          heading,
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+        ),
+        const SizedBox(height: 12),
+        AppSelectSheetField<String>(
+          key: ValueKey<String?>(
+            dropdownItems.contains(_selectedProject) ? _selectedProject : null,
+          ),
+          label: 'Project',
+          title: 'Select Project',
+          leadingIcon: Icons.work_outline_rounded,
+          items: dropdownItems,
+          value: dropdownItems.contains(_selectedProject)
+              ? _selectedProject
+              : null,
+          itemLabelBuilder: (String value) => value,
+          enabled: hasProjects,
+          placeholderText: hasProjects
+              ? 'Select project'
+              : 'No projects available',
+          onChanged: (String value) => setState(() => _selectedProject = value),
+        ),
+        const SizedBox(height: 12),
+        Expanded(
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              color: Theme.of(context).colorScheme.surface,
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: Stack(
+              children: <Widget>[
+                Scrollbar(
+                  controller: _horizontalScrollController,
+                  thumbVisibility: true,
+                  trackVisibility: true,
+                  interactive: true,
+                  notificationPredicate: (ScrollNotification notification) =>
+                      notification.metrics.axis == Axis.horizontal,
+                  child: SingleChildScrollView(
+                    controller: _horizontalScrollController,
+                    scrollDirection: Axis.horizontal,
+                    child: SizedBox(
+                      width: 760,
+                      child: ListView(
+                        children: <Widget>[
+                          _headerRow(context),
+                          ...visibleItems.asMap().entries.map(
+                            (MapEntry<int, ProjectMajorItem> entry) =>
+                                _itemRow(entry.value, entry.key),
+                          ),
+                          if (visibleItems.isEmpty)
+                            const Padding(
+                              padding: EdgeInsets.all(20),
+                              child: Text(
+                                'No data available for selected project.',
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                if (visibleItems.isNotEmpty)
+                  Positioned.fill(
+                    child: Align(
+                      alignment: _isAtTableEnd
+                          ? Alignment.centerLeft
+                          : Alignment.centerRight,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 6),
+                        child: AnimatedBuilder(
+                          animation: _arrowBounceController,
+                          builder: (BuildContext context, Widget? child) {
+                            final double bounceOffset =
+                                _arrowBounceController.value * 8;
+                            return Transform.translate(
+                              offset: Offset(
+                                _isAtTableEnd ? bounceOffset : -bounceOffset,
+                                0,
+                              ),
+                              child: child,
+                            );
+                          },
+                          child: Material(
+                            elevation: 4,
+                            shape: const CircleBorder(),
+                            color: Theme.of(context).colorScheme.primary,
+                            child: InkWell(
+                              customBorder: const CircleBorder(),
+                              onTap: _toggleTableSide,
+                              child: Padding(
+                                padding: const EdgeInsets.all(8),
+                                child: Icon(
+                                  _isAtTableEnd
+                                      ? Icons.arrow_back_ios_new_rounded
+                                      : Icons.arrow_forward_ios_rounded,
+                                  size: 16,
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onPrimary,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _headerRow(BuildContext context) {
+    final Color headerColor = Theme.of(context).colorScheme.primary;
+    const TextStyle textStyle = TextStyle(
+      color: Colors.white,
+      fontWeight: FontWeight.w700,
+    );
+    return Container(
+      color: headerColor,
+      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 10),
+      child: const Row(
+        children: <Widget>[
+          SizedBox(width: 170, child: Text('Item', style: textStyle)),
+          SizedBox(width: 70, child: Text('Unit', style: textStyle)),
+          SizedBox(width: 120, child: Text('Scope', style: textStyle)),
+          SizedBox(width: 110, child: Text('Completed', style: textStyle)),
+          SizedBox(width: 110, child: Text('Progress %', style: textStyle)),
+          SizedBox(width: 120, child: Text('TDC', style: textStyle)),
+        ],
+      ),
+    );
+  }
+
+  Widget _itemRow(ProjectMajorItem item, int index) {
+    const TextStyle style = TextStyle(
+      fontSize: 14,
+      fontWeight: FontWeight.w500,
+    );
+    final Color rowColor = index.isEven
+        ? Colors.transparent
+        : Theme.of(context).colorScheme.primary.withValues(alpha: 0.12);
+    return Container(
+      color: rowColor,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            SizedBox(width: 170, child: Text(item.item, style: style)),
+            SizedBox(width: 70, child: Text(item.unit, style: style)),
+            SizedBox(width: 120, child: Text(item.scope, style: style)),
+            SizedBox(width: 110, child: Text(item.completed, style: style)),
+            SizedBox(
+              width: 110,
+              child: Text(item.progressPercent, style: style),
+            ),
+            SizedBox(width: 120, child: Text(item.tdc, style: style)),
+          ],
+        ),
+      ),
+    );
+  }
+}
