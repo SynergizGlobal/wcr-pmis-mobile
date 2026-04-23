@@ -266,15 +266,19 @@ class DashboardRepositoryImpl implements DashboardRepository {
 
   HomeOverview _parseOverview(Map<String, dynamic> json) {
     final Map<String, dynamic> source = _extractFirstMap(json) ?? json;
+    final int explicitProjectsCount = _toInt(
+      source['projectsCount'] ??
+          source['projectCount'] ??
+          source['project_count'] ??
+          source['totalProjects'] ??
+          source['total_projects'] ??
+          source['projects'],
+    );
+    final int fallbackProjectsCount = _extractFirstList(json).length;
     return HomeOverview(
-      projectsCount: _toInt(
-        source['projectsCount'] ??
-            source['projectCount'] ??
-            source['project_count'] ??
-            source['totalProjects'] ??
-            source['total_projects'] ??
-            source['projects'],
-      ),
+      projectsCount: explicitProjectsCount > 0
+          ? explicitProjectsCount
+          : fallbackProjectsCount,
       totalLength: _toDouble(
         source['length'] ?? source['totalLength'] ?? source['projectLength'],
       ),

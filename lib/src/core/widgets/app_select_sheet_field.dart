@@ -49,14 +49,16 @@ class AppSelectSheetField<T> extends StatelessWidget {
                     final bool isDark =
                         Theme.of(context).brightness == Brightness.dark;
                     final double maxSheetHeight =
-                        MediaQuery.of(context).size.height * 0.72;
+                        MediaQuery.of(context).size.height * 0.58;
                     return Padding(
-                      padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+                      padding: const EdgeInsets.only(top: 8),
                       child: ConstrainedBox(
                         constraints: BoxConstraints(maxHeight: maxSheetHeight),
                         child: Material(
                           color: Theme.of(context).colorScheme.surface,
-                          borderRadius: BorderRadius.circular(24),
+                          borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(24),
+                          ),
                           clipBehavior: Clip.antiAlias,
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
