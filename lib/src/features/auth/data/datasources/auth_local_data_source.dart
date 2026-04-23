@@ -43,8 +43,8 @@ class AuthLocalDataSource {
     );
   }
 
-  /// Persists credentials and profile when [rememberMe] is true; otherwise clears
-  /// stored password and profile (keeps last username if [userId] non-empty).
+  /// Persists credentials/profile when [rememberMe] is true; otherwise clears
+  /// all remembered credentials/profile so the last non-remember login wins.
   Future<void> saveAfterLogin({
     required bool rememberMe,
     required String userId,
@@ -71,6 +71,7 @@ class AuthLocalDataSource {
       await prefs.setString(_userProfileJsonKey, jsonEncode(model.toJson()));
       return;
     }
+    await _secureStorage.delete(key: _secureUserIdKey);
     await _secureStorage.delete(key: _securePasswordKey);
     await prefs.remove(_userProfileJsonKey);
   }
@@ -78,6 +79,7 @@ class AuthLocalDataSource {
   Future<void> clearSensitiveOnly() async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_rememberMeKey, false);
+    await _secureStorage.delete(key: _secureUserIdKey);
     await _secureStorage.delete(key: _securePasswordKey);
     await prefs.remove(_userProfileJsonKey);
   }

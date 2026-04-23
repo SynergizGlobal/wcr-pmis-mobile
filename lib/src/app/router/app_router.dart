@@ -5,6 +5,8 @@ import 'package:wcr_pmis_mobile/src/app/router/go_router_refresh.dart';
 import 'package:wcr_pmis_mobile/src/features/auth/domain/entities/auth_session.dart';
 import 'package:wcr_pmis_mobile/src/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:wcr_pmis_mobile/src/features/auth/presentation/pages/login_page.dart';
+import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/add_project_form_page.dart';
+import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/add_project_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/dashboard_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/project_details_page.dart';
 import 'package:wcr_pmis_mobile/src/features/profile/presentation/pages/profile_page.dart';
@@ -41,6 +43,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         return LoginPage.routePath;
       }
       if (!loggedIn && loc == ProjectDetailsPage.routePath) {
+        return LoginPage.routePath;
+      }
+      if (!loggedIn && loc == AddProjectPage.routePath) {
+        return LoginPage.routePath;
+      }
+      if (!loggedIn && loc == AddProjectFormPage.routePath) {
         return LoginPage.routePath;
       }
       if (loggedIn && loc == LoginPage.routePath) {
@@ -82,6 +90,18 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               : 'Project';
           return ProjectDetailsPage(projectTypeName: projectTypeName);
         },
+      ),
+      GoRoute(
+        path: AddProjectPage.routePath,
+        name: AddProjectPage.routeName,
+        builder: (BuildContext context, GoRouterState state) =>
+            const AddProjectPage(),
+      ),
+      GoRoute(
+        path: AddProjectFormPage.routePath,
+        name: AddProjectFormPage.routeName,
+        builder: (BuildContext context, GoRouterState state) =>
+            const AddProjectFormPage(),
       ),
     ],
   );

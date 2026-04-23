@@ -9,6 +9,7 @@ import 'package:wcr_pmis_mobile/src/features/auth/domain/entities/auth_session.d
 import 'package:wcr_pmis_mobile/src/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/domain/entities/home_dashboard_data.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/domain/entities/update_form_item.dart';
+import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/add_project_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/project_details_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/providers/home_dashboard_provider.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/providers/update_forms_provider.dart';
@@ -639,11 +640,9 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
   Future<void> _onUpdateFormTap(UpdateFormItem form) async {
     final List<UpdateFormSubItem> subMenus = form.orderedSubMenus;
     if (subMenus.isEmpty) {
-      await AppDialog.show(
-        context: context,
-        title: form.formName,
-        message: '${form.formName} navigation will be connected next.',
-        type: AppDialogType.info,
+      await _handleUpdateFormNavigation(
+        label: form.formName,
+        webFormUrl: form.webFormUrl,
       );
       return;
     }
@@ -684,10 +683,28 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     if (!mounted || selected == null) {
       return;
     }
+    await _handleUpdateFormNavigation(
+      label: selected.formName,
+      webFormUrl: selected.webFormUrl,
+    );
+  }
+
+  Future<void> _handleUpdateFormNavigation({
+    required String label,
+    String? webFormUrl,
+  }) async {
+    final String normalized = _normalizeFormKey(webFormUrl ?? '');
+    if (normalized == 'project') {
+      if (!mounted) {
+        return;
+      }
+      context.pushNamed(AddProjectPage.routeName);
+      return;
+    }
     await AppDialog.show(
       context: context,
-      title: selected.formName,
-      message: '${selected.formName} navigation will be connected next.',
+      title: label,
+      message: '$label navigation will be connected next.',
       type: AppDialogType.info,
     );
   }
