@@ -659,7 +659,13 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
               child: ListView.separated(
                 shrinkWrap: true,
                 itemCount: subMenus.length,
-                separatorBuilder: (_, _) => const SizedBox(height: 4),
+                separatorBuilder: (BuildContext context, int _) => Divider(
+                  height: 1,
+                  thickness: 0.8,
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.outlineVariant.withValues(alpha: 0.55),
+                ),
                 itemBuilder: (BuildContext context, int index) {
                   final UpdateFormSubItem sub = subMenus[index];
                   return ListTile(
