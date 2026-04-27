@@ -216,18 +216,57 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
           child: DecoratedBox(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(24),
+              border: Border.all(
+                color: Theme.of(context).colorScheme.outlineVariant.withValues(
+                  alpha: Theme.of(context).brightness == Brightness.dark
+                      ? 0.45
+                      : 0.55,
+                ),
+              ),
               boxShadow: <BoxShadow>[
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.20),
-                  blurRadius: 16,
-                  offset: const Offset(0, 6),
+                  color: Theme.of(context).colorScheme.shadow.withValues(
+                    alpha: Theme.of(context).brightness == Brightness.dark
+                        ? 0.26
+                        : 0.10,
+                  ),
+                  blurRadius: 22,
+                  offset: const Offset(0, 10),
+                ),
+                BoxShadow(
+                  color: Theme.of(context).colorScheme.primary.withValues(
+                    alpha: Theme.of(context).brightness == Brightness.dark
+                        ? 0.10
+                        : 0.06,
+                  ),
+                  blurRadius: 26,
+                  offset: const Offset(0, 4),
                 ),
               ],
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(24),
               child: Container(
-                color: Theme.of(context).colorScheme.primary,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: Theme.of(context).brightness == Brightness.dark
+                        ? <Color>[
+                            Theme.of(context).colorScheme.surfaceContainerHighest
+                                .withValues(alpha: 0.78),
+                            Theme.of(context).colorScheme.surfaceContainer
+                                .withValues(alpha: 0.72),
+                          ]
+                        : <Color>[
+                            Theme.of(context).colorScheme.surfaceContainerHighest
+                                .withValues(alpha: 0.94),
+                            Theme.of(context).colorScheme.surface.withValues(
+                              alpha: 0.96,
+                            ),
+                          ],
+                  ),
+                ),
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
                 child: Row(
                   children: <Widget>[
@@ -812,6 +851,22 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
   }) {
     final bool selected = _selectedIndex == index;
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final Color selectedBackground = isDark
+        ? colorScheme.primary.withValues(alpha: 0.42)
+        : colorScheme.primary.withValues(alpha: 0.14);
+    final Color selectedIconColor = isDark
+        ? colorScheme.onPrimary
+        : colorScheme.primary;
+    final Color selectedTextColor = isDark
+        ? colorScheme.onSurface
+        : colorScheme.primary;
+    final Color unselectedIconColor = colorScheme.onSurfaceVariant.withValues(
+      alpha: isDark ? 0.96 : 0.86,
+    );
+    final Color unselectedTextColor = colorScheme.onSurfaceVariant.withValues(
+      alpha: isDark ? 0.90 : 0.78,
+    );
     return Expanded(
       child: InkWell(
         borderRadius: BorderRadius.circular(20),
@@ -830,14 +885,32 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                 ),
                 decoration: BoxDecoration(
                   color: selected
-                      ? colorScheme.onPrimary.withValues(alpha: 0.22)
+                      ? selectedBackground
                       : Colors.transparent,
                   borderRadius: BorderRadius.circular(20),
+                  border: selected
+                      ? Border.all(
+                          color: isDark
+                              ? colorScheme.primary.withValues(alpha: 0.46)
+                              : colorScheme.primary.withValues(alpha: 0.28),
+                        )
+                      : null,
+                  boxShadow: selected
+                      ? <BoxShadow>[
+                          BoxShadow(
+                            color: colorScheme.primary.withValues(
+                              alpha: isDark ? 0.28 : 0.14,
+                            ),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
+                        ]
+                      : null,
                 ),
                 child: Icon(
                   selected ? selectedIcon : icon,
-                  color: colorScheme.onPrimary,
-                  size: 22,
+                  color: selected ? selectedIconColor : unselectedIconColor,
+                  size: selected ? 23 : 22,
                 ),
               ),
               const SizedBox(height: 7),
@@ -849,8 +922,9 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                     label,
                     maxLines: 1,
                     style: TextStyle(
-                      color: colorScheme.onPrimary,
+                      color: selected ? selectedTextColor : unselectedTextColor,
                       fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                      letterSpacing: selected ? 0.15 : 0.0,
                     ),
                   ),
                 ),

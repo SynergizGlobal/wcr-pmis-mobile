@@ -176,25 +176,41 @@ class AppSelectSheetField<T> extends StatelessWidget {
                   onChanged(selected);
                 }
               },
-        child: InputDecorator(
-          decoration: InputDecoration(
-            labelText: label,
-            prefixIcon: leadingIcon != null ? Icon(leadingIcon) : null,
-            suffixIcon: const Icon(Icons.keyboard_arrow_down_rounded),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-            enabled: enabled,
-          ),
-          child: Text(
-            selectedLabel.isEmpty ? placeholderText : selectedLabel,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-              fontWeight: FontWeight.w600,
-              color: selectedLabel.isEmpty
-                  ? Theme.of(context).colorScheme.onSurfaceVariant
-                  : null,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            if (label.trim().isNotEmpty) ...<Widget>[
+              Padding(
+                padding: const EdgeInsets.only(left: 2, bottom: 8),
+                child: Text(
+                  label,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+                ),
+              ),
+            ],
+            InputDecorator(
+              decoration: InputDecoration(
+                prefixIcon: leadingIcon != null ? Icon(leadingIcon) : null,
+                suffixIcon: const Icon(Icons.keyboard_arrow_down_rounded),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                enabled: enabled,
+              ),
+              child: Text(
+                selectedLabel.isEmpty ? placeholderText : selectedLabel,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: selectedLabel.isEmpty
+                      ? Theme.of(context).colorScheme.onSurfaceVariant
+                      : null,
+                ),
+              ),
             ),
-          ),
+          ],
         ),
       ),
     );

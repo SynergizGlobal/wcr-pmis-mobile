@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:excel/excel.dart' hide Border;
@@ -28,6 +29,7 @@ class _AddProjectFormPageState extends ConsumerState<AddProjectFormPage> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final DateFormat _apiDateFormat = DateFormat('yyyy-MM-dd');
   bool _prefilledFromInitialData = false;
+  String? _initialFormSignature;
 
   final TextEditingController _projectNameCtrl = TextEditingController();
   final TextEditingController _planHeadCtrl = TextEditingController();
@@ -44,6 +46,7 @@ class _AddProjectFormPageState extends ConsumerState<AddProjectFormPage> {
   bool _loading = true;
   bool _saving = false;
   String? _loadError;
+  int _currentStep = 0;
 
   String _projectStatus = 'Open';
   _OptionItem? _projectType;
@@ -67,6 +70,7 @@ class _AddProjectFormPageState extends ConsumerState<AddProjectFormPage> {
   @override
   void initState() {
     super.initState();
+    _attachControllerListeners();
     _loadLookups();
   }
 
@@ -134,6 +138,7 @@ class _AddProjectFormPageState extends ConsumerState<AddProjectFormPage> {
         labelKeys: <String>['section_name', 'sectionName', 'name'],
       );
       _applyInitialValuesIfNeeded();
+      _initialFormSignature ??= _formSignature();
 
       if (!mounted) {
         return;
@@ -153,8 +158,50 @@ class _AddProjectFormPageState extends ConsumerState<AddProjectFormPage> {
   @override
   Widget build(BuildContext context) {
     final bool isEditMode = widget.initialData != null;
+    final bool isLastStep = _currentStep == 2;
     return Scaffold(
       appBar: AppBar(title: Text(isEditMode ? 'Edit Project' : 'Add Project')),
+      bottomNavigationBar: (_loading || _loadError != null)
+          ? null
+          : SafeArea(
+              top: false,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(12, 6, 12, 12),
+                child: Row(
+                  children: <Widget>[
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: _saving
+                            ? null
+                            : (_currentStep == 0
+                                  ? () => Navigator.of(context).maybePop()
+                                  : () => setState(() => _currentStep--)),
+                        child: Text(_currentStep == 0 ? 'Cancel' : 'Back'),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: FilledButton(
+                        onPressed: _saving
+                            ? null
+                            : (isLastStep
+                                  ? (!_canSubmit ? null : _submit)
+                                  : (!_canProceedCurrentStep
+                                        ? null
+                                        : _goToNextStep)),
+                        child: Text(
+                          !isLastStep
+                              ? 'Next'
+                              : (_saving
+                                    ? (isEditMode ? 'Updating...' : 'Saving...')
+                                    : (isEditMode ? 'Update' : 'Save')),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _loadError != null
@@ -179,169 +226,214 @@ class _AddProjectFormPageState extends ConsumerState<AddProjectFormPage> {
               child: ListView(
                 padding: const EdgeInsets.all(12),
                 children: <Widget>[
-                  _sectionTitle('Project Details'),
-                  _textField(_projectNameCtrl, 'Project Name', required: true),
-                  const SizedBox(height: 10),
-                  AppSelectSheetField<String>(
-                    label: 'Project Status',
-                    title: 'Select Project Status',
-                    items: const <String>['Open', 'Closed'],
-                    value: _projectStatus,
-                    itemLabelBuilder: (String value) => value,
-                    onChanged: (String value) =>
-                        setState(() => _projectStatus = value),
-                  ),
-                  const SizedBox(height: 10),
-                  _optionSelect(
-                    label: 'Project Type',
-                    items: _projectTypes,
-                    value: _projectType,
-                    onChanged: (_OptionItem v) => setState(() => _projectType = v),
-                  ),
-                  const SizedBox(height: 10),
-                  _optionSelect(
-                    label: 'Railway Zone',
-                    items: _railwayZones,
-                    value: _railwayZone,
-                    onChanged: (_OptionItem v) => setState(() => _railwayZone = v),
-                  ),
-                  const SizedBox(height: 10),
-                  _textField(_planHeadCtrl, 'Plan Head Number'),
-                  const SizedBox(height: 10),
-                  _optionSelect(
-                    label: 'Sanctioned Year',
-                    items: _years,
-                    value: _sanctionedYear,
-                    onChanged: (_OptionItem v) =>
-                        setState(() => _sanctionedYear = v),
-                  ),
-                  const SizedBox(height: 10),
-                  _textField(
-                    _sanctionedAmountCtrl,
-                    'Sanctioned Amount',
-                    keyboardType: TextInputType.number,
-                  ),
-                  const SizedBox(height: 10),
-                  _dateField(
-                    label: 'Sanctioned Commissioning Date',
-                    value: _sanctionedCommissionDate,
-                    onChanged: (DateTime value) =>
-                        setState(() => _sanctionedCommissionDate = value),
-                  ),
-                  const SizedBox(height: 10),
-                  _optionSelect(
-                    label: 'Division',
-                    items: _divisions,
-                    value: _division,
-                    onChanged: (_OptionItem v) => setState(() => _division = v),
-                  ),
-                  const SizedBox(height: 10),
-                  _optionSelect(
-                    label: 'Section',
-                    items: _sections,
-                    value: _section,
-                    onChanged: (_OptionItem v) => setState(() => _section = v),
-                  ),
-                  const SizedBox(height: 10),
-                  _textField(_pbItemCtrl, 'PB Item No'),
-                  const SizedBox(height: 10),
-                  _textField(
-                    _actualCompletionCostCtrl,
-                    'Actual Completion Cost',
-                    keyboardType: TextInputType.number,
-                  ),
-                  const SizedBox(height: 10),
-                  _dateField(
-                    label: 'Actual Completion Date',
-                    value: _actualCompletionDate,
-                    onChanged: (DateTime value) =>
-                        setState(() => _actualCompletionDate = value),
-                  ),
-                  const SizedBox(height: 10),
-                  _textField(_proposedLengthCtrl, 'Proposed Length (km)'),
-                  const SizedBox(height: 10),
-                  _textField(_structureDetailsCtrl, 'Structure Details'),
-                  const SizedBox(height: 10),
-                  Row(
-                    children: <Widget>[
-                      Expanded(
-                        child: _textField(
-                          _fromChainageCtrl,
-                          'From Chainage',
-                          keyboardType: TextInputType.number,
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: _textField(
-                          _toChainageCtrl,
-                          'To Chainage',
-                          keyboardType: TextInputType.number,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  _textField(_benefitsCtrl, 'Benefits', maxLines: 3),
-                  const SizedBox(height: 10),
-                  _textField(_remarksCtrl, 'Remarks', maxLines: 3),
-                  const SizedBox(height: 16),
-                  _sectionTitle('Completion Costs'),
-                  const SizedBox(height: 4),
-                  ..._completionRows.asMap().entries.map(
-                    (MapEntry<int, _CompletionCostRow> entry) => Padding(
-                      padding: const EdgeInsets.only(bottom: 10),
-                      child: _completionRow(entry.key, entry.value),
-                    ),
-                  ),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: OutlinedButton.icon(
-                      onPressed: () =>
-                          setState(() => _completionRows.add(_CompletionCostRow())),
-                      icon: const Icon(Icons.add_circle_outline_rounded),
-                      label: const Text('Add Completion Cost'),
-                    ),
-                  ),
-                  const SizedBox(height: 18),
-                  _sectionTitle('KMZ / Chainage Template'),
-                  const SizedBox(height: 8),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: OutlinedButton.icon(
-                      onPressed: _downloadTemplate,
-                      icon: const Icon(Icons.download_rounded),
-                      label: const Text('Download Template (.xlsx)'),
-                    ),
-                  ),
-                  const SizedBox(height: 18),
-                  Row(
-                    children: <Widget>[
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: _saving
-                              ? null
-                              : () => Navigator.of(context).maybePop(),
-                          child: const Text('Cancel'),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: FilledButton(
-                          onPressed: _saving ? null : _submit,
-                          child: Text(
-                            _saving
-                                ? (isEditMode ? 'Updating...' : 'Saving...')
-                                : (isEditMode ? 'Update' : 'Save'),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                  _buildStepHeader(),
+                  const SizedBox(height: 14),
+                  if (_currentStep == 0) ..._buildStepBasicDetails(),
+                  if (_currentStep == 1) ..._buildStepAdditionalDetails(),
+                  if (_currentStep == 2) ..._buildStepStructureAndCosts(),
+                  const SizedBox(height: 14),
                 ],
               ),
             ),
     );
+  }
+
+  Widget _buildStepHeader() {
+    final List<String> labels = <String>[
+      'Basic',
+      'Additional',
+      'Structure & Costs',
+    ];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Text(
+          'Step ${_currentStep + 1} of ${labels.length}: ${labels[_currentStep]}',
+          style: Theme.of(
+            context,
+          ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: List<Widget>.generate(labels.length, (int index) {
+            final bool active = index <= _currentStep;
+            return Expanded(
+              child: Container(
+                margin: EdgeInsets.only(right: index == labels.length - 1 ? 0 : 6),
+                height: 6,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(999),
+                  color: active
+                      ? Theme.of(context).colorScheme.primary
+                      : Theme.of(
+                          context,
+                        ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.7),
+                ),
+              ),
+            );
+          }),
+        ),
+      ],
+    );
+  }
+
+  List<Widget> _buildStepBasicDetails() {
+    return <Widget>[
+      _sectionTitle('Project Details'),
+      _textField(_projectNameCtrl, 'Project Name *', required: true),
+      const SizedBox(height: 10),
+      AppSelectSheetField<String>(
+        label: 'Project Status *',
+        title: 'Select Project Status',
+        items: const <String>['Open', 'Closed'],
+        value: _projectStatus,
+        itemLabelBuilder: (String value) => value,
+        onChanged: (String value) => setState(() => _projectStatus = value),
+      ),
+      const SizedBox(height: 10),
+      _optionSelect(
+        label: 'Project Type *',
+        items: _projectTypes,
+        value: _projectType,
+        onChanged: (_OptionItem v) => setState(() => _projectType = v),
+      ),
+      const SizedBox(height: 10),
+      _optionSelect(
+        label: 'Railway Zone *',
+        items: _railwayZones,
+        value: _railwayZone,
+        onChanged: (_OptionItem v) => setState(() => _railwayZone = v),
+      ),
+      const SizedBox(height: 10),
+      _textField(_planHeadCtrl, 'Plan Head Number *', required: true),
+      const SizedBox(height: 10),
+      _optionSelect(
+        label: 'Sanctioned Year *',
+        items: _years,
+        value: _sanctionedYear,
+        onChanged: (_OptionItem v) => setState(() => _sanctionedYear = v),
+      ),
+      const SizedBox(height: 10),
+      _textField(
+        _sanctionedAmountCtrl,
+        'Sanctioned Amount *',
+        required: true,
+        keyboardType: TextInputType.number,
+      ),
+      const SizedBox(height: 10),
+      _dateField(
+        label: 'Sanctioned Commissioning Date *',
+        value: _sanctionedCommissionDate,
+        onChanged: (DateTime value) =>
+            setState(() => _sanctionedCommissionDate = value),
+      ),
+      const SizedBox(height: 10),
+      _optionSelect(
+        label: 'Division *',
+        items: _divisions,
+        value: _division,
+        onChanged: (_OptionItem v) => setState(() => _division = v),
+      ),
+      const SizedBox(height: 10),
+      _optionSelect(
+        label: 'Section *',
+        items: _sections,
+        value: _section,
+        onChanged: (_OptionItem v) => setState(() => _section = v),
+      ),
+    ];
+  }
+
+  List<Widget> _buildStepAdditionalDetails() {
+    return <Widget>[
+      _sectionTitle('Additional Details'),
+      _textField(_pbItemCtrl, 'PB Item No'),
+      const SizedBox(height: 10),
+      _textField(
+        _actualCompletionCostCtrl,
+        'Actual Completion Cost',
+        keyboardType: TextInputType.number,
+      ),
+      const SizedBox(height: 10),
+      _dateField(
+        label: 'Actual Completion Date',
+        value: _actualCompletionDate,
+        onChanged: (DateTime value) => setState(() => _actualCompletionDate = value),
+      ),
+      const SizedBox(height: 10),
+      _textField(_proposedLengthCtrl, 'Proposed Length (km)'),
+      const SizedBox(height: 10),
+      _textField(_benefitsCtrl, 'Benefits', maxLines: 3),
+      const SizedBox(height: 10),
+      _textField(_remarksCtrl, 'Remarks', maxLines: 3),
+    ];
+  }
+
+  List<Widget> _buildStepStructureAndCosts() {
+    return <Widget>[
+      _sectionCard(
+        title: 'Structure Details',
+        children: <Widget>[
+          _textField(
+            _structureDetailsCtrl,
+            'Structure Details',
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: _textField(
+                  _fromChainageCtrl,
+                  'From Chainage',
+                  keyboardType: TextInputType.number,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _textField(
+                  _toChainageCtrl,
+                  'To Chainage',
+                  keyboardType: TextInputType.number,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+      const SizedBox(height: 16),
+      _sectionCard(
+        title: 'Completion Costs',
+        children: <Widget>[
+          ..._completionRows.asMap().entries.map(
+            (MapEntry<int, _CompletionCostRow> entry) => Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: _completionRow(entry.key, entry.value),
+            ),
+          ),
+          Align(
+            alignment: Alignment.centerRight,
+            child: OutlinedButton.icon(
+              onPressed: () => setState(
+                () => _completionRows.add(_CompletionCostRow()),
+              ),
+              icon: const Icon(Icons.add_circle_outline_rounded),
+              label: const Text('Add Completion Cost'),
+            ),
+          ),
+        ],
+      ),
+      const SizedBox(height: 12),
+      _sectionTitle('KMZ / Chainage Template'),
+      const SizedBox(height: 8),
+      Align(
+        alignment: Alignment.centerLeft,
+        child: OutlinedButton.icon(
+          onPressed: _downloadTemplate,
+          icon: const Icon(Icons.download_rounded),
+          label: const Text('Download Template (.xlsx)'),
+        ),
+      ),
+    ];
   }
 
   Widget _sectionTitle(String title) => Text(
@@ -351,6 +443,35 @@ class _AddProjectFormPageState extends ConsumerState<AddProjectFormPage> {
     ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
   );
 
+  Widget _sectionCard({
+    required String title,
+    required List<Widget> children,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+        color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(
+          alpha: 0.20,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            title,
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 10),
+          ...children,
+        ],
+      ),
+    );
+  }
+
   Widget _textField(
     TextEditingController controller,
     String label, {
@@ -358,15 +479,31 @@ class _AddProjectFormPageState extends ConsumerState<AddProjectFormPage> {
     int maxLines = 1,
     TextInputType? keyboardType,
   }) {
-    return TextFormField(
-      controller: controller,
-      maxLines: maxLines,
-      keyboardType: keyboardType,
-      decoration: InputDecoration(labelText: label),
-      validator: required
-          ? (String? value) =>
-                (value == null || value.trim().isEmpty) ? '$label is required' : null
-          : null,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Padding(
+          padding: const EdgeInsets.only(left: 2, bottom: 8),
+          child: Text(
+            label,
+            style: Theme.of(
+              context,
+            ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+          ),
+        ),
+        TextFormField(
+          controller: controller,
+          maxLines: maxLines,
+          keyboardType: keyboardType,
+          decoration: const InputDecoration(hintText: 'Enter value'),
+          onChanged: (_) => setState(() {}),
+          validator: required
+              ? (String? value) => (value == null || value.trim().isEmpty)
+                    ? '$label is required'
+                    : null
+              : null,
+        ),
+      ],
     );
   }
 
@@ -391,29 +528,46 @@ class _AddProjectFormPageState extends ConsumerState<AddProjectFormPage> {
     required DateTime? value,
     required ValueChanged<DateTime> onChanged,
   }) {
-    return InputDecorator(
-      decoration: InputDecoration(
-        labelText: label,
-        border: const OutlineInputBorder(),
-      ),
-      child: InkWell(
-        onTap: () async {
-          final DateTime now = DateTime.now();
-          final DateTime? picked = await showDatePicker(
-            context: context,
-            initialDate: value ?? now,
-            firstDate: DateTime(1990),
-            lastDate: DateTime(2100),
-          );
-          if (picked != null) {
-            onChanged(picked);
-          }
-        },
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 4),
-          child: Text(value == null ? 'Select date' : _apiDateFormat.format(value)),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Padding(
+          padding: const EdgeInsets.only(left: 2, bottom: 8),
+          child: Text(
+            label,
+            style: Theme.of(
+              context,
+            ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+          ),
         ),
-      ),
+        InputDecorator(
+          decoration: const InputDecoration(
+            border: OutlineInputBorder(),
+            suffixIcon: Icon(Icons.calendar_today_rounded, size: 18),
+          ),
+          child: InkWell(
+            onTap: () async {
+              final DateTime now = DateTime.now();
+              final DateTime? picked = await showDatePicker(
+                context: context,
+                initialDate: value ?? now,
+                firstDate: DateTime(1990),
+                lastDate: DateTime(2100),
+              );
+              if (picked != null) {
+                onChanged(picked);
+                setState(() {});
+              }
+            },
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Text(
+                value == null ? 'Select...' : _apiDateFormat.format(value),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -543,14 +697,10 @@ class _AddProjectFormPageState extends ConsumerState<AddProjectFormPage> {
 
   Future<void> _submit() async {
     final bool isEditMode = widget.initialData != null;
-    if (!_formKey.currentState!.validate()) {
+    if (!_formKey.currentState!.validate() || !_hasRequiredSelections) {
       return;
     }
-    if (_projectType == null ||
-        _railwayZone == null ||
-        _sanctionedYear == null ||
-        _division == null ||
-        _section == null) {
+    if (!_hasRequiredSelections) {
       await AppDialog.show(
         context: context,
         title: 'Missing Required Fields',
@@ -662,6 +812,113 @@ class _AddProjectFormPageState extends ConsumerState<AddProjectFormPage> {
       if (mounted) {
         setState(() => _saving = false);
       }
+    }
+  }
+
+  bool get _hasRequiredSelections =>
+      _projectType != null &&
+      _railwayZone != null &&
+      _sanctionedYear != null &&
+      _division != null &&
+      _section != null &&
+      _sanctionedCommissionDate != null;
+
+  bool get _hasRequiredTextFields {
+    return _projectNameCtrl.text.trim().isNotEmpty &&
+        _planHeadCtrl.text.trim().isNotEmpty &&
+        _sanctionedAmountCtrl.text.trim().isNotEmpty;
+  }
+
+  bool get _hasChanges {
+    if (widget.initialData == null) {
+      return true;
+    }
+    if (_initialFormSignature == null) {
+      return false;
+    }
+    return _formSignature() != _initialFormSignature!;
+  }
+
+  bool get _canSubmit => _hasRequiredTextFields && _hasRequiredSelections && _hasChanges;
+
+  bool get _canProceedCurrentStep {
+    if (_currentStep == 0) {
+      return _hasRequiredTextFields && _hasRequiredSelections;
+    }
+    return true;
+  }
+
+  void _goToNextStep() {
+    if (!_canProceedCurrentStep) {
+      AppDialog.show(
+        context: context,
+        title: 'Missing Required Fields',
+        message:
+            'Please complete all mandatory fields in this step before proceeding.',
+        type: AppDialogType.error,
+      );
+      return;
+    }
+    setState(() => _currentStep++);
+  }
+
+  String _formSignature() {
+    final List<Map<String, String?>> completionSignature = _completionRows
+        .map(
+          (_CompletionCostRow row) => <String, String?>{
+            'completion': _toApiDate(row.completionDate),
+            'estimated': row.estimatedCostCtrl.text.trim().isEmpty
+                ? null
+                : row.estimatedCostCtrl.text.trim(),
+            'revised': _toApiDate(row.revisedCompletionDate),
+          },
+        )
+        .toList();
+    final Map<String, dynamic> signature = <String, dynamic>{
+      'project_name': _projectNameCtrl.text.trim(),
+      'plan_head_number': _planHeadCtrl.text.trim(),
+      'project_status': _projectStatus,
+      'project_type_id': _projectType?.id,
+      'railway_zone': _railwayZone?.id,
+      'pb_item_number': _pbItemCtrl.text.trim().isEmpty ? null : _pbItemCtrl.text.trim(),
+      'sanctioned_year': _sanctionedYear?.id,
+      'sanctioned_amount': _sanctionedAmountCtrl.text.trim(),
+      'sanctioned_commissioning_date': _toApiDate(_sanctionedCommissionDate),
+      'actual_completion_cost': _actualCompletionCostCtrl.text.trim(),
+      'actual_completion_date': _toApiDate(_actualCompletionDate),
+      'benefits': _benefitsCtrl.text.trim(),
+      'remarks': _remarksCtrl.text.trim(),
+      'division_id': _division?.id,
+      'section_id': _section?.id,
+      'proposed_length': _proposedLengthCtrl.text.trim(),
+      'structure_details': _structureDetailsCtrl.text.trim(),
+      'from_chainage': _fromChainageCtrl.text.trim(),
+      'to_chainage': _toChainageCtrl.text.trim(),
+      'completion_rows': completionSignature,
+    };
+    return jsonEncode(signature);
+  }
+
+  void _attachControllerListeners() {
+    final List<TextEditingController> controllers = <TextEditingController>[
+      _projectNameCtrl,
+      _planHeadCtrl,
+      _pbItemCtrl,
+      _sanctionedAmountCtrl,
+      _actualCompletionCostCtrl,
+      _benefitsCtrl,
+      _remarksCtrl,
+      _proposedLengthCtrl,
+      _structureDetailsCtrl,
+      _fromChainageCtrl,
+      _toChainageCtrl,
+    ];
+    for (final TextEditingController controller in controllers) {
+      controller.addListener(() {
+        if (mounted) {
+          setState(() {});
+        }
+      });
     }
   }
 
