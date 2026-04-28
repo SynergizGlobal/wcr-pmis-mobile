@@ -10,6 +10,7 @@ import 'package:wcr_pmis_mobile/src/features/auth/presentation/controllers/auth_
 import 'package:wcr_pmis_mobile/src/features/dashboard/domain/entities/home_dashboard_data.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/domain/entities/update_form_item.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/add_project_page.dart';
+import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/ai_custom_report_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/project_details_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/providers/home_dashboard_provider.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/providers/update_forms_provider.dart';
@@ -310,18 +311,33 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
       _HomeSection.updateForms => const <_DashboardCardSpec>[],
       _HomeSection.reports => <_DashboardCardSpec>[
         _DashboardCardSpec(
-          title: 'Monthly Summary',
-          icon: Icons.summarize_rounded,
+          title: 'Contracts',
+          icon: Icons.description_outlined,
         ),
         _DashboardCardSpec(
-          title: 'Section Analytics',
-          icon: Icons.analytics_outlined,
+          title: 'Contract-wise Activities',
+          icon: Icons.bar_chart_rounded,
         ),
         _DashboardCardSpec(
-          title: 'Exception Report',
-          rightPlaceholder: const Icon(Icons.warning_amber_rounded),
+          title: 'Progress Report',
+          icon: Icons.trending_up_rounded,
         ),
-        _DashboardCardSpec(title: 'Export Data', icon: Icons.download_rounded),
+        _DashboardCardSpec(
+          title: 'Issues',
+          icon: Icons.error_outline_rounded,
+        ),
+        _DashboardCardSpec(
+          title: 'Land Acquisition',
+          icon: Icons.map_outlined,
+        ),
+        _DashboardCardSpec(
+          title: 'Utility Shifting',
+          icon: Icons.handyman_outlined,
+        ),
+        _DashboardCardSpec(
+          title: 'AI Custom Report',
+          icon: Icons.build_outlined,
+        ),
       ],
       _HomeSection.documents => <_DashboardCardSpec>[
         _DashboardCardSpec(title: 'Circulars', icon: Icons.article_outlined),
@@ -666,6 +682,11 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     if (_section == _HomeSection.updateForms &&
         card.payload is UpdateFormItem) {
       await _onUpdateFormTap(card.payload! as UpdateFormItem);
+      return;
+    }
+    if (_section == _HomeSection.reports &&
+        card.title.toLowerCase().contains('custom report')) {
+      context.pushNamed(AiCustomReportPage.routeName);
       return;
     }
     await AppDialog.show(

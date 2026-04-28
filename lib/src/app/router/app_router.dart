@@ -5,8 +5,10 @@ import 'package:wcr_pmis_mobile/src/app/router/go_router_refresh.dart';
 import 'package:wcr_pmis_mobile/src/features/auth/domain/entities/auth_session.dart';
 import 'package:wcr_pmis_mobile/src/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:wcr_pmis_mobile/src/features/auth/presentation/pages/login_page.dart';
+import 'package:wcr_pmis_mobile/src/features/dashboard/data/datasources/dashboard_remote_data_source.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/add_project_form_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/add_project_page.dart';
+import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/ai_custom_report_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/dashboard_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/project_details_page.dart';
 import 'package:wcr_pmis_mobile/src/features/profile/presentation/pages/profile_page.dart';
@@ -49,6 +51,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         return LoginPage.routePath;
       }
       if (!loggedIn && loc == AddProjectFormPage.routePath) {
+        return LoginPage.routePath;
+      }
+      if (!loggedIn && loc == AiCustomReportPage.routePath) {
         return LoginPage.routePath;
       }
       if (loggedIn && loc == LoginPage.routePath) {
@@ -102,6 +107,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         name: AddProjectFormPage.routeName,
         builder: (BuildContext context, GoRouterState state) =>
             const AddProjectFormPage(),
+      ),
+      GoRoute(
+        path: AiCustomReportPage.routePath,
+        name: AiCustomReportPage.routeName,
+        builder: (BuildContext context, GoRouterState state) =>
+            AiCustomReportPage(
+              dataSource: ref.read(dashboardRemoteDataSourceProvider),
+            ),
       ),
     ],
   );

@@ -110,6 +110,15 @@ class DashboardRemoteDataSource {
     return _normalizeResponse(response.data);
   }
 
+  Future<Map<String, dynamic>> fetchAiReport(String query) async {
+    final response = await _dio.post<dynamic>(
+      '/api/ai/report',
+      data: <String, dynamic>{'query': query},
+      options: _requestOptions,
+    );
+    return _normalizeResponse(response.data);
+  }
+
   Map<String, dynamic> _normalizeResponse(dynamic data) {
     if (data is Map<String, dynamic>) {
       return data;
