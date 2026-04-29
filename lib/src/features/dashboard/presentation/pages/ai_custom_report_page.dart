@@ -100,7 +100,7 @@ class _AiCustomReportPageState extends State<AiCustomReportPage> {
             TextField(
               controller: _queryController,
               readOnly: _loading,
-              minLines: 2,
+              minLines: 1,
               maxLines: 3,
               decoration: const InputDecoration(
                 hintText:
