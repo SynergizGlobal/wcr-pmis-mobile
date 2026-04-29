@@ -104,7 +104,7 @@ class _AiCustomReportPageState extends State<AiCustomReportPage> {
               maxLines: 3,
               decoration: const InputDecoration(
                 hintText:
-                    'Describe the report in plain language —',
+                    'Describe the report in plain language....',
                 hintMaxLines: 4,
                 border: OutlineInputBorder(),
               ),
