@@ -201,7 +201,7 @@ class _AddProjectPageState extends ConsumerState<AddProjectPage> {
             children: <Widget>[
               Expanded(
                 child: OutlinedButton.icon(
-                  onPressed: filtered.isEmpty ? null : () => _exportCsv(filtered),
+                  onPressed: filtered.isEmpty ? null : () => _confirmExportCsv(filtered),
                   icon: const Icon(Icons.download_rounded),
                   label: const Text('Excel'),
                 ),
@@ -209,7 +209,7 @@ class _AddProjectPageState extends ConsumerState<AddProjectPage> {
               const SizedBox(width: 8),
               Expanded(
                 child: OutlinedButton.icon(
-                  onPressed: filtered.isEmpty ? null : () => _exportPdf(filtered),
+                  onPressed: filtered.isEmpty ? null : () => _confirmExportPdf(filtered),
                   icon: const Icon(Icons.picture_as_pdf_rounded),
                   label: const Text('PDF'),
                 ),
@@ -508,6 +508,50 @@ class _AddProjectPageState extends ConsumerState<AddProjectPage> {
       'Action' => 84,
       _ => 100,
     };
+  }
+
+  Future<void> _confirmExportCsv(List<Map<String, dynamic>> rows) async {
+    if (!mounted || rows.isEmpty) {
+      return;
+    }
+    await AppDialog.show(
+      context: context,
+      type: AppDialogType.confirmation,
+      leadingIcon: Icons.table_view_rounded,
+      title: 'Export to Excel',
+      message:
+          'Download the project list as an Excel file (.xlsx)? Current filters, search, and visible rows will be included.',
+      actions: <AppDialogAction>[
+        const AppDialogAction(label: 'Cancel'),
+        AppDialogAction(
+          label: 'Export',
+          isPrimary: true,
+          onPressed: () => _exportCsv(rows),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _confirmExportPdf(List<Map<String, dynamic>> rows) async {
+    if (!mounted || rows.isEmpty) {
+      return;
+    }
+    await AppDialog.show(
+      context: context,
+      type: AppDialogType.confirmation,
+      leadingIcon: Icons.picture_as_pdf_rounded,
+      title: 'Export to PDF',
+      message:
+          'Download the project list as a PDF? Current filters, search, and visible rows will be included.',
+      actions: <AppDialogAction>[
+        const AppDialogAction(label: 'Cancel'),
+        AppDialogAction(
+          label: 'Export',
+          isPrimary: true,
+          onPressed: () => _exportPdf(rows),
+        ),
+      ],
+    );
   }
 
   Future<void> _exportCsv(List<Map<String, dynamic>> rows) async {

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-enum AppDialogType { error, info, success }
+enum AppDialogType { error, info, success, confirmation }
 
 class AppDialogAction {
   const AppDialogAction({
@@ -17,38 +17,63 @@ class AppDialogAction {
 class AppDialog {
   const AppDialog._();
 
+  /// Theme-aware alert dialog.
+  ///
+  /// - [title]: optional; if null or blank, the title row is hidden.
+  /// - [type]: info / error / success show a single **OK** by default.
+  ///   **confirmation** shows **Cancel** + **OK** by default (override with [actions]).
   static Future<void> show({
     required BuildContext context,
-    required String title,
     required String message,
+    String? title,
     AppDialogType type = AppDialogType.info,
     List<AppDialogAction>? actions,
+    IconData? leadingIcon,
   }) {
-    final ColorScheme colorScheme = Theme.of(context).colorScheme;
-    final (iconData, accentColor) = switch (type) {
-      AppDialogType.error => (Icons.error_outline_rounded, Colors.red.shade600),
+    final ThemeData theme = Theme.of(context);
+    final ColorScheme colorScheme = theme.colorScheme;
+    final TextTheme textTheme = theme.textTheme;
+
+    final String trimmedTitle = title?.trim() ?? '';
+    final bool showTitle = trimmedTitle.isNotEmpty;
+
+    final (IconData defaultIcon, Color accentColor) = switch (type) {
+      AppDialogType.error => (
+        Icons.error_outline_rounded,
+        colorScheme.error,
+      ),
       AppDialogType.success => (
         Icons.check_circle_outline_rounded,
-        Colors.green.shade600,
+        colorScheme.tertiary,
       ),
       AppDialogType.info => (
         Icons.info_outline_rounded,
         colorScheme.primary,
       ),
+      AppDialogType.confirmation => (
+        Icons.help_outline_rounded,
+        colorScheme.primary,
+      ),
     };
+    final IconData iconData = leadingIcon ?? defaultIcon;
+
     final List<AppDialogAction> dialogActions =
-        actions ??
-        <AppDialogAction>[
-          const AppDialogAction(label: 'OK', isPrimary: true),
-        ];
+        actions ?? _defaultActions(type);
 
     return showDialog<void>(
       context: context,
-      builder: (BuildContext context) {
+      barrierDismissible: type != AppDialogType.confirmation,
+      builder: (BuildContext dialogContext) {
         return Dialog(
           insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-          backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          backgroundColor: colorScheme.surface,
+          surfaceTintColor: colorScheme.surfaceTint,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: BorderSide(
+              color: colorScheme.outlineVariant.withValues(alpha: 0.6),
+            ),
+          ),
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 420),
             child: Padding(
@@ -58,50 +83,57 @@ class AppDialog {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: <Widget>[
                   Center(
-                    child: Icon(iconData, color: accentColor, size: 30),
+                    child: Icon(iconData, color: accentColor, size: 32),
                   ),
-                  const SizedBox(height: 10),
-                  Text(
-                    title,
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontWeight: FontWeight.w700,
+                  if (showTitle) ...<Widget>[
+                    const SizedBox(height: 10),
+                    Text(
+                      trimmedTitle,
+                      style: textTheme.titleMedium?.copyWith(
+                        color: colorScheme.onSurface,
+                        fontWeight: FontWeight.w700,
+                      ),
+                      textAlign: TextAlign.center,
                     ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 10),
+                  ],
+                  SizedBox(height: showTitle ? 10 : 6),
                   ConstrainedBox(
-                    constraints: const BoxConstraints(maxHeight: 180),
+                    constraints: const BoxConstraints(maxHeight: 220),
                     child: SingleChildScrollView(
                       child: Text(
                         message,
-                        style: const TextStyle(color: Colors.black),
+                        style: textTheme.bodyMedium?.copyWith(
+                          color: colorScheme.onSurface,
+                        ),
                         textAlign: TextAlign.center,
                       ),
                     ),
                   ),
                   const SizedBox(height: 18),
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: List<Widget>.generate(dialogActions.length, (
                         int index,
                       ) {
                         final AppDialogAction action = dialogActions[index];
+                        void handleTap() {
+                          Navigator.of(dialogContext).pop();
+                          final VoidCallback? pressed = action.onPressed;
+                          if (pressed != null) {
+                            WidgetsBinding.instance.addPostFrameCallback((_) {
+                              pressed();
+                            });
+                          }
+                        }
                         final Widget button = action.isPrimary
                             ? FilledButton(
-                                onPressed: () {
-                                  Navigator.of(context).pop();
-                                  action.onPressed?.call();
-                                },
+                                onPressed: handleTap,
                                 child: Text(action.label),
                               )
                             : OutlinedButton(
-                                onPressed: () {
-                                  Navigator.of(context).pop();
-                                  action.onPressed?.call();
-                                },
+                                onPressed: handleTap,
                                 child: Text(action.label),
                               );
                         return Expanded(
@@ -124,5 +156,18 @@ class AppDialog {
         );
       },
     );
+  }
+
+  static List<AppDialogAction> _defaultActions(AppDialogType type) {
+    return switch (type) {
+      AppDialogType.confirmation => <AppDialogAction>[
+          const AppDialogAction(label: 'Cancel'),
+          const AppDialogAction(label: 'OK', isPrimary: true),
+        ],
+      AppDialogType.error ||
+      AppDialogType.info ||
+      AppDialogType.success =>
+        <AppDialogAction>[const AppDialogAction(label: 'OK', isPrimary: true)],
+    };
   }
 }

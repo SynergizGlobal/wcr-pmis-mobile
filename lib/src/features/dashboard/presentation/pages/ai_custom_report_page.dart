@@ -34,9 +34,7 @@ class _AiCustomReportPageState extends State<AiCustomReportPage> {
     'status': 'Status',
   };
 
-  final TextEditingController _queryController = TextEditingController(
-    text: 'generate activites wise data',
-  );
+  final TextEditingController _queryController = TextEditingController();
   final TextEditingController _searchController = TextEditingController();
   bool _loading = false;
   List<Map<String, dynamic>> _rows = <Map<String, dynamic>>[];
@@ -86,6 +84,12 @@ class _AiCustomReportPageState extends State<AiCustomReportPage> {
   }
 
   Widget _queryCard(BuildContext context) {
+    final ColorScheme colorScheme = Theme.of(context).colorScheme;
+    final TextTheme textTheme = Theme.of(context).textTheme;
+    final TextStyle generateLabelStyle =
+        (textTheme.labelLarge ?? const TextStyle()).copyWith(
+      color: colorScheme.onPrimary,
+    );
     return Card(
       margin: EdgeInsets.zero,
       child: Padding(
@@ -95,10 +99,13 @@ class _AiCustomReportPageState extends State<AiCustomReportPage> {
           children: <Widget>[
             TextField(
               controller: _queryController,
+              readOnly: _loading,
               minLines: 2,
               maxLines: 3,
               decoration: const InputDecoration(
-                hintText: 'Enter prompt',
+                hintText:
+                    'Describe the report in plain language —',
+                hintMaxLines: 4,
                 border: OutlineInputBorder(),
               ),
             ),
@@ -108,8 +115,21 @@ class _AiCustomReportPageState extends State<AiCustomReportPage> {
                 const Spacer(),
                 FilledButton.icon(
                   onPressed: _loading ? null : _generate,
-                  icon: const Icon(Icons.auto_awesome),
-                  label: Text(_loading ? 'Generating...' : 'Generate'),
+                  icon: _loading
+                      ? SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.2,
+                            color: colorScheme.onPrimary,
+                          ),
+                        )
+                      : const Icon(Icons.auto_awesome),
+                  label: Text(
+                    _loading ? 'Generating...' : 'Generate Report',
+                    maxLines: 1,
+                    style: generateLabelStyle,
+                  ),
                 ),
               ],
             ),
@@ -140,13 +160,10 @@ class _AiCustomReportPageState extends State<AiCustomReportPage> {
                 border: OutlineInputBorder(),
               ),
             ),
-            const SizedBox(height: 10),
-            Wrap(
-              spacing: 10,
-              runSpacing: 10,
+            const SizedBox(height: 12),
+            Row(
               children: <Widget>[
-                SizedBox(
-                  width: 160,
+                Expanded(
                   child: _titledControl(
                     title: 'Group By',
                     child: _simpleDropdown(
@@ -159,8 +176,8 @@ class _AiCustomReportPageState extends State<AiCustomReportPage> {
                     ),
                   ),
                 ),
-                SizedBox(
-                  width: 160,
+                const SizedBox(width: 10),
+                Expanded(
                   child: _titledControl(
                     title: 'Order By',
                     child: _simpleDropdown(
@@ -173,44 +190,65 @@ class _AiCustomReportPageState extends State<AiCustomReportPage> {
                     ),
                   ),
                 ),
-                SegmentedButton<bool>(
-                  segments: const <ButtonSegment<bool>>[
-                    ButtonSegment<bool>(value: true, label: Text('Asc')),
-                    ButtonSegment<bool>(value: false, label: Text('Desc')),
-                  ],
-                  selected: <bool>{_ascending},
-                  onSelectionChanged: (Set<bool> selected) => setState(() {
-                    _ascending = selected.first;
-                    _currentPage = 1;
-                  }),
-                ),
-                FilledButton.tonalIcon(
-                  onPressed: _openColumnsSheet,
-                  icon: const Icon(Icons.view_column_rounded),
-                  label: Text('Columns (${_selectedColumns.length})'),
-                ),
-                SizedBox(
-                  width: 110,
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: <Widget>[
+                Expanded(
                   child: _titledControl(
                     title: 'Entries',
                     child: _rowsPerPageDropdown(),
                   ),
                 ),
-                OutlinedButton(
-                  onPressed: _rows.isEmpty ? null : () => _exportExcel(),
-                  child: const Text('Excel'),
-                ),
-                OutlinedButton(
-                  onPressed: _rows.isEmpty ? null : () => _exportPdf(),
-                  child: const Text('PDF'),
-                ),
-                IconButton.filledTonal(
-                  onPressed: _rows.isEmpty
-                      ? null
-                      : () => setState(() => _resetTableControls(preserveRows: true)),
-                  icon: const Icon(Icons.refresh_rounded),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _titledControl(
+                    title: 'Sort',
+                    child: _ascDescToggle(context),
+                  ),
                 ),
               ],
+            ),
+            const SizedBox(height: 10),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.tonalIcon(
+                onPressed: _openColumnsSheet,
+                icon: const Icon(Icons.view_column_rounded),
+                label: Text('Columns (${_selectedColumns.length})'),
+              ),
+            ),
+            const SizedBox(height: 10),
+            Row(
+              children: <Widget>[
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: _rows.isEmpty ? null : _confirmExportExcel,
+                    icon: const Icon(Icons.table_view_rounded, size: 18),
+                    label: const Text('Excel'),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: _rows.isEmpty ? null : _confirmExportPdf,
+                    icon: const Icon(Icons.picture_as_pdf_rounded, size: 18),
+                    label: const Text('PDF'),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: _rows.isEmpty
+                    ? null
+                    : () => setState(() => _resetTableControls(preserveRows: true)),
+                icon: const Icon(Icons.restart_alt_rounded),
+                label: const Text('Reset filters and sorting'),
+              ),
             ),
           ],
         ),
@@ -343,27 +381,64 @@ class _AiCustomReportPageState extends State<AiCustomReportPage> {
 
     if (_groupBy != null) {
       rows.sort((Map<String, dynamic> a, Map<String, dynamic> b) {
-        final String ga = _displayValue(a[_groupBy], _groupBy!);
-        final String gb = _displayValue(b[_groupBy], _groupBy!);
-        final int groupCompare = ga.compareTo(gb);
+        // Keep group headers in predictable ascending order.
+        final int groupCompare = _compareByKey(a, b, _groupBy!);
         if (groupCompare != 0) {
           return groupCompare;
         }
         final String orderKey = _orderBy ?? _groupBy!;
-        final String va = _displayValue(a[orderKey], orderKey);
-        final String vb = _displayValue(b[orderKey], orderKey);
-        final int result = va.compareTo(vb);
+        final int result = _compareByKey(a, b, orderKey);
+        if (_orderBy == null) {
+          return result;
+        }
         return _ascending ? result : -result;
       });
     } else if (_orderBy != null) {
       rows.sort((Map<String, dynamic> a, Map<String, dynamic> b) {
-        final String va = _displayValue(a[_orderBy], _orderBy!);
-        final String vb = _displayValue(b[_orderBy], _orderBy!);
-        final int result = va.compareTo(vb);
+        final int result = _compareByKey(a, b, _orderBy!);
         return _ascending ? result : -result;
       });
     }
     return rows;
+  }
+
+  int _compareByKey(
+    Map<String, dynamic> a,
+    Map<String, dynamic> b,
+    String key,
+  ) {
+    final dynamic av = a[key];
+    final dynamic bv = b[key];
+    if (av == null && bv == null) {
+      return 0;
+    }
+    if (av == null) {
+      return 1;
+    }
+    if (bv == null) {
+      return -1;
+    }
+
+    final double? ad = _asDouble(av);
+    final double? bd = _asDouble(bv);
+    if (ad != null && bd != null) {
+      return ad.compareTo(bd);
+    }
+
+    final DateTime? at = DateTime.tryParse(av.toString());
+    final DateTime? bt = DateTime.tryParse(bv.toString());
+    if (at != null && bt != null) {
+      return at.compareTo(bt);
+    }
+
+    return av.toString().toLowerCase().compareTo(bv.toString().toLowerCase());
+  }
+
+  double? _asDouble(dynamic value) {
+    if (value is num) {
+      return value.toDouble();
+    }
+    return double.tryParse(value.toString());
   }
 
   List<Map<String, dynamic>> get _pagedRows {
@@ -388,6 +463,12 @@ class _AiCustomReportPageState extends State<AiCustomReportPage> {
   Future<void> _generate() async {
     final String query = _queryController.text.trim();
     if (query.isEmpty) {
+      await AppDialog.show(
+        context: context,
+        title: 'Prompt Required',
+        message: 'Enter a short description of the report you want.',
+        type: AppDialogType.info,
+      );
       return;
     }
     setState(() => _loading = true);
@@ -434,6 +515,90 @@ class _AiCustomReportPageState extends State<AiCustomReportPage> {
         setState(() => _loading = false);
       }
     }
+  }
+
+  Widget _ascDescToggle(BuildContext context) {
+    final ColorScheme cs = Theme.of(context).colorScheme;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: cs.surfaceContainerHighest.withValues(alpha: 0.55),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.65)),
+      ),
+      child: Row(
+        children: <Widget>[
+          Expanded(
+            child: _ascDescChip(
+              context,
+              label: 'Asc',
+              selected: _ascending,
+              alignLeft: true,
+              onTap: () => setState(() {
+                _ascending = true;
+                _currentPage = 1;
+              }),
+            ),
+          ),
+          Container(
+            width: 1,
+            height: 36,
+            color: cs.outlineVariant.withValues(alpha: 0.7),
+          ),
+          Expanded(
+            child: _ascDescChip(
+              context,
+              label: 'Desc',
+              selected: !_ascending,
+              alignLeft: false,
+              onTap: () => setState(() {
+                _ascending = false;
+                _currentPage = 1;
+              }),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _ascDescChip(
+    BuildContext context, {
+    required String label,
+    required bool selected,
+    required bool alignLeft,
+    required VoidCallback onTap,
+  }) {
+    final ColorScheme cs = Theme.of(context).colorScheme;
+    final TextTheme tt = Theme.of(context).textTheme;
+    final BorderRadius radius = alignLeft
+        ? const BorderRadius.horizontal(left: Radius.circular(11))
+        : const BorderRadius.horizontal(right: Radius.circular(11));
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: radius,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 160),
+          curve: Curves.easeOut,
+          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+          decoration: BoxDecoration(
+            color: selected ? cs.primaryContainer : Colors.transparent,
+            borderRadius: radius,
+          ),
+          alignment: Alignment.center,
+          child: Text(
+            label,
+            style: tt.labelLarge?.copyWith(
+              color: selected
+                  ? cs.onPrimaryContainer
+                  : cs.onSurface.withValues(alpha: 0.45),
+              fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   Future<void> _openColumnsSheet() async {
@@ -731,6 +896,50 @@ class _AiCustomReportPageState extends State<AiCustomReportPage> {
       );
     }
     return items;
+  }
+
+  Future<void> _confirmExportExcel() async {
+    if (_rows.isEmpty || !mounted) {
+      return;
+    }
+    await AppDialog.show(
+      context: context,
+      type: AppDialogType.confirmation,
+      leadingIcon: Icons.table_view_rounded,
+      title: 'Export to Excel',
+      message:
+          'Download the report as an Excel file (.xlsx)? Current filters, sorting, grouping, and visible columns will be included.',
+      actions: <AppDialogAction>[
+        const AppDialogAction(label: 'Cancel'),
+        AppDialogAction(
+          label: 'Export',
+          isPrimary: true,
+          onPressed: () => _exportExcel(),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _confirmExportPdf() async {
+    if (_rows.isEmpty || !mounted) {
+      return;
+    }
+    await AppDialog.show(
+      context: context,
+      type: AppDialogType.confirmation,
+      leadingIcon: Icons.picture_as_pdf_rounded,
+      title: 'Export to PDF',
+      message:
+          'Download the report as a PDF? Current filters, sorting, grouping, and visible columns will be included.',
+      actions: <AppDialogAction>[
+        const AppDialogAction(label: 'Cancel'),
+        AppDialogAction(
+          label: 'Export',
+          isPrimary: true,
+          onPressed: () => _exportPdf(),
+        ),
+      ],
+    );
   }
 
   Future<void> _exportExcel() async {
