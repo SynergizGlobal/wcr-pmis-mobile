@@ -10,6 +10,7 @@ import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/add_pr
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/add_project_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/ai_custom_report_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/dashboard_page.dart';
+import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/issues_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/project_details_page.dart';
 import 'package:wcr_pmis_mobile/src/features/profile/presentation/pages/profile_page.dart';
 import 'package:wcr_pmis_mobile/src/features/settings/presentation/pages/settings_page.dart';
@@ -54,6 +55,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         return LoginPage.routePath;
       }
       if (!loggedIn && loc == AiCustomReportPage.routePath) {
+        return LoginPage.routePath;
+      }
+      if (!loggedIn && loc == IssuesPage.routePath) {
         return LoginPage.routePath;
       }
       if (loggedIn && loc == LoginPage.routePath) {
@@ -115,6 +119,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             AiCustomReportPage(
               dataSource: ref.read(dashboardRemoteDataSourceProvider),
             ),
+      ),
+      GoRoute(
+        path: IssuesPage.routePath,
+        name: IssuesPage.routeName,
+        builder: (BuildContext context, GoRouterState state) =>
+            IssuesPage(dataSource: ref.read(dashboardRemoteDataSourceProvider)),
       ),
     ],
   );

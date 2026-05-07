@@ -119,6 +119,151 @@ class DashboardRemoteDataSource {
     return _normalizeResponse(response.data);
   }
 
+  Future<Map<String, dynamic>> fetchIssuesList({
+    String? contractId,
+    String? department,
+    String? category,
+    String? status,
+    String? hod,
+  }) async {
+    final response = await _dio.post<dynamic>(
+      '/issue/ajax/getIssuesList',
+      data: _issueFilterPayload(
+        contractId: contractId,
+        department: department,
+        category: category,
+        status: status,
+        hod: hod,
+      ),
+      options: _requestOptions,
+    );
+    return _normalizeResponse(response.data);
+  }
+
+  Future<Map<String, dynamic>> fetchIssueContractsFilter({
+    String? contractId,
+    String? department,
+    String? category,
+    String? status,
+    String? hod,
+  }) async {
+    final response = await _dio.post<dynamic>(
+      '/issue/ajax/getContractsListFilterInIssue',
+      data: _issueFilterPayload(
+        contractId: contractId,
+        department: department,
+        category: category,
+        status: status,
+        hod: hod,
+      ),
+      options: _requestOptions,
+    );
+    return _normalizeResponse(response.data);
+  }
+
+  Future<Map<String, dynamic>> fetchIssueHodFilter({
+    String? contractId,
+    String? department,
+    String? category,
+    String? status,
+    String? hod,
+  }) async {
+    final response = await _dio.post<dynamic>(
+      '/issue/ajax/getHODListFilterInIssue',
+      data: _issueFilterPayload(
+        contractId: contractId,
+        department: department,
+        category: category,
+        status: status,
+        hod: hod,
+      ),
+      options: _requestOptions,
+    );
+    return _normalizeResponse(response.data);
+  }
+
+  Future<Map<String, dynamic>> fetchIssueDepartmentsFilter({
+    String? contractId,
+    String? department,
+    String? category,
+    String? status,
+    String? hod,
+  }) async {
+    final response = await _dio.post<dynamic>(
+      '/issue/ajax/getDepartmentsListFilterInIssue',
+      data: _issueFilterPayload(
+        contractId: contractId,
+        department: department,
+        category: category,
+        status: status,
+        hod: hod,
+      ),
+      options: _requestOptions,
+    );
+    return _normalizeResponse(response.data);
+  }
+
+  Future<Map<String, dynamic>> fetchIssueCategoryFilter({
+    String? contractId,
+    String? department,
+    String? category,
+    String? status,
+    String? hod,
+  }) async {
+    final response = await _dio.post<dynamic>(
+      '/issue/ajax/getCategoryListFilterInIssue',
+      data: _issueFilterPayload(
+        contractId: contractId,
+        department: department,
+        category: category,
+        status: status,
+        hod: hod,
+      ),
+      options: _requestOptions,
+    );
+    return _normalizeResponse(response.data);
+  }
+
+  Future<Map<String, dynamic>> fetchIssueStatusFilter({
+    String? contractId,
+    String? department,
+    String? category,
+    String? status,
+    String? hod,
+  }) async {
+    final response = await _dio.post<dynamic>(
+      '/issue/ajax/getStatusListFilterInIssue',
+      data: _issueFilterPayload(
+        contractId: contractId,
+        department: department,
+        category: category,
+        status: status,
+        hod: hod,
+      ),
+      options: _requestOptions,
+    );
+    return _normalizeResponse(response.data);
+  }
+
+  Map<String, String> _issueFilterPayload({
+    String? contractId,
+    String? department,
+    String? category,
+    String? status,
+    String? hod,
+  }) {
+    String valueOrEmpty(String? value) => value?.trim().isNotEmpty == true
+        ? value!.trim()
+        : '';
+    return <String, String>{
+      'contract_id_fk': valueOrEmpty(contractId),
+      'department_fk': valueOrEmpty(department),
+      'category_fk': valueOrEmpty(category),
+      'status_fk': valueOrEmpty(status),
+      'hod': valueOrEmpty(hod),
+    };
+  }
+
   Map<String, dynamic> _normalizeResponse(dynamic data) {
     if (data is Map<String, dynamic>) {
       return data;

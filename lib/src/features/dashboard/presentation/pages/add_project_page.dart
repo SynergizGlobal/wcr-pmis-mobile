@@ -299,27 +299,90 @@ class _AddProjectPageState extends ConsumerState<AddProjectPage> {
         ),
         Padding(
           padding: const EdgeInsets.fromLTRB(12, 8, 12, 10),
-          child: Row(
-            children: <Widget>[
-              Text(
-                total == 0 ? '0 to 0 of 0 entries' : '${start + 1} to $end of $total entries',
-              ),
-              const Spacer(),
-              OutlinedButton(
-                onPressed: _currentPage > 0
-                    ? () => setState(() => _currentPage--)
-                    : null,
-                child: const Text('Prev'),
-              ),
-              const SizedBox(width: 8),
-              OutlinedButton(
-                onPressed: end < total
-                    ? () => setState(() => _currentPage++)
-                    : null,
-                child: const Text('Next'),
-              ),
-            ],
+          child: _paginationBar(
+            total: total,
+            start: start,
+            end: end,
+            pageCount: pageCount,
           ),
+        ),
+      ],
+    );
+  }
+
+  Widget _paginationBar({
+    required int total,
+    required int start,
+    required int end,
+    required int pageCount,
+  }) {
+    final ColorScheme cs = Theme.of(context).colorScheme;
+    final TextTheme tt = Theme.of(context).textTheme;
+    final String summary = total == 0
+        ? 'Showing 0 to 0 of 0 entries'
+        : 'Showing ${start + 1} to $end of $total entries';
+    final int currentPage = total == 0 ? 0 : (_currentPage + 1);
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        Text(
+          summary,
+          style: tt.bodySmall?.copyWith(
+            color: cs.onSurfaceVariant.withValues(alpha: 0.85),
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 4),
+        LayoutBuilder(
+          builder: (BuildContext context, BoxConstraints constraints) {
+            final bool compact = constraints.maxWidth < 430;
+            final double buttonWidth = compact ? 92 : 100;
+            final double gap = compact ? 8 : 10;
+            final double pillHorizontalPadding = compact ? 12 : 18;
+            final TextStyle? pageStyle = (compact ? tt.bodySmall : tt.bodySmall)
+                ?.copyWith(color: cs.primary, fontWeight: FontWeight.w700);
+            return Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                ConstrainedBox(
+                  constraints: BoxConstraints(minWidth: buttonWidth, maxWidth: buttonWidth + 14),
+                  child: OutlinedButton.icon(
+                    onPressed:
+                        _currentPage > 0 ? () => setState(() => _currentPage--) : null,
+                    icon: const Icon(Icons.chevron_left_rounded),
+                    label: const Text('Prev'),
+                    style: OutlinedButton.styleFrom(
+                      minimumSize: Size(buttonWidth, 42),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    ),
+                  ),
+                ),
+                SizedBox(width: gap),
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: pillHorizontalPadding, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: cs.primaryContainer.withValues(alpha: 0.45),
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                  child: Text('Page $currentPage of $pageCount', style: pageStyle),
+                ),
+                SizedBox(width: gap),
+                ConstrainedBox(
+                  constraints: BoxConstraints(minWidth: buttonWidth, maxWidth: buttonWidth + 14),
+                  child: OutlinedButton.icon(
+                    onPressed: end < total ? () => setState(() => _currentPage++) : null,
+                    iconAlignment: IconAlignment.end,
+                    icon: const Icon(Icons.chevron_right_rounded),
+                    label: const Text('Next'),
+                    style: OutlinedButton.styleFrom(
+                      minimumSize: Size(buttonWidth, 42),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
         ),
       ],
     );

@@ -11,6 +11,7 @@ import 'package:wcr_pmis_mobile/src/features/dashboard/domain/entities/home_dash
 import 'package:wcr_pmis_mobile/src/features/dashboard/domain/entities/update_form_item.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/add_project_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/ai_custom_report_page.dart';
+import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/issues_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/project_details_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/providers/home_dashboard_provider.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/providers/update_forms_provider.dart';
@@ -689,6 +690,11 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
       context.pushNamed(AiCustomReportPage.routeName);
       return;
     }
+    if (_section == _HomeSection.reports &&
+        card.title.toLowerCase().contains('issues')) {
+      context.pushNamed(IssuesPage.routeName);
+      return;
+    }
     await AppDialog.show(
       context: context,
       title: title,
@@ -759,6 +765,13 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         return;
       }
       context.pushNamed(AddProjectPage.routeName);
+      return;
+    }
+    if (normalized.contains('issue')) {
+      if (!mounted) {
+        return;
+      }
+      context.pushNamed(IssuesPage.routeName);
       return;
     }
     await AppDialog.show(

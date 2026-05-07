@@ -461,6 +461,7 @@ class _AiCustomReportPageState extends State<AiCustomReportPage> {
   }
 
   Future<void> _generate() async {
+    FocusScope.of(context).unfocus();
     final String query = _queryController.text.trim();
     if (query.isEmpty) {
       await AppDialog.show(
@@ -500,6 +501,7 @@ class _AiCustomReportPageState extends State<AiCustomReportPage> {
           _orderBy = null;
         }
       });
+      FocusScope.of(context).unfocus();
     } catch (error) {
       if (!mounted) {
         return;
@@ -694,42 +696,101 @@ class _AiCustomReportPageState extends State<AiCustomReportPage> {
     final int page = _currentPage.clamp(1, _totalPages);
     final int start = total == 0 ? 0 : ((page - 1) * _rowsPerPage) + 1;
     final int end = total == 0 ? 0 : (start + _pagedRows.length - 1);
+    final ColorScheme cs = Theme.of(context).colorScheme;
+    final TextTheme tt = Theme.of(context).textTheme;
     return SafeArea(
       top: false,
       child: Container(
-        padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+        padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
         decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
+          color: cs.surface,
           border: Border(
             top: BorderSide(
-              color: Theme.of(context).colorScheme.outlineVariant.withValues(
+              color: cs.outlineVariant.withValues(
                 alpha: 0.55,
               ),
             ),
           ),
         ),
-        child: Row(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            Expanded(
-              child: Text(
-                '$start to $end of $total entries',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+            Text(
+              total == 0
+                  ? 'Showing 0 to 0 of 0 entries'
+                  : 'Showing $start to $end of $total entries',
+              style: tt.bodySmall?.copyWith(
+                color: cs.onSurfaceVariant.withValues(alpha: 0.85),
+                fontWeight: FontWeight.w600,
               ),
             ),
-            const SizedBox(width: 10),
-            OutlinedButton(
-              onPressed: page <= 1
-                  ? null
-                  : () => setState(() => _currentPage = page - 1),
-              child: const Text('Prev'),
-            ),
-            const SizedBox(width: 8),
-            FilledButton(
-              onPressed: page >= _totalPages
-                  ? null
-                  : () => setState(() => _currentPage = page + 1),
-              child: const Text('Next'),
+            const SizedBox(height: 4),
+            LayoutBuilder(
+              builder: (BuildContext context, BoxConstraints constraints) {
+                final bool compact = constraints.maxWidth < 430;
+                final double buttonWidth = compact ? 92 : 100;
+                final double gap = compact ? 8 : 10;
+                final double pillHorizontalPadding = compact ? 12 : 18;
+                final TextStyle? pageStyle = (compact ? tt.bodySmall : tt.bodySmall)
+                    ?.copyWith(color: cs.primary, fontWeight: FontWeight.w700);
+                return Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    ConstrainedBox(
+                      constraints: BoxConstraints(
+                        minWidth: buttonWidth,
+                        maxWidth: buttonWidth + 14,
+                      ),
+                      child: OutlinedButton.icon(
+                        onPressed: page <= 1
+                            ? null
+                            : () => setState(() => _currentPage = page - 1),
+                        icon: const Icon(Icons.chevron_left_rounded),
+                        label: const Text('Prev'),
+                        style: OutlinedButton.styleFrom(
+                          minimumSize: Size(buttonWidth, 42),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: gap),
+                    Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: pillHorizontalPadding,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: cs.primaryContainer.withValues(alpha: 0.45),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Text('Page $page of $_totalPages', style: pageStyle),
+                    ),
+                    SizedBox(width: gap),
+                    ConstrainedBox(
+                      constraints: BoxConstraints(
+                        minWidth: buttonWidth,
+                        maxWidth: buttonWidth + 14,
+                      ),
+                      child: OutlinedButton.icon(
+                        onPressed: page >= _totalPages
+                            ? null
+                            : () => setState(() => _currentPage = page + 1),
+                        iconAlignment: IconAlignment.end,
+                        icon: const Icon(Icons.chevron_right_rounded),
+                        label: const Text('Next'),
+                        style: OutlinedButton.styleFrom(
+                          minimumSize: Size(buttonWidth, 42),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              },
             ),
           ],
         ),
