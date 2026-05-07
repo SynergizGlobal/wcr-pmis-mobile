@@ -12,6 +12,7 @@ import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/ai_cus
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/dashboard_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/issues_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/project_details_page.dart';
+import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/utility_shifting_page.dart';
 import 'package:wcr_pmis_mobile/src/features/profile/presentation/pages/profile_page.dart';
 import 'package:wcr_pmis_mobile/src/features/settings/presentation/pages/settings_page.dart';
 
@@ -58,6 +59,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         return LoginPage.routePath;
       }
       if (!loggedIn && loc == IssuesPage.routePath) {
+        return LoginPage.routePath;
+      }
+      if (!loggedIn && loc == UtilityShiftingPage.routePath) {
         return LoginPage.routePath;
       }
       if (loggedIn && loc == LoginPage.routePath) {
@@ -125,6 +129,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         name: IssuesPage.routeName,
         builder: (BuildContext context, GoRouterState state) =>
             IssuesPage(dataSource: ref.read(dashboardRemoteDataSourceProvider)),
+      ),
+      GoRoute(
+        path: UtilityShiftingPage.routePath,
+        name: UtilityShiftingPage.routeName,
+        builder: (BuildContext context, GoRouterState state) =>
+            UtilityShiftingPage(
+              dataSource: ref.read(dashboardRemoteDataSourceProvider),
+            ),
       ),
     ],
   );

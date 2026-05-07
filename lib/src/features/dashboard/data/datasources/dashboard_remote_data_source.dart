@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:wcr_pmis_mobile/src/core/network/dio_client.dart';
@@ -243,6 +245,121 @@ class DashboardRemoteDataSource {
       options: _requestOptions,
     );
     return _normalizeResponse(response.data);
+  }
+
+  Future<Map<String, dynamic>> fetchUtilityShiftingList({
+    int start = 0,
+    int length = 10,
+    String search = '',
+  }) async {
+    final response = await _dio.post<dynamic>(
+      '/utility-shifting/ajax/getUtilityShiftingList',
+      queryParameters: <String, dynamic>{
+        'iDisplayStart': start,
+        'iDisplayLength': length,
+        'sSearch': search,
+      },
+      data: const <String, dynamic>{},
+      options: _requestOptions,
+    );
+    return _normalizeResponse(response.data);
+  }
+
+  Future<Map<String, dynamic>> fetchUtilityShiftingUploadsList() async {
+    final response = await _dio.post<dynamic>(
+      '/utility-shifting/ajax/getUtilityShiftingUploadsList',
+      data: const <String, dynamic>{},
+      options: _requestOptions,
+    );
+    return _normalizeResponse(response.data);
+  }
+
+  Future<Map<String, dynamic>> fetchUtilityLocationFilter() async {
+    final response = await _dio.post<dynamic>(
+      '/utility-shifting/ajax/getLocationListFilter',
+      data: const <String, dynamic>{},
+      options: _requestOptions,
+    );
+    return _normalizeResponse(response.data);
+  }
+
+  Future<Map<String, dynamic>> fetchUtilityCategoryFilter() async {
+    final response = await _dio.post<dynamic>(
+      '/utility-shifting/ajax/getUtilityCategoryListFilter',
+      data: const <String, dynamic>{},
+      options: _requestOptions,
+    );
+    return _normalizeResponse(response.data);
+  }
+
+  Future<Map<String, dynamic>> fetchUtilityTypeFilter() async {
+    final response = await _dio.post<dynamic>(
+      '/utility-shifting/ajax/getUtilityTypeListFilter',
+      data: const <String, dynamic>{},
+      options: _requestOptions,
+    );
+    return _normalizeResponse(response.data);
+  }
+
+  Future<Map<String, dynamic>> fetchUtilityStatusFilter() async {
+    final response = await _dio.post<dynamic>(
+      '/utility-shifting/ajax/getStatusListFilter',
+      data: const <String, dynamic>{},
+      options: _requestOptions,
+    );
+    return _normalizeResponse(response.data);
+  }
+
+  Future<({Uint8List bytes, String? fileName})>
+      downloadUtilityShiftingTemplate() async {
+    final Response<dynamic> response = await _dio.get<dynamic>(
+      '/utility-shifting/utility-shifting-template',
+      options: Options(
+        receiveTimeout: _dashboardReceiveTimeout,
+        connectTimeout: _dashboardConnectTimeout,
+        responseType: ResponseType.bytes,
+      ),
+    );
+    final dynamic data = response.data;
+    final List<int> raw = data is List<int> ? data : <int>[];
+    final String? contentDisposition = response.headers.value('content-disposition');
+    final String? fileName = _fileNameFromContentDisposition(contentDisposition);
+    return (bytes: Uint8List.fromList(raw), fileName: fileName);
+  }
+
+  Future<Map<String, dynamic>> uploadUtilityShiftingTemplate({
+    required String fileName,
+    required Uint8List bytes,
+  }) async {
+    final FormData formData = FormData.fromMap(<String, dynamic>{
+      'file': MultipartFile.fromBytes(
+        bytes,
+        filename: fileName,
+      ),
+    });
+    final Response<dynamic> response = await _dio.post<dynamic>(
+      '/utility-shifting/upload-utility-shifting',
+      data: formData,
+      options: _requestOptions.copyWith(
+        contentType: 'multipart/form-data',
+      ),
+    );
+    return _normalizeResponse(response.data);
+  }
+
+  String? _fileNameFromContentDisposition(String? header) {
+    if (header == null || header.trim().isEmpty) {
+      return null;
+    }
+    final RegExpMatch? match = RegExp(
+      "filename\\*?=(?:UTF-8''\\s*)?\"?([^\";]+)\"?",
+      caseSensitive: false,
+    ).firstMatch(header);
+    final String? name = match?.group(1);
+    if (name == null || name.trim().isEmpty) {
+      return null;
+    }
+    return Uri.decodeFull(name.trim());
   }
 
   Map<String, String> _issueFilterPayload({

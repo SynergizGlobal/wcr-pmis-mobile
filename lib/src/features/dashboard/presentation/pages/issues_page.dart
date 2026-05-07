@@ -417,10 +417,9 @@ class _IssuesPageState extends State<IssuesPage> {
       children: <Widget>[
         Text(
           summary,
-          style: tt.titleMedium?.copyWith(
+          style: tt.bodySmall?.copyWith(
             color: cs.onSurfaceVariant.withValues(alpha: 0.85),
             fontWeight: FontWeight.w600,
-            fontSize: 12
           ),
         ),
         const SizedBox(height: 4),
@@ -430,8 +429,10 @@ class _IssuesPageState extends State<IssuesPage> {
             final double buttonWidth = compact ? 92 : 100;
             final double gap = compact ? 8 : 10;
             final double pillHorizontalPadding = compact ? 12 : 18;
-            final TextStyle? pageStyle = (compact ? tt.titleSmall : tt.bodySmall)
-                ?.copyWith(color: cs.primary, fontWeight: FontWeight.w700);
+            final TextStyle? pageStyle = tt.bodySmall?.copyWith(
+              color: cs.primary,
+              fontWeight: FontWeight.w700,
+            );
             return Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
