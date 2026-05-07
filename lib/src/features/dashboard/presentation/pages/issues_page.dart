@@ -242,24 +242,24 @@ class _IssuesPageState extends State<IssuesPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            actionsBox,
-            const SizedBox(height: 8),
             narrow
                 ? Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      searchField,
-                      const SizedBox(height: 2),
-                      entriesControl,
-                    ],
-                  )
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                searchField,
+                const SizedBox(height: 2),
+                entriesControl,
+              ],
+            )
                 : Row(
-                    children: <Widget>[
-                      searchField,
-                      const Spacer(),
-                      entriesControl,
-                    ],
-                  ),
+              children: <Widget>[
+                searchField,
+                const Spacer(),
+                entriesControl,
+              ],
+            ),
+            actionsBox,
+            const SizedBox(height: 10),
           ],
         ),
       ),
