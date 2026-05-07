@@ -223,15 +223,23 @@ class _AddProjectFormPageState extends ConsumerState<AddProjectFormPage> {
             )
           : Form(
               key: _formKey,
-              child: ListView(
-                padding: const EdgeInsets.all(12),
+              child: Column(
                 children: <Widget>[
-                  _buildStepHeader(),
-                  const SizedBox(height: 14),
-                  if (_currentStep == 0) ..._buildStepBasicDetails(),
-                  if (_currentStep == 1) ..._buildStepAdditionalDetails(),
-                  if (_currentStep == 2) ..._buildStepStructureAndCosts(),
-                  const SizedBox(height: 14),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
+                    child: _buildStepHeader(),
+                  ),
+                  Expanded(
+                    child: ListView(
+                      padding: const EdgeInsets.fromLTRB(12, 6, 12, 14),
+                      children: <Widget>[
+                        if (_currentStep == 0) ..._buildStepBasicDetails(),
+                        if (_currentStep == 1) ..._buildStepAdditionalDetails(),
+                        if (_currentStep == 2) ..._buildStepStructureAndCosts(),
+                        const SizedBox(height: 14),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -239,47 +247,120 @@ class _AddProjectFormPageState extends ConsumerState<AddProjectFormPage> {
   }
 
   Widget _buildStepHeader() {
-    final List<String> labels = <String>[
-      'Basic',
-      'Additional',
+    final List<String> stepTitles = <String>[
+      'Basic Details',
+      'Additional Details',
       'Structure & Costs',
     ];
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        Text(
-          'Step ${_currentStep + 1} of ${labels.length}: ${labels[_currentStep]}',
-          style: Theme.of(
-            context,
-          ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
-        ),
-        const SizedBox(height: 8),
-        Row(
-          children: List<Widget>.generate(labels.length, (int index) {
-            final bool active = index <= _currentStep;
-            return Expanded(
-              child: Container(
-                margin: EdgeInsets.only(right: index == labels.length - 1 ? 0 : 6),
-                height: 6,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(999),
-                  color: active
-                      ? Theme.of(context).colorScheme.primary
-                      : Theme.of(
-                          context,
-                        ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.7),
+    final List<String> chipLabels = <String>['Basic', 'More', 'Structure'];
+    final ColorScheme cs = Theme.of(context).colorScheme;
+    final TextTheme tt = Theme.of(context).textTheme;
+    return Container(
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        color: cs.surfaceContainerHighest.withValues(alpha: 0.42),
+        border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.6)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: Text(
+                  'Project Setup',
+                  style: tt.titleMedium?.copyWith(fontWeight: FontWeight.w700),
                 ),
               ),
-            );
-          }),
-        ),
-      ],
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: cs.primaryContainer.withValues(alpha: 0.55),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  'Step ${_currentStep + 1}/${stepTitles.length}',
+                  style: tt.labelLarge?.copyWith(
+                    color: cs.primary,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: List<Widget>.generate(stepTitles.length, (int index) {
+              final bool done = index < _currentStep;
+              final bool current = index == _currentStep;
+              final bool active = index <= _currentStep;
+              return Expanded(
+                child: Padding(
+                  padding: EdgeInsets.only(right: index == stepTitles.length - 1 ? 0 : 8),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 180),
+                    curve: Curves.easeOut,
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      color: active
+                          ? cs.primaryContainer.withValues(alpha: current ? 0.78 : 0.45)
+                          : cs.surface,
+                      border: Border.all(
+                        color: active
+                            ? cs.primary.withValues(alpha: 0.45)
+                            : cs.outlineVariant.withValues(alpha: 0.7),
+                      ),
+                    ),
+                    child: Row(
+                      children: <Widget>[
+                        Container(
+                          width: 22,
+                          height: 22,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: active ? cs.primary : cs.surfaceContainerHighest,
+                          ),
+                          child: Center(
+                            child: done
+                                ? Icon(Icons.check_rounded, size: 14, color: cs.onPrimary)
+                                : Text(
+                                    '${index + 1}',
+                                    style: tt.labelMedium?.copyWith(
+                                      color: active ? cs.onPrimary : cs.onSurfaceVariant,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            chipLabels[index],
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            softWrap: false,
+                            style: tt.bodySmall?.copyWith(
+                              fontWeight: current ? FontWeight.w700 : FontWeight.w600,
+                              color: active ? cs.onPrimaryContainer : cs.onSurfaceVariant,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }),
+          ),
+        ],
+      ),
     );
   }
 
   List<Widget> _buildStepBasicDetails() {
     return <Widget>[
-      _sectionTitle('Project Details'),
       _textField(_projectNameCtrl, 'Project Name *', required: true),
       const SizedBox(height: 10),
       AppSelectSheetField<String>(
@@ -346,7 +427,6 @@ class _AddProjectFormPageState extends ConsumerState<AddProjectFormPage> {
 
   List<Widget> _buildStepAdditionalDetails() {
     return <Widget>[
-      _sectionTitle('Additional Details'),
       _textField(_pbItemCtrl, 'PB Item No'),
       const SizedBox(height: 10),
       _textField(
