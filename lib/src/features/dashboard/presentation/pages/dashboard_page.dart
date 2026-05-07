@@ -13,6 +13,7 @@ import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/add_pr
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/ai_custom_report_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/issues_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/project_details_page.dart';
+import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/rfi_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/utility_shifting_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/providers/home_dashboard_provider.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/providers/update_forms_provider.dart';
@@ -60,8 +61,19 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
   _HomeSection _section = _HomeSection.home;
 
   void _onBottomSelected(int index) {
+    if (index == 2) {
+      context.pushNamed(AiCustomReportPage.routeName);
+      return;
+    }
     if (index == 3) {
-      _openMoreMenu();
+      final List<_HomeSection> moreSections = _availableMoreSections;
+      if (moreSections.length == 1) {
+        if (moreSections.first == _HomeSection.rfi) {
+          context.pushNamed(RfiPage.routeName);
+        }
+      } else {
+        _openMoreMenu();
+      }
       return;
     }
     setState(() {
@@ -75,6 +87,16 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
   }
 
   Future<void> _openMoreMenu() async {
+    final List<_HomeSection> moreSections = _availableMoreSections;
+    if (moreSections.isEmpty) {
+      return;
+    }
+    if (moreSections.length == 1) {
+      if (moreSections.first == _HomeSection.rfi) {
+        context.pushNamed(RfiPage.routeName);
+      }
+      return;
+    }
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
     final _HomeSection? result = await showModalBottomSheet<_HomeSection>(
       context: context,
@@ -86,20 +108,21 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
           padding: const EdgeInsets.fromLTRB(12, 0, 12, 18),
           child: Column(
             mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              _moreItem(_HomeSection.documents, Icons.description_outlined),
-              _moreItem(_HomeSection.quickLinks, Icons.link_rounded),
-              _moreItem(
-                _HomeSection.admin,
-                Icons.admin_panel_settings_outlined,
-              ),
-              _moreItem(_HomeSection.rfi, Icons.support_agent_outlined),
-            ],
+            children: moreSections
+                .map(
+                  (_HomeSection section) =>
+                      _moreItem(section, _iconForSection(section)),
+                )
+                .toList(),
           ),
         );
       },
     );
     if (result == null || !mounted) {
+      return;
+    }
+    if (result == _HomeSection.rfi) {
+      context.pushNamed(RfiPage.routeName);
       return;
     }
     setState(() {
@@ -119,11 +142,25 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     );
   }
 
+  List<_HomeSection> get _availableMoreSections => <_HomeSection>[
+        _HomeSection.rfi,
+      ];
+
+  IconData _iconForSection(_HomeSection section) {
+    return switch (section) {
+      _HomeSection.documents => Icons.description_outlined,
+      _HomeSection.quickLinks => Icons.link_rounded,
+      _HomeSection.admin => Icons.admin_panel_settings_outlined,
+      _HomeSection.rfi => Icons.support_agent_outlined,
+      _ => Icons.grid_view_rounded,
+    };
+  }
+
   String _titleForSection(_HomeSection section) {
     return switch (section) {
       _HomeSection.home => 'Western Central Railways',
       _HomeSection.updateForms => 'Update Forms',
-      _HomeSection.reports => 'Reports',
+      _HomeSection.reports => 'AI Reports',
       _HomeSection.documents => 'Documents',
       _HomeSection.quickLinks => 'Quick Links',
       _HomeSection.admin => 'Admin',
@@ -142,6 +179,9 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     );
     final DashboardViewMode viewMode = ref.watch(dashboardViewModeProvider);
     final String pageTitle = _titleForSection(_section);
+    final List<_HomeSection> moreSections = _availableMoreSections;
+    final bool singleMoreSection = moreSections.length == 1;
+    final _HomeSection? singleMore = singleMoreSection ? moreSections.first : null;
     final AppPalette palette =
         Theme.of(context).extension<AppPalette>() ?? AppPalette.light;
     final String initial = _avatarInitial(session);
@@ -287,15 +327,21 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                     ),
                     _bottomItem(
                       index: 2,
-                      label: 'Reports',
+                      label: 'AI Reports',
                       icon: Icons.bar_chart_rounded,
                       selectedIcon: Icons.bar_chart_rounded,
                     ),
                     _bottomItem(
                       index: 3,
-                      label: 'More',
-                      icon: Icons.grid_view_rounded,
-                      selectedIcon: Icons.grid_view_rounded,
+                      label: singleMoreSection
+                          ? _titleForSection(singleMore!)
+                          : 'More',
+                      icon: singleMoreSection
+                          ? _iconForSection(singleMore!)
+                          : Icons.grid_view_rounded,
+                      selectedIcon: singleMoreSection
+                          ? _iconForSection(singleMore!)
+                          : Icons.grid_view_rounded,
                     ),
                   ],
                 ),
@@ -311,36 +357,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     return switch (section) {
       _HomeSection.home => const <_DashboardCardSpec>[],
       _HomeSection.updateForms => const <_DashboardCardSpec>[],
-      _HomeSection.reports => <_DashboardCardSpec>[
-        _DashboardCardSpec(
-          title: 'Contracts',
-          icon: Icons.description_outlined,
-        ),
-        _DashboardCardSpec(
-          title: 'Contract-wise Activities',
-          icon: Icons.bar_chart_rounded,
-        ),
-        _DashboardCardSpec(
-          title: 'Progress Report',
-          icon: Icons.trending_up_rounded,
-        ),
-        _DashboardCardSpec(
-          title: 'Issues',
-          icon: Icons.error_outline_rounded,
-        ),
-        _DashboardCardSpec(
-          title: 'Land Acquisition',
-          icon: Icons.map_outlined,
-        ),
-        _DashboardCardSpec(
-          title: 'Utility Shifting',
-          icon: Icons.handyman_outlined,
-        ),
-        _DashboardCardSpec(
-          title: 'AI Custom Report',
-          icon: Icons.build_outlined,
-        ),
-      ],
+      _HomeSection.reports => const <_DashboardCardSpec>[],
       _HomeSection.documents => <_DashboardCardSpec>[
         _DashboardCardSpec(title: 'Circulars', icon: Icons.article_outlined),
         _DashboardCardSpec(
@@ -487,7 +504,17 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
   }) {
     return updateFormsAsync.when(
       data: (List<UpdateFormItem> forms) {
-        final List<_DashboardCardSpec> cards = forms
+        final List<UpdateFormItem> visibleForms = forms.where((UpdateFormItem item) {
+          final String key = _normalizeFormKey(item.formName);
+          final bool isProjects = key.contains('project');
+          final bool isExecutionMonitoring = key.contains('execution') &&
+              (key.contains('monitoring') || key.contains('monitering'));
+          final bool isIssues = key.contains('issue');
+          final bool isUtilityShifting =
+              key.contains('utility') && key.contains('shifting');
+          return isProjects || isExecutionMonitoring || isIssues || isUtilityShifting;
+        }).toList();
+        final List<_DashboardCardSpec> cards = visibleForms
             .map(
               (UpdateFormItem item) => _DashboardCardSpec(
                 title: item.formName,
