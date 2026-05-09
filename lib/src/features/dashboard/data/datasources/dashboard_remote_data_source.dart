@@ -347,6 +347,26 @@ class DashboardRemoteDataSource {
     return _normalizeResponse(response.data);
   }
 
+  Future<Map<String, dynamic>> fetchAddUtilityShiftingFormData() async {
+    final Response<dynamic> response = await _dio.post<dynamic>(
+      '/utility-shifting/ajax/form/add-utility-shifting',
+      data: const <String, dynamic>{},
+      options: _requestOptions,
+    );
+    return _normalizeResponse(response.data);
+  }
+
+  Future<Map<String, dynamic>> submitAddUtilityShifting({
+    required Map<String, dynamic> payload,
+  }) async {
+    final Response<dynamic> response = await _dio.post<dynamic>(
+      '/utility-shifting/ajax/form/add-utility-shifting',
+      data: payload,
+      options: _requestOptions,
+    );
+    return _normalizeResponse(response.data);
+  }
+
   String? _fileNameFromContentDisposition(String? header) {
     if (header == null || header.trim().isEmpty) {
       return null;
@@ -382,8 +402,18 @@ class DashboardRemoteDataSource {
   }
 
   Map<String, dynamic> _normalizeResponse(dynamic data) {
-    if (data is Map<String, dynamic>) {
-      return data;
+    // JSON maps are not always typed as Map<String, dynamic> at runtime; normalize
+    // keys so callers can read lists/options reliably.
+    if (data is Map) {
+      final Map<Object?, Object?> map = data as Map<Object?, Object?>;
+      return Map<String, dynamic>.fromEntries(
+        map.entries.map(
+          (MapEntry<Object?, Object?> e) => MapEntry<String, dynamic>(
+            e.key.toString(),
+            e.value,
+          ),
+        ),
+      );
     }
     if (data is List<dynamic>) {
       return <String, dynamic>{'data': data};

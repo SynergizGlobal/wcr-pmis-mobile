@@ -4,9 +4,11 @@ import 'package:excel/excel.dart' hide Border;
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:wcr_pmis_mobile/src/core/widgets/app_dialog.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/data/datasources/dashboard_remote_data_source.dart';
+import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/add_utility_shifting_form_page.dart';
 
 class UtilityShiftingPage extends StatefulWidget {
   const UtilityShiftingPage({super.key, required this.dataSource});
@@ -1034,12 +1036,10 @@ class _UtilityShiftingPageState extends State<UtilityShiftingPage>
   }
 
   Future<void> _showAddComingSoon() async {
-    await AppDialog.show(
-      context: context,
-      title: 'Add Utility Shifting',
-      message: 'Add Utility Shifting form will be connected next.',
-      type: AppDialogType.info,
-    );
+    final bool? added = await context.pushNamed<bool>(AddUtilityShiftingFormPage.routeName);
+    if (added == true && mounted) {
+      await _loadAll();
+    }
   }
 
   Future<void> _showEditComingSoon(Map<String, dynamic> row) async {

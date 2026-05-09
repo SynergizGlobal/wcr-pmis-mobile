@@ -8,6 +8,7 @@ import 'package:wcr_pmis_mobile/src/features/auth/presentation/pages/login_page.
 import 'package:wcr_pmis_mobile/src/features/dashboard/data/datasources/dashboard_remote_data_source.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/add_project_form_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/add_project_page.dart';
+import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/add_utility_shifting_form_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/ai_custom_report_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/dashboard_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/issues_page.dart';
@@ -54,6 +55,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         return LoginPage.routePath;
       }
       if (!loggedIn && loc == AddProjectFormPage.routePath) {
+        return LoginPage.routePath;
+      }
+      if (!loggedIn && loc == AddUtilityShiftingFormPage.routePath) {
         return LoginPage.routePath;
       }
       if (!loggedIn && loc == AiCustomReportPage.routePath) {
@@ -125,6 +129,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         name: AiCustomReportPage.routeName,
         builder: (BuildContext context, GoRouterState state) =>
             AiCustomReportPage(
+              dataSource: ref.read(dashboardRemoteDataSourceProvider),
+            ),
+      ),
+      GoRoute(
+        path: AddUtilityShiftingFormPage.routePath,
+        name: AddUtilityShiftingFormPage.routeName,
+        builder: (BuildContext context, GoRouterState state) =>
+            AddUtilityShiftingFormPage(
               dataSource: ref.read(dashboardRemoteDataSourceProvider),
             ),
       ),
