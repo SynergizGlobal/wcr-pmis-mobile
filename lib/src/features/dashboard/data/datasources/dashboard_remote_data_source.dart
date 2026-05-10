@@ -247,6 +247,106 @@ class DashboardRemoteDataSource {
     return _normalizeResponse(response.data);
   }
 
+  Future<Map<String, dynamic>> fetchAddIssueFormData() async {
+    final response = await _dio.post<dynamic>(
+      '/issue/ajax/form/add-issue-form',
+      data: const <String, dynamic>{},
+      options: _requestOptions,
+    );
+    return _normalizeResponse(response.data);
+  }
+
+  Future<Map<String, dynamic>> fetchIssueFormContracts({
+    required String projectIdFk,
+  }) async {
+    final response = await _dio.post<dynamic>(
+      '/issue/ajax/getContractsListForIssuesForm',
+      data: <String, dynamic>{'project_id_fk': projectIdFk},
+      options: _requestOptions,
+    );
+    return _normalizeResponse(response.data);
+  }
+
+  Future<Map<String, dynamic>> fetchIssueFormCategories({
+    required String contractTypeFk,
+  }) async {
+    final response = await _dio.post<dynamic>(
+      '/issue/ajax/getIssueCategoryListForIssuesForm',
+      data: <String, dynamic>{'contract_type_fk': contractTypeFk},
+      options: _requestOptions,
+    );
+    return _normalizeResponse(response.data);
+  }
+
+  Future<Map<String, dynamic>> fetchIssueFormTitles({
+    required String categoryFk,
+  }) async {
+    final response = await _dio.post<dynamic>(
+      '/issue/ajax/getIssueTitlesListForIssuesForm',
+      data: <String, dynamic>{'category_fk': categoryFk},
+      options: _requestOptions,
+    );
+    return _normalizeResponse(response.data);
+  }
+
+  Future<Map<String, dynamic>> fetchIssueFormStructures({
+    required String contractIdFk,
+  }) async {
+    final response = await _dio.post<dynamic>(
+      '/issue/ajax/getStructureListForIssue',
+      data: <String, dynamic>{'contract_id_fk': contractIdFk},
+      options: _requestOptions,
+    );
+    return _normalizeResponse(response.data);
+  }
+
+  Future<Map<String, dynamic>> fetchIssueFormComponents({
+    required String contractIdFk,
+    required String structure,
+  }) async {
+    final response = await _dio.post<dynamic>(
+      '/issue/ajax/getComponentListForIssue',
+      data: <String, dynamic>{
+        'contract_id_fk': contractIdFk,
+        'structure': structure,
+      },
+      options: _requestOptions,
+    );
+    return _normalizeResponse(response.data);
+  }
+
+  /// Add Issue: `POST /issue/add-issue` (multipart). Text fields + optional binary `issueFiles`.
+  Future<Map<String, dynamic>> submitAddIssue({
+    required Map<String, String> fields,
+    List<({Uint8List bytes, String fileName})> files = const [],
+  }) async {
+    final FormData formData = FormData();
+    fields.forEach((String k, String v) {
+      formData.fields.add(MapEntry<String, String>(k, v));
+    });
+    for (final ({Uint8List bytes, String fileName}) p in files) {
+      formData.files.add(
+        MapEntry<String, MultipartFile>(
+          'issueFiles',
+          MultipartFile.fromBytes(
+            p.bytes,
+            filename: p.fileName,
+          ),
+        ),
+      );
+    }
+    final Response<dynamic> response = await _dio.post<dynamic>(
+      '/issue/add-issue',
+      data: formData,
+      options: Options(
+        receiveTimeout: _dashboardReceiveTimeout,
+        connectTimeout: _dashboardConnectTimeout,
+        contentType: null,
+      ),
+    );
+    return _normalizeResponse(response.data);
+  }
+
   Future<Map<String, dynamic>> fetchUtilityShiftingList({
     int start = 0,
     int length = 10,

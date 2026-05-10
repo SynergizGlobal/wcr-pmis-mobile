@@ -90,11 +90,21 @@ class _UtilityShiftingPageState extends State<UtilityShiftingPage>
       pageSize: _uploadedPageSize,
     );
 
+    final ThemeData theme = Theme.of(context);
+    // TabBar defaults use ColorScheme.primary for selected labels; on a primary
+    // AppBar (light theme) that matches the background and text vanishes. Match AppBar foreground.
+    final Color appBarForeground =
+        theme.appBarTheme.foregroundColor ?? theme.colorScheme.onSurface;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Utility Shifting'),
         bottom: TabBar(
           controller: _tabController,
+          labelColor: appBarForeground,
+          unselectedLabelColor: appBarForeground.withValues(alpha: 0.72),
+          indicatorColor: appBarForeground,
+          dividerColor: appBarForeground.withValues(alpha: 0.22),
           tabs: const <Tab>[
             Tab(text: 'Utility Shifting'),
             Tab(text: 'Uploaded Utility Shifting Data'),

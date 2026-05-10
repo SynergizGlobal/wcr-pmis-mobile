@@ -6,6 +6,7 @@ import 'package:wcr_pmis_mobile/src/features/auth/domain/entities/auth_session.d
 import 'package:wcr_pmis_mobile/src/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:wcr_pmis_mobile/src/features/auth/presentation/pages/login_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/data/datasources/dashboard_remote_data_source.dart';
+import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/add_issue_form_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/add_project_form_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/add_project_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/add_utility_shifting_form_page.dart';
@@ -64,6 +65,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         return LoginPage.routePath;
       }
       if (!loggedIn && loc == IssuesPage.routePath) {
+        return LoginPage.routePath;
+      }
+      if (!loggedIn && loc == AddIssueFormPage.routePath) {
         return LoginPage.routePath;
       }
       if (!loggedIn && loc == UtilityShiftingPage.routePath) {
@@ -145,6 +149,18 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         name: IssuesPage.routeName,
         builder: (BuildContext context, GoRouterState state) =>
             IssuesPage(dataSource: ref.read(dashboardRemoteDataSourceProvider)),
+      ),
+      GoRoute(
+        path: AddIssueFormPage.routePath,
+        name: AddIssueFormPage.routeName,
+        builder: (BuildContext context, GoRouterState state) {
+          final AuthSession? session =
+              ref.read(authControllerProvider).valueOrNull;
+          return AddIssueFormPage(
+            dataSource: ref.read(dashboardRemoteDataSourceProvider),
+            session: session,
+          );
+        },
       ),
       GoRoute(
         path: UtilityShiftingPage.routePath,

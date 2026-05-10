@@ -3,9 +3,11 @@ import 'dart:io';
 import 'package:excel/excel.dart' hide Border;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:wcr_pmis_mobile/src/core/widgets/app_dialog.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/data/datasources/dashboard_remote_data_source.dart';
+import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/add_issue_form_page.dart';
 
 class IssuesPage extends StatefulWidget {
   const IssuesPage({super.key, required this.dataSource});
@@ -723,12 +725,11 @@ class _IssuesPageState extends State<IssuesPage> {
   }
 
   Future<void> _onAddIssueTap() async {
-    await AppDialog.show(
-      context: context,
-      title: 'Add Issue',
-      message: 'Issue add form will be connected next.',
-      type: AppDialogType.info,
-    );
+    final Object? result =
+        await context.push<Object?>(AddIssueFormPage.routePath);
+    if (result == true && mounted) {
+      await _reloadAll();
+    }
   }
 
   Future<void> _onIssueViewTap(Map<String, dynamic> row) async {
