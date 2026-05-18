@@ -13,7 +13,7 @@ import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/add_pr
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/ai_custom_report_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/issues_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/project_details_page.dart';
-import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/rfi_page.dart';
+import 'package:wcr_pmis_mobile/src/features/rfi/presentation/pages/rfi_dashboard_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/utility_shifting_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/providers/home_dashboard_provider.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/providers/update_forms_provider.dart';
@@ -69,7 +69,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
       final List<_HomeSection> moreSections = _availableMoreSections;
       if (moreSections.length == 1) {
         if (moreSections.first == _HomeSection.rfi) {
-          context.pushNamed(RfiPage.routeName);
+          context.pushNamed(RfiDashboardPage.routeName);
         }
       } else {
         _openMoreMenu();
@@ -93,7 +93,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     }
     if (moreSections.length == 1) {
       if (moreSections.first == _HomeSection.rfi) {
-        context.pushNamed(RfiPage.routeName);
+        context.pushNamed(RfiDashboardPage.routeName);
       }
       return;
     }
@@ -122,7 +122,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
       return;
     }
     if (result == _HomeSection.rfi) {
-      context.pushNamed(RfiPage.routeName);
+      context.pushNamed(RfiDashboardPage.routeName);
       return;
     }
     setState(() {

@@ -17,11 +17,6 @@ class AppDialogAction {
 class AppDialog {
   const AppDialog._();
 
-  /// Theme-aware alert dialog.
-  ///
-  /// - [title]: optional; if null or blank, the title row is hidden.
-  /// - [type]: info / error / success show a single **OK** by default.
-  ///   **confirmation** shows **Cancel** + **OK** by default (override with [actions]).
   static Future<void> show({
     required BuildContext context,
     required String message,

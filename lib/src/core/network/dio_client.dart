@@ -4,8 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pretty_dio_logger/pretty_dio_logger.dart';
 import 'package:wcr_pmis_mobile/src/app/config/app_config_provider.dart';
 import 'package:wcr_pmis_mobile/src/core/constants/api_constants.dart';
+import 'package:wcr_pmis_mobile/src/core/network/auth_interceptor.dart';
 import 'package:wcr_pmis_mobile/src/core/network/network_connectivity.dart';
 import 'package:wcr_pmis_mobile/src/core/network/session_cookie_manager.dart';
+import 'package:wcr_pmis_mobile/src/features/auth/presentation/providers/auth_token_provider.dart';
 
 final sessionCookieManagerProvider = FutureProvider<SessionCookieManager>((ref) {
   return SessionCookieManager.create();
@@ -49,6 +51,10 @@ final dioProvider = Provider<Dio>((ref) {
       },
     ),
   );
+  dio.interceptors.add(
+    AuthInterceptor(() => ref.read(authTokenProvider)),
+  );
+
   if (sessionCookieManager != null) {
     dio.interceptors.add(sessionCookieManager.asInterceptor());
   }

@@ -30,7 +30,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     WidgetsBinding.instance.addPostFrameCallback((_) => _prepareLoginForm());
   }
 
-  /// Fills username/password from disk when not already restored into session.
   Future<void> _prepareLoginForm() async {
     await Future<void>.delayed(Duration.zero);
     if (!mounted) {
@@ -97,7 +96,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       );
       return;
     }
-    // [GoRouter.redirect] sends authenticated users to the dashboard.
   }
 
   @override

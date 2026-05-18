@@ -1,20 +1,49 @@
 class ApiConstants {
   const ApiConstants._();
 
-  /// Manually flip to `false` when you want the production base URL.
   static const bool useDevServer = false;
 
-  static const String devBaseUrl = 'http://115.124.125.227:92/wcrpmis_qa/';
-  static const String prodBaseUrl = 'http://115.124.125.227:8444/wcrpmis/';
+  static const String wcrDevBaseUrl =
+      'https://pmis-wcrindianrailways.org/wcrpmis_qa/';
+  static const String wcrProdBaseUrl =
+      'https://pmis-wcrindianrailways.org/wcrpmis/';
 
-  /// Optional override: `flutter run --dart-define=BASE_URL=https://.../`
-  static String get baseUrl {
+  static const String rfiDevBaseUrl =
+      'https://pmis-wcrindianrailways.org/rfiSystem_qa/';
+  static const String rfiProdBaseUrl =
+      'https://pmis-wcrindianrailways.org/rfiSystem/';
+
+  static const String wcrHomePath = 'home';
+  static const String wcrLoginPath = 'login';
+  static const String wcrRfiRedirectPath = 'rfi/redirect';
+  static const String rfiSsoLoginPath = '/api/auth/login';
+  static const String rfiDashboardPath = 'dashboard';
+
+  static String get wcrBaseUrl {
     const String fromEnv = String.fromEnvironment('BASE_URL');
     if (fromEnv.isNotEmpty) {
       return fromEnv;
     }
-    return useDevServer ? devBaseUrl : prodBaseUrl;
+    return useDevServer ? wcrDevBaseUrl : wcrProdBaseUrl;
   }
+
+  static String get baseUrl => wcrBaseUrl;
+
+  static String get rfiBaseUrl =>
+      useDevServer ? rfiDevBaseUrl : rfiProdBaseUrl;
+
+  static Uri originUriFor(String baseUrl) {
+    final Uri parsed = Uri.parse(baseUrl);
+    return Uri(
+      scheme: parsed.scheme,
+      host: parsed.host,
+      port: parsed.hasPort ? parsed.port : null,
+    );
+  }
+
+  static Uri get wcrOriginUri => originUriFor(wcrBaseUrl);
+
+  static Uri get rfiOriginUri => originUriFor(rfiBaseUrl);
 
   static const Duration connectTimeout = Duration(seconds: 20);
   static const Duration receiveTimeout = Duration(seconds: 60);

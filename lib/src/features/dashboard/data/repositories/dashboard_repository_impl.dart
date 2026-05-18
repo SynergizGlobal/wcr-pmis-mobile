@@ -80,7 +80,6 @@ class DashboardRepositoryImpl implements DashboardRepository {
     } catch (error, stackTrace) {
       debugPrint('[DashboardRepo] unexpected exception: $error');
       debugPrint('$stackTrace');
-      // Fallback with empty model to avoid hard-failing Home UI
       return const Right<Failure, HomeDashboardData>(
         HomeDashboardData(
           overview: HomeOverview(
@@ -131,7 +130,6 @@ class DashboardRepositoryImpl implements DashboardRepository {
         if (rowTypeName.trim().toLowerCase() == target) {
           return true;
         }
-        // Fallback for payloads that only provide IDs.
         final String rowTypeId =
             row['project_type_id_fk']?.toString() ??
             row['project_type_id']?.toString() ??
@@ -201,7 +199,6 @@ class DashboardRepositoryImpl implements DashboardRepository {
         );
       }
 
-      // Fallback: if overview endpoint has no names, derive from detail endpoint.
       if (projectNames.isEmpty) {
         for (final ProjectMajorItem item in items) {
           if (item.projectName.isNotEmpty &&
@@ -383,10 +380,8 @@ class DashboardRepositoryImpl implements DashboardRepository {
       final String key = name.trim().toLowerCase();
       final int previous = result[key] ?? 0;
       if (count > 0) {
-        // API often repeats rows per structure_type; keep strongest declared total.
         result[key] = count > previous ? count : previous;
       } else {
-        // Fallback: no explicit count, so derive from number of rows.
         result[key] = previous + 1;
       }
     }

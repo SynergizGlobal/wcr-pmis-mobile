@@ -91,8 +91,6 @@ class _UtilityShiftingPageState extends State<UtilityShiftingPage>
     );
 
     final ThemeData theme = Theme.of(context);
-    // TabBar defaults use ColorScheme.primary for selected labels; on a primary
-    // AppBar (light theme) that matches the background and text vanishes. Match AppBar foreground.
     final Color appBarForeground =
         theme.appBarTheme.foregroundColor ?? theme.colorScheme.onSurface;
 
@@ -1247,9 +1245,7 @@ class _UtilityShiftingPageState extends State<UtilityShiftingPage>
           return relativePath;
         }
       } on MissingPluginException {
-        // fallback below
       } on PlatformException {
-        // fallback below
       }
     }
     final Directory dir = await getApplicationDocumentsDirectory();

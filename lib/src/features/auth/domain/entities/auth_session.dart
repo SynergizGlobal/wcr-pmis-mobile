@@ -1,6 +1,5 @@
 import 'package:equatable/equatable.dart';
 
-/// Logged-in user session (matches `/login` JSON; token optional for future).
 class AuthSession extends Equatable {
   const AuthSession({
     this.token = '',

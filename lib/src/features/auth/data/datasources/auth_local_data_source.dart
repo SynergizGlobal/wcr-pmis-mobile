@@ -43,8 +43,6 @@ class AuthLocalDataSource {
     );
   }
 
-  /// Persists credentials/profile when [rememberMe] is true; otherwise clears
-  /// all remembered credentials/profile so the last non-remember login wins.
   Future<void> saveAfterLogin({
     required bool rememberMe,
     required String userId,

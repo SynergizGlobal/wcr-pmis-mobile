@@ -14,7 +14,11 @@ import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/ai_cus
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/dashboard_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/issues_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/project_details_page.dart';
-import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/rfi_page.dart';
+import 'package:wcr_pmis_mobile/src/features/rfi/domain/rfi_list_kind.dart';
+import 'package:wcr_pmis_mobile/src/features/rfi/presentation/pages/create_rfi_page.dart';
+import 'package:wcr_pmis_mobile/src/features/rfi/presentation/pages/rfi_dashboard_page.dart';
+import 'package:wcr_pmis_mobile/src/features/rfi/presentation/pages/rfi_detail_page.dart';
+import 'package:wcr_pmis_mobile/src/features/rfi/presentation/pages/rfi_list_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/utility_shifting_page.dart';
 import 'package:wcr_pmis_mobile/src/features/profile/presentation/pages/profile_page.dart';
 import 'package:wcr_pmis_mobile/src/features/settings/presentation/pages/settings_page.dart';
@@ -73,7 +77,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       if (!loggedIn && loc == UtilityShiftingPage.routePath) {
         return LoginPage.routePath;
       }
-      if (!loggedIn && loc == RfiPage.routePath) {
+      if (!loggedIn && loc.startsWith('/rfi')) {
         return LoginPage.routePath;
       }
       if (loggedIn && loc == LoginPage.routePath) {
@@ -171,9 +175,37 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             ),
       ),
       GoRoute(
-        path: RfiPage.routePath,
-        name: RfiPage.routeName,
-        builder: (BuildContext context, GoRouterState state) => const RfiPage(),
+        path: RfiDashboardPage.routePath,
+        name: RfiDashboardPage.routeName,
+        builder: (BuildContext context, GoRouterState state) =>
+            const RfiDashboardPage(),
+      ),
+      GoRoute(
+        path: CreateRfiPage.routePath,
+        name: CreateRfiPage.routeName,
+        builder: (BuildContext context, GoRouterState state) =>
+            const CreateRfiPage(),
+      ),
+      GoRoute(
+        path: RfiListPage.routePath,
+        name: RfiListPage.routeName,
+        builder: (BuildContext context, GoRouterState state) {
+          final RfiListKind? kind = RfiListKindX.fromRouteSegment(
+            state.pathParameters['kind'],
+          );
+          if (kind == null) {
+            return const RfiDashboardPage();
+          }
+          return RfiListPage(kind: kind);
+        },
+      ),
+      GoRoute(
+        path: RfiDetailPage.routePath,
+        name: RfiDetailPage.routeName,
+        builder: (BuildContext context, GoRouterState state) {
+          final int id = int.tryParse(state.pathParameters['id'] ?? '') ?? 0;
+          return RfiDetailPage(rfiId: id);
+        },
       ),
     ],
   );

@@ -25,7 +25,6 @@ Map<String, dynamic> _asStringKeyedMap(dynamic data) {
   );
 }
 
-/// Merges common wrapper objects so list keys are visible even if nested.
 bool _shouldReplaceMergedValue(dynamic existing, dynamic v) {
   if (existing == null) {
     return true;
@@ -195,7 +194,6 @@ String _inferOptionLabel(Map<String, dynamic> map) {
     'hod_name',
     'description',
     'location_name',
-    // Backend often exposes human-readable text on these keys:
     'execution_agency_fk',
     'utility_type_fk',
     'utility_category_fk',
@@ -950,8 +948,6 @@ class _AddUtilityShiftingFormPageState
     }
   }
 
-  /// Lays out fields in 1–3 columns without [GridView] fixed cell heights (those
-  /// left large empty gaps between short inputs on narrow screens).
   Widget _grid(List<Widget> children) {
     const double gapH = 12;
     const double gapV = 10;

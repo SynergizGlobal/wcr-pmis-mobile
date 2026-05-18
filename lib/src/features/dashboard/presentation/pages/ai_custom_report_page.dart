@@ -381,7 +381,6 @@ class _AiCustomReportPageState extends State<AiCustomReportPage> {
 
     if (_groupBy != null) {
       rows.sort((Map<String, dynamic> a, Map<String, dynamic> b) {
-        // Keep group headers in predictable ascending order.
         final int groupCompare = _compareByKey(a, b, _groupBy!);
         if (groupCompare != 0) {
           return groupCompare;
@@ -1096,9 +1095,7 @@ class _AiCustomReportPageState extends State<AiCustomReportPage> {
           return relativePath;
         }
       } on MissingPluginException {
-        // fallback
       } on PlatformException {
-        // fallback
       }
     }
     final Directory dir = await getApplicationDocumentsDirectory();

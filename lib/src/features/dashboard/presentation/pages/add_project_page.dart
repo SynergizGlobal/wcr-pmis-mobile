@@ -755,9 +755,7 @@ class _AddProjectPageState extends ConsumerState<AddProjectPage> {
           return relativePath;
         }
       } on MissingPluginException {
-        // Happens on hot reload/full-restart mismatch; fallback safely.
       } on PlatformException {
-        // Fall through to app-scoped fallback path for unsupported devices.
       }
     }
 

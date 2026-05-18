@@ -832,9 +832,7 @@ class _IssuesPageState extends State<IssuesPage> {
           return relativePath;
         }
       } on MissingPluginException {
-        // fallback below
       } on PlatformException {
-        // fallback below
       }
     }
     final Directory dir = await getApplicationDocumentsDirectory();

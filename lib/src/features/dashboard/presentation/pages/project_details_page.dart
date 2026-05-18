@@ -261,7 +261,7 @@ class _ProjectDetailsPageState extends ConsumerState<ProjectDetailsPage>
   }
 
   _TableWidths _resolveTableWidths(double totalWidth) {
-    const double horizontalRowPadding = 20; // 10 left + 10 right
+    const double horizontalRowPadding = 20;
     final double contentWidth = (totalWidth - horizontalRowPadding).clamp(
       0,
       double.infinity,

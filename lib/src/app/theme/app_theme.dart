@@ -82,7 +82,6 @@ class AppPalette extends ThemeExtension<AppPalette> {
 class AppTheme {
   const AppTheme._();
 
-  /// Brand primary: #50589C.
   static const Color brandPrimary = Color(0xFF50589C);
 
   static ThemeData get light {

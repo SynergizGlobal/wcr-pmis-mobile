@@ -127,7 +127,6 @@ class AddIssueFormPage extends StatefulWidget {
 
   final DashboardRemoteDataSource dataSource;
 
-  /// Current login; used for **Reported by** (matches web — fixed to logged-in user).
   final AuthSession? session;
 
   @override
@@ -401,7 +400,6 @@ class _AddIssueFormPageState extends State<AddIssueFormPage> {
     return out;
   }
 
-  /// Rows from `add-issue-form`: maps use [rowFieldKey]; plain strings are allowed too.
   List<_IssueOption> _issueOptionsFromField(
     List<dynamic> rows, {
     required String rowFieldKey,
@@ -432,7 +430,6 @@ class _AddIssueFormPageState extends State<AddIssueFormPage> {
     return out;
   }
 
-  /// `add-issue-form` **Responsible Organization** list: rows use `railway_name` (and optional ids).
   List<_IssueOption> _optionsFromRailwayRows(List<dynamic> rows) {
     final List<_IssueOption> out = <_IssueOption>[];
     final Set<String> seen = <String>{};
@@ -481,7 +478,6 @@ class _AddIssueFormPageState extends State<AddIssueFormPage> {
     return out;
   }
 
-  /// `add-issue-form` **Other Responsible Organization** list: rows use `other_organization`.
   List<_IssueOption> _optionsFromOtherOrgRows(List<dynamic> rows) {
     final List<_IssueOption> out = <_IssueOption>[];
     final Set<String> seen = <String>{};
@@ -794,7 +790,6 @@ class _AddIssueFormPageState extends State<AddIssueFormPage> {
     return _responsible!.id;
   }
 
-  /// Field names match `POST /issue/add-issue` (multipart text map).
   Map<String, String> _buildAddIssueFields() {
     final String titleText = _title?.label ?? _title?.id ?? '';
     final String priorityText = _priority?.label ?? _priority?.id ?? '';

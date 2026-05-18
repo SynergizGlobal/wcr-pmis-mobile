@@ -315,7 +315,6 @@ class DashboardRemoteDataSource {
     return _normalizeResponse(response.data);
   }
 
-  /// Add Issue: `POST /issue/add-issue` (multipart). Text fields + optional binary `issueFiles`.
   Future<Map<String, dynamic>> submitAddIssue({
     required Map<String, String> fields,
     List<({Uint8List bytes, String fileName})> files = const [],
@@ -502,8 +501,6 @@ class DashboardRemoteDataSource {
   }
 
   Map<String, dynamic> _normalizeResponse(dynamic data) {
-    // JSON maps are not always typed as Map<String, dynamic> at runtime; normalize
-    // keys so callers can read lists/options reliably.
     if (data is Map) {
       final Map<Object?, Object?> map = data as Map<Object?, Object?>;
       return Map<String, dynamic>.fromEntries(

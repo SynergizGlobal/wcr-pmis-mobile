@@ -1080,9 +1080,7 @@ class _AddProjectFormPageState extends ConsumerState<AddProjectFormPage> {
           return relativePath;
         }
       } on MissingPluginException {
-        // fallback
       } on PlatformException {
-        // fallback
       }
     }
     final Directory dir = await getApplicationDocumentsDirectory();

@@ -100,7 +100,6 @@ List<UpdateFormSubItem> _parseSubMenus(dynamic raw) {
           items.add(UpdateFormSubItem.fromJson(map));
         }
       } catch (_) {
-        // Ignore malformed submenu row and continue parsing remaining items.
       }
     }
   }
