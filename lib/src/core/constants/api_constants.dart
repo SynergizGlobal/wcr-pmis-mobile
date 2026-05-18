@@ -2,7 +2,7 @@ class ApiConstants {
   const ApiConstants._();
 
   /// Manually flip to `false` when you want the production base URL.
-  static const bool useDevServer = true;
+  static const bool useDevServer = false;
 
   static const String devBaseUrl = 'http://115.124.125.227:92/wcrpmis_qa/';
   static const String prodBaseUrl = 'http://115.124.125.227:8444/wcrpmis/';
