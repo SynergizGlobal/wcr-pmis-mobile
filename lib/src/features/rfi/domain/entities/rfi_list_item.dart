@@ -46,9 +46,26 @@ class RfiListItem {
   factory RfiListItem.fromJson(Map<String, dynamic> json) {
     String str(String key) => json[key]?.toString() ?? '';
 
+    String strFromKeys(List<String> keys) {
+      for (final String key in keys) {
+        final String value = json[key]?.toString().trim() ?? '';
+        if (value.isNotEmpty) {
+          return value;
+        }
+      }
+      return '';
+    }
+
+    final int parsedId = (json['rfiId'] as num?)?.toInt() ??
+        (json['id'] as num?)?.toInt() ??
+        int.tryParse(json['id']?.toString() ?? '') ??
+        int.tryParse(json['rfiId']?.toString() ?? '') ??
+        0;
+
     return RfiListItem(
-      rfiId: (json['rfiId'] as num?)?.toInt() ?? 0,
-      rfiNo: str('rfiNo'),
+      rfiId: parsedId,
+      // API returns human-readable id as `rfi_Id` (e.g. MJB_77/2_000157_RFI0001_R0).
+      rfiNo: strFromKeys(<String>['rfi_Id', 'rfiNo', 'rfi_id']),
       project: str('project'),
       structure: str('structure'),
       activity: str('activity'),

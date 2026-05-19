@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:wcr_pmis_mobile/src/core/widgets/app_dialog.dart';
 import 'package:wcr_pmis_mobile/src/features/auth/domain/entities/auth_session.dart';
 import 'package:wcr_pmis_mobile/src/features/rfi/domain/entities/rfi_list_item.dart';
+import 'package:wcr_pmis_mobile/src/features/rfi/domain/inspection/inspection_item.dart';
 import 'package:wcr_pmis_mobile/src/features/rfi/domain/utils/rfi_user_role.dart';
-import 'package:wcr_pmis_mobile/src/features/rfi/presentation/pages/rfi_detail_page.dart';
 import 'package:wcr_pmis_mobile/src/features/rfi/presentation/rfi_theme.dart';
+import 'package:wcr_pmis_mobile/src/features/rfi/presentation/widgets/assign_executive_dialog.dart';
 import 'package:wcr_pmis_mobile/src/features/rfi/presentation/widgets/delete_rfi_dialog.dart';
 import 'package:wcr_pmis_mobile/src/features/rfi/presentation/widgets/rfi_action_menu.dart';
+import 'package:wcr_pmis_mobile/src/features/rfi/presentation/widgets/upload_attachment_dialog.dart';
+import 'package:wcr_pmis_mobile/src/features/rfi/presentation/widgets/upload_test_results_dialog.dart';
+import 'package:wcr_pmis_mobile/src/features/rfi/domain/utils/rfi_list_item_mapper.dart';
 
 class RfiListActions {
   const RfiListActions._();
@@ -50,12 +53,10 @@ class RfiListActions {
           title: 'View Details',
           icon: Icons.remove_red_eye_outlined,
           color: RfiTheme.actionView(scheme),
-          onTap: () {
-            context.pushNamed(
-              RfiDetailPage.routeName,
-              pathParameters: <String, String>{'id': item.rfiId.toString()},
-            );
-          },
+          onTap: () => context.pushNamed(
+            'rfi-detail',
+            pathParameters: <String, String>{'id': item.rfiId.toString()},
+          ),
         ),
       );
     }
@@ -66,7 +67,7 @@ class RfiListActions {
           title: 'Edit RFI',
           icon: Icons.edit_outlined,
           color: RfiTheme.actionEdit(scheme),
-          onTap: () => _comingSoon(context, 'Edit RFI'),
+          onTap: () => context.pushNamed('rfi-update', extra: item),
         ),
       );
     }
@@ -77,7 +78,12 @@ class RfiListActions {
           title: 'Upload Attachments',
           icon: Icons.attach_file_rounded,
           color: RfiTheme.actionDefault(scheme),
-          onTap: () => _comingSoon(context, 'Upload Attachments'),
+          onTap: () {
+            showDialog<void>(
+              context: context,
+              builder: (_) => UploadAttachmentDialog(rfiId: item.rfiId),
+            );
+          },
         ),
       );
     }
@@ -88,7 +94,12 @@ class RfiListActions {
           title: 'Upload Test Results',
           icon: Icons.biotech_rounded,
           color: RfiTheme.actionDefault(scheme),
-          onTap: () => _comingSoon(context, 'Upload Test Results'),
+          onTap: () {
+            showDialog<void>(
+              context: context,
+              builder: (_) => UploadTestResultsDialog(rfiId: item.rfiId),
+            );
+          },
         ),
       );
     }
@@ -99,7 +110,7 @@ class RfiListActions {
           title: 'Start Inspection Online',
           icon: Icons.online_prediction,
           color: RfiTheme.actionDefault(scheme),
-          onTap: () => _comingSoon(context, 'Start Inspection Online'),
+          onTap: () => _startInspection(context, item, offline: false),
         ),
       );
       actions.add(
@@ -107,7 +118,7 @@ class RfiListActions {
           title: 'Start Inspection Offline',
           icon: Icons.offline_pin_outlined,
           color: RfiTheme.actionDefault(scheme),
-          onTap: () => _comingSoon(context, 'Start Inspection Offline'),
+          onTap: () => _startInspection(context, item, offline: true),
         ),
       );
     }
@@ -118,7 +129,7 @@ class RfiListActions {
           title: 'Submit',
           icon: Icons.check_circle_outline_rounded,
           color: RfiTheme.actionDefault(scheme),
-          onTap: () => _comingSoon(context, 'Submit Inspection'),
+          onTap: () => _startInspection(context, item, offline: false),
         ),
       );
     }
@@ -168,7 +179,14 @@ class RfiListActions {
           title: 'Change Executive',
           icon: Icons.person_search_outlined,
           color: RfiTheme.actionDefault(scheme),
-          onTap: () => _comingSoon(context, 'Change Executive'),
+          onTap: () {
+            showDialog<void>(
+              context: context,
+              builder: (_) => AssignExecutiveDialog(
+                item: toPortedRfiListItem(item),
+              ),
+            );
+          },
         ),
       );
     }
@@ -176,15 +194,34 @@ class RfiListActions {
     return actions;
   }
 
-  static RfiUserRole roleFromSession(AuthSession? session) =>
-      RfiUserRole.fromSession(session);
-
-  static Future<void> _comingSoon(BuildContext context, String action) {
-    return AppDialog.show(
-      context: context,
-      title: action,
-      message: '$action will be available in a future update.',
-      type: AppDialogType.info,
+  static void _startInspection(
+    BuildContext context,
+    RfiListItem item, {
+    required bool offline,
+  }) {
+    final InspectionItem inspectionItem = InspectionItem(
+      id: item.rfiId,
+      rfiId: item.rfiNo,
+      project: item.project,
+      work: item.work,
+      contract: item.contract ?? '',
+      structure: item.structure,
+      element: item.element,
+      activity: item.activity,
+      status: item.status,
+      dateOfSubmission: item.dateOfSubmission,
+      assignedPersonClient: item.assignedPersonClient,
+      nameOfRepresentative: item.nameOfRepresentative,
+    );
+    context.pushNamed(
+      'rfi-inspection-start',
+      extra: <String, dynamic>{
+        'item': inspectionItem,
+        'isOffline': offline,
+      },
     );
   }
+
+  static RfiUserRole roleFromSession(AuthSession? session) =>
+      RfiUserRole.fromSession(session);
 }

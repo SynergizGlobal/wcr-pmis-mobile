@@ -165,36 +165,53 @@ class _RfiDashboardPageState extends ConsumerState<RfiDashboardPage> {
         ),
       );
     }
-    void addComingSoon(String label, IconData icon) {
+    if (role.canViewInspection) {
       actions.add(
         _RfiMoreAction(
-          label: label,
-          icon: icon,
-          onSelect: (BuildContext context) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('$label will be available soon.')),
-            );
-          },
+          label: 'Inspection',
+          icon: Icons.assignment_outlined,
+          onSelect: (BuildContext context) =>
+              context.pushNamed('rfi-inspection'),
         ),
       );
     }
-
-    if (role.canViewInspection) {
-      addComingSoon('Inspection', Icons.assignment_outlined);
-    }
     if (role.canViewValidation) {
-      addComingSoon('Validation', Icons.verified_user_outlined);
+      actions.add(
+        _RfiMoreAction(
+          label: 'Validation',
+          icon: Icons.verified_user_outlined,
+          onSelect: (BuildContext context) =>
+              context.pushNamed('rfi-validation'),
+        ),
+      );
     }
     if (role.canViewRfiLog) {
-      addComingSoon('RFI Log', Icons.history);
+      actions.add(
+        _RfiMoreAction(
+          label: 'RFI Log',
+          icon: Icons.history,
+          onSelect: (BuildContext context) => context.pushNamed('rfi-log'),
+        ),
+      );
     }
     if (role.canChangeExecutive('')) {
-      addComingSoon('Assign Executive', Icons.person_add_alt_outlined);
+      actions.add(
+        _RfiMoreAction(
+          label: 'Assign Executive',
+          icon: Icons.person_add_alt_outlined,
+          onSelect: (BuildContext context) =>
+              context.pushNamed('rfi-assign-executive'),
+        ),
+      );
     }
     if (role.canViewInspectionReferenceForm) {
-      addComingSoon(
-        'Inspection Reference Form',
-        Icons.description_outlined,
+      actions.add(
+        _RfiMoreAction(
+          label: 'Inspection Reference Form',
+          icon: Icons.description_outlined,
+          onSelect: (BuildContext context) =>
+              context.pushNamed('rfi-inspection-reference'),
+        ),
       );
     }
     return actions;

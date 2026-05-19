@@ -26,6 +26,16 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>Camera access is used to capture inspection site photos for RFI records.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Location is used to record the inspection site address for RFI.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Photo library access is used to attach images to RFI inspections.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Photo library access is used to save RFI documents and images.</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>UIFileSharingEnabled</key>
 	<true/>
 	<key>LSSupportsOpeningDocumentsInPlace</key>

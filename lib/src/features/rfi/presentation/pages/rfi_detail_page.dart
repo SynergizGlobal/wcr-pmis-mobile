@@ -21,7 +21,9 @@ class RfiDetailPage extends ConsumerWidget {
       appBar: AppBar(
         title: detailAsync.maybeWhen(
           data: (Map<String, dynamic> data) {
-            final String no = data['rfiNo']?.toString() ?? '';
+            final String no = data['rfi_Id']?.toString() ??
+                data['rfiNo']?.toString() ??
+                '';
             return Text(no.isEmpty ? 'RFI Details' : no);
           },
           orElse: () => const Text('RFI Details'),
@@ -69,6 +71,7 @@ class _RfiDetailBody extends StatelessWidget {
   final Map<String, dynamic> data;
 
   static const List<String> _preferredKeys = <String>[
+    'rfi_Id',
     'rfiNo',
     'status',
     'approvalStatus',
