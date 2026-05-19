@@ -98,52 +98,121 @@ class _StartInspectionOnlineScreenState
       },
     );
 
+    final bool isBusy = state.isSubmitting || state.isUploadingFile;
+    final ColorScheme scheme = Theme.of(context).colorScheme;
+
     return PopScope(
-      canPop: state.currentStep == 1,
+      canPop: state.currentStep == 1 && !isBusy,
       onPopInvokedWithResult: (bool didPop, Object? result) {
         if (didPop) return;
+        if (isBusy) return;
         if (state.currentStep == 2) {
           _goToInspectionStep1(notifier);
         }
       },
-      child: Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        title: Text(widget.isOffline ? 'RFI Inspection (Offline)' : 'RFI Inspection'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: state.currentStep == 1
-              ? () {
-                  if (context.canPop()) context.pop();
-                }
-              : () => _goToInspectionStep1(notifier),
-        ),
-      ),
-      body: GestureDetector(
-        behavior: HitTestBehavior.translucent,
-        onTap: () => FocusScope.of(context).unfocus(),
-        child: SafeArea(
-          top: false,
-          child: Column(
-            children: [
-              _buildHeader(context, state.currentStep),
-              Divider(height: 1, thickness: 1, color: Theme.of(context).dividerColor),
-              Expanded(
-                child: PageView(
-                  controller: _pageController,
-                  physics: const NeverScrollableScrollPhysics(),
+      child: Stack(
+        children: [
+          Scaffold(
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+            appBar: AppBar(
+              title: Text(
+                widget.isOffline ? 'RFI Inspection (Offline)' : 'RFI Inspection',
+              ),
+              leading: IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: isBusy
+                    ? null
+                    : state.currentStep == 1
+                        ? () {
+                            if (context.canPop()) context.pop();
+                          }
+                        : () => _goToInspectionStep1(notifier),
+              ),
+            ),
+            body: GestureDetector(
+              behavior: HitTestBehavior.translucent,
+              onTap: () => FocusScope.of(context).unfocus(),
+              child: SafeArea(
+                top: false,
+                child: Column(
                   children: [
-                    _buildStep1(context, state, notifier),
-                    _buildStep2(context, state, notifier),
+                    _buildHeader(context, state.currentStep),
+                    Divider(
+                      height: 1,
+                      thickness: 1,
+                      color: Theme.of(context).dividerColor,
+                    ),
+                    Expanded(
+                      child: PageView(
+                        controller: _pageController,
+                        physics: const NeverScrollableScrollPhysics(),
+                        children: [
+                          _buildStep1(context, state, notifier),
+                          _buildStep2(context, state, notifier),
+                        ],
+                      ),
+                    ),
+                    _buildStickyFooter(context, state, notifier),
                   ],
                 ),
               ),
-              _buildStickyFooter(context, state, notifier),
-            ],
+            ),
+          ),
+          if (isBusy)
+            _buildBlockingLoader(
+              context,
+              scheme: scheme,
+              message: state.isSubmitting
+                  ? 'Submitting inspection…'
+                  : 'Uploading document…',
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBlockingLoader(
+    BuildContext context, {
+    required ColorScheme scheme,
+    required String message,
+  }) {
+    return Positioned.fill(
+      child: AbsorbPointer(
+        child: ColoredBox(
+          color: scheme.scrim.withValues(alpha: 0.45),
+          child: Center(
+            child: Container(
+              margin: const EdgeInsets.symmetric(horizontal: 32),
+              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 28),
+              decoration: BoxDecoration(
+                color: scheme.surface,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: scheme.shadow.withValues(alpha: 0.12),
+                    blurRadius: 16,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CircularProgressIndicator(color: scheme.primary),
+                  const SizedBox(height: 16),
+                  Text(
+                    message,
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
       ),
-    ),
     );
   }
  
@@ -514,7 +583,9 @@ class _StartInspectionOnlineScreenState
                 width: double.infinity,
                 height: 50,
                 child: ElevatedButton(
-                  onPressed: _hasCapturedSelfie(state)
+                  onPressed: _hasCapturedSelfie(state) &&
+                          !state.isSubmitting &&
+                          !state.isUploadingFile
                       ? () {
                           notifier.updateStep(2);
                           _pageController.animateToPage(1,
@@ -1645,6 +1716,7 @@ class _StartInspectionOnlineScreenState
     InspectionFormNotifier notifier,
   ) {
     final ColorScheme scheme = Theme.of(context).colorScheme;
+    final bool isBusy = state.isSubmitting || state.isUploadingFile;
 
     return Column(
       children: [
@@ -1654,7 +1726,7 @@ class _StartInspectionOnlineScreenState
               child: SizedBox(
                 height: _footerBtnHeight,
                 child: OutlinedButton(
-                  onPressed: () => _goToInspectionStep1(notifier),
+                  onPressed: isBusy ? null : () => _goToInspectionStep1(notifier),
                   style: RfiTheme.secondaryOutlined(scheme).copyWith(
                     padding: const WidgetStatePropertyAll(
                       EdgeInsets.symmetric(horizontal: 14),
@@ -1691,7 +1763,7 @@ class _StartInspectionOnlineScreenState
               child: SizedBox(
                 height: _footerBtnHeight,
                 child: OutlinedButton(
-                  onPressed: state.isDraftSaving
+                  onPressed: isBusy || state.isDraftSaving
                       ? null
                       : () async {
                           await notifier.saveDraft();
@@ -1747,11 +1819,11 @@ class _StartInspectionOnlineScreenState
         ),
         const SizedBox(height: 16),
         Builder(builder: (btnContext) {
-          final isReady = !state.isSubmitting &&
+          final isReady = !isBusy &&
               !state.locationPermissionDenied &&
               notifier.checkIsStep2Valid(widget.isOffline);
           final radius = BorderRadius.circular(_footerBtnRadius);
-          final showGradient = isReady && !state.isSubmitting;
+          final showGradient = isReady;
 
           return DecoratedBox(
             decoration: BoxDecoration(
@@ -1772,11 +1844,11 @@ class _StartInspectionOnlineScreenState
               child: Material(
                 color: Colors.transparent,
                 child: InkWell(
-                  onTap: state.isSubmitting || !isReady
+                  onTap: isBusy || !isReady
                       ? null
                       : () async {
                           try {
-                            await notifier.submit();
+                            await notifier.submit(isOffline: widget.isOffline);
                             if (!mounted) return;
                             if (btnContext.mounted) {
                               GlobalAlertDialog.show(
@@ -1842,7 +1914,7 @@ class _StartInspectionOnlineScreenState
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            'Submit Inspection',
+                            isBusy ? 'Please wait…' : 'Submit Inspection',
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w700,

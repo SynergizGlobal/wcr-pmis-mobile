@@ -7,11 +7,10 @@ import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:path/path.dart' as p;
-import 'package:pdf/pdf.dart';
-import 'package:pdf/widgets.dart' as pw;
-import 'package:path_provider/path_provider.dart';
 import '../../data/inspection/inspection_repository.dart';
+import '../../core/providers/dio_provider.dart';
 import '../../core/providers/shared_prefs_provider.dart';
+import '../../core/services/inspection_submit_pdf_builder.dart';
 import '../../core/utils/txn_id.dart';
 import '../../core/utils/user_role.dart';
 import '../auth/auth_provider.dart';
@@ -721,15 +720,22 @@ class InspectionFormNotifier extends StateNotifier<InspectionFormState> {
     return true;
   }
 
-  Future<void> submit() async {
+  Future<void> submit({bool isOffline = false}) async {
     state = state.copyWith(isSubmitting: true, error: null);
     try {
       final userData = _ref.read(authNotifierProvider).value;
       final role = UserRole.fromLoginResponse(userData ?? {});
       final userId = userData?['userId'] ?? '';
+      final dio = _ref.read(dioProvider);
 
-      // 1. Generate PDF
-      final pdfFile = await _generateInspectionPdf();
+      // 1. Generate MRVC-style PDF (pages 1–2 + attachments + checklist)
+      final pdfFile = await InspectionSubmitPdfBuilder.build(
+        state: state,
+        role: role,
+        isOffline: isOffline,
+        rfiId: _rfiId,
+        dio: dio,
+      );
 
       // 2. Upload PDF → 3. Stamp → 4. finalSubmit
       if (role == UserRole.contractor || role == UserRole.contractorRep) {
@@ -740,7 +746,6 @@ class InspectionFormNotifier extends StateNotifier<InspectionFormState> {
             filename: "$_rfiId.pdf",
           ),
         });
-        await _appendInspectionFileAttachments(uploadData);
         await _repository.uploadPdfContractor(uploadData);
 
         final txnId = generateUniqueTxnId();
@@ -762,7 +767,6 @@ class InspectionFormNotifier extends StateNotifier<InspectionFormState> {
             filename: "$_rfiId.pdf",
           ),
         });
-        await _appendInspectionFileAttachments(uploadData);
         await _repository.uploadPdfEngg(uploadData);
 
         await _repository.stampEnggPdf(FormData.fromMap({
@@ -842,27 +846,6 @@ class InspectionFormNotifier extends StateNotifier<InspectionFormState> {
     }
   }
 
-  Future<void> _appendInspectionFileAttachments(FormData uploadData) async {
-    for (var path in state.siteImagePaths) {
-      uploadData.files.add(MapEntry(
-        "siteImage",
-        await MultipartFile.fromFile(path),
-      ));
-    }
-    for (var path in state.enclosurePaths) {
-      uploadData.files.add(MapEntry(
-        "testSiteDocuments",
-        await MultipartFile.fromFile(path),
-      ));
-    }
-    for (var path in state.supportingDocPaths) {
-      uploadData.files.add(MapEntry(
-        "supportingDocuments",
-        await MultipartFile.fromFile(path),
-      ));
-    }
-  }
-
   String _userMessageFromException(Object e) {
     final text = e.toString();
     const prefix = 'Exception: ';
@@ -926,57 +909,4 @@ class InspectionFormNotifier extends StateNotifier<InspectionFormState> {
     }
   }
 
-  Future<File> _generateInspectionPdf() async {
-    final pdf = pw.Document();
-    final rfi = state.rfiDetails;
-    
-    pdf.addPage(
-      pw.MultiPage(
-        pageFormat: PdfPageFormat.a4,
-        build: (context) => [
-          pw.Header(
-            level: 0,
-            child: pw.Text("Inspection Report", style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold)),
-          ),
-          pw.SizedBox(height: 20),
-          pw.Text("RFI ID: $_rfiId"),
-          pw.Text("Project: ${rfi?.project ?? 'N/A'}"),
-          pw.Text("Work: ${rfi?.work ?? 'N/A'}"),
-          pw.Text("Activity: ${rfi?.activity ?? 'N/A'}"),
-          pw.SizedBox(height: 20),
-          pw.Text("Inspection Details", style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
-          pw.Divider(),
-          pw.Text("Location: ${state.location}"),
-          pw.Text("Chainage: ${state.chainage}"),
-          pw.Text("Date: ${DateTime.now().toLocal().toString()}"),
-          pw.Text("Status: ${state.inspectionStatus}"),
-          pw.Text("Engineer Remarks: ${state.engineerRemarks}"),
-          pw.Text("Contractor Description: ${state.contractorDescription}"),
-          pw.SizedBox(height: 20),
-          if (state.measurements.isNotEmpty) ...[
-            pw.Text("Measurements", style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
-            pw.TableHelper.fromTextArray(
-              context: context,
-              data: [
-                ['Type', 'Units', 'L', 'B', 'H', 'Qty'],
-                ...state.measurements.map((m) => [
-                  m.type,
-                  m.units,
-                  m.l,
-                  m.b,
-                  m.h,
-                  m.totalQty.toStringAsFixed(2),
-                ]),
-              ],
-            ),
-          ],
-        ],
-      ),
-    );
-
-    final directory = await getTemporaryDirectory();
-    final file = File('${directory.path}/inspection_$_rfiId.pdf');
-    await file.writeAsBytes(await pdf.save());
-    return file;
-  }
 }
