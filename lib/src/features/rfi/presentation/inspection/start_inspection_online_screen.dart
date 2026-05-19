@@ -12,6 +12,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:dio/dio.dart';
 import 'package:pdfx/pdfx.dart';
+import 'package:path_provider/path_provider.dart';
 import '../../core/network/environment.dart';
 import '../../core/utils/rfi_preview_fetch.dart';
 import '../../core/providers/dio_provider.dart';
@@ -1535,6 +1536,13 @@ class _StartInspectionOnlineScreenState
 
   Widget _buildContractorConfirm(
       InspectionFormState state, InspectionFormNotifier notifier) {
+    final rfiStatus =
+        (state.rfiDetails?.status ?? widget.item.status ?? '').toUpperCase();
+    final showPriorFeedback = rfiStatus == 'UNDER_CON_RECTIFICATION';
+    final priorDetail = showPriorFeedback
+        ? _priorRectificationDetail(state, forContractorView: true)
+        : null;
+
     return Card(
       elevation: 0,
       shape: RoundedRectangleBorder(
@@ -1545,6 +1553,16 @@ class _StartInspectionOnlineScreenState
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            if (priorDetail != null) ...[
+              _buildReadonlyRectificationPanel(
+                priorDetail,
+                remarksLabel: 'Remarks By Client',
+              ),
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 16),
+                child: Divider(height: 1),
+              ),
+            ],
             const Text('Tests in Site/Lab *',
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
             const SizedBox(height: 12),
@@ -1579,6 +1597,10 @@ class _StartInspectionOnlineScreenState
           .toUpperCase();
     }
 
+    final priorDetail = s == 'UNDER_ENGG_RECTIFICATION'
+        ? _priorRectificationDetail(state, forContractorView: false)
+        : null;
+
     return Card(
       elevation: 0,
       margin: EdgeInsets.zero,
@@ -1590,6 +1612,16 @@ class _StartInspectionOnlineScreenState
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            if (priorDetail != null) ...[
+              _buildReadonlyRectificationPanel(
+                priorDetail,
+                remarksLabel: 'Remarks',
+              ),
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 16),
+                child: Divider(height: 1),
+              ),
+            ],
             // Section 1: Tests in Site/Lab
             Text(
               isCreated
@@ -1705,6 +1737,186 @@ class _StartInspectionOnlineScreenState
               ),
             ],
           ],
+        ),
+      ),
+    );
+  }
+
+  InspectionDetail? _priorRectificationDetail(
+    InspectionFormState state, {
+    required bool forContractorView,
+  }) {
+    final details = state.rfiDetails?.inspectionDetails;
+    if (details == null || details.isEmpty) return null;
+
+    final bool Function(String?) matcher =
+        forContractorView ? _isClientSideUploader : _isDyHodUploader;
+
+    for (final detail in details) {
+      if (!matcher(detail.uploadedBy)) continue;
+      if (_hasRectificationFeedback(detail)) return detail;
+    }
+    for (final detail in details) {
+      if (!matcher(detail.uploadedBy)) continue;
+      if (detail.engineerRemarks?.trim().isNotEmpty == true) return detail;
+    }
+    return null;
+  }
+
+  bool _hasRectificationFeedback(InspectionDetail detail) {
+    final status = (detail.inspectionStatus ?? '').toUpperCase();
+    return status.contains('RECTIFICATION') ||
+        status == 'REJECTED' ||
+        status == 'RETURNED_FOR_RECTIFICATION' ||
+        detail.engineerRemarks?.trim().isNotEmpty == true;
+  }
+
+  bool _isClientSideUploader(String? uploadedBy) {
+    final u = uploadedBy?.trim().toUpperCase() ?? '';
+    if (u.isEmpty) return false;
+    return u == 'ENG' ||
+        u == 'ENGG' ||
+        u == 'AE' ||
+        u.startsWith('ENG');
+  }
+
+  bool _isDyHodUploader(String? uploadedBy) {
+    final u = uploadedBy?.trim().toUpperCase() ?? '';
+    if (u.isEmpty) return false;
+    if (_isClientSideUploader(uploadedBy) || u == 'CON') return false;
+    return u.contains('DY') ||
+        u == 'HOD' ||
+        u.contains('DATA') ||
+        u.contains('ADMIN');
+  }
+
+  bool _looksLikeInspectionStatusValue(String? raw) {
+    if (raw == null || raw.trim().isEmpty) return false;
+    final u = raw.trim().toUpperCase();
+    return u.contains('RECTIFICATION') ||
+        u == 'REJECTED' ||
+        u == 'ACCEPTED' ||
+        u == 'RETURNED_FOR_RECTIFICATION';
+  }
+
+  bool _looksLikeTestInSiteLabValue(String? raw) {
+    if (raw == null || raw.trim().isEmpty) return false;
+    final u = raw.trim().toUpperCase();
+    return u == 'VISUAL' ||
+        u == 'LAB_TEST' ||
+        u == 'SITE_TEST' ||
+        u == 'LAB TEST' ||
+        u == 'SITE TEST';
+  }
+
+  String _formatTestInSiteLabLabel(String? raw) {
+    if (raw == null || raw.trim().isEmpty) return '—';
+    if (_looksLikeInspectionStatusValue(raw)) return '—';
+    switch (raw.trim().toUpperCase()) {
+      case 'VISUAL':
+        return 'Visual';
+      case 'LAB_TEST':
+        return 'Lab test';
+      case 'SITE_TEST':
+        return 'Site test';
+      default:
+        return raw.replaceAll('_', ' ');
+    }
+  }
+
+  String _formatInspectionStatusLabel(String? raw) {
+    if (raw == null || raw.trim().isEmpty) return '—';
+    switch (raw.trim().toUpperCase()) {
+      case 'RETURNED_FOR_RECTIFICATION':
+      case 'RECTIFICATION':
+        return 'Return For Rectification';
+      case 'REJECTED':
+        return 'Rejected';
+      case 'ACCEPTED':
+        return 'Accepted';
+      default:
+        if (_looksLikeTestInSiteLabValue(raw)) return '—';
+        return raw.replaceAll('_', ' ');
+    }
+  }
+
+  ({String testLabel, String statusLabel}) _resolvePriorConfirmLabels(
+    InspectionDetail detail,
+  ) {
+    var testRaw = detail.testInsiteLab;
+    var statusRaw = detail.inspectionStatus;
+
+    if (_looksLikeInspectionStatusValue(testRaw) &&
+        (statusRaw == null || statusRaw.trim().isEmpty)) {
+      statusRaw = testRaw;
+      testRaw = null;
+    }
+
+    if (_looksLikeTestInSiteLabValue(statusRaw) &&
+        (testRaw == null || testRaw.trim().isEmpty)) {
+      testRaw = statusRaw;
+      statusRaw = null;
+    }
+
+    if (testRaw == null || testRaw.trim().isEmpty) {
+      final fallback = detail.postTestType;
+      if (_looksLikeTestInSiteLabValue(fallback)) {
+        testRaw = fallback;
+      }
+    }
+
+    return (
+      testLabel: _formatTestInSiteLabLabel(testRaw),
+      statusLabel: _formatInspectionStatusLabel(statusRaw),
+    );
+  }
+
+  Widget _buildReadonlyRectificationPanel(
+    InspectionDetail detail, {
+    required String remarksLabel,
+  }) {
+    final statusLabel = _resolvePriorConfirmLabels(detail).statusLabel;
+    final remarks = detail.engineerRemarks?.trim() ?? '';
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Inspection Status',
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+        ),
+        const SizedBox(height: 8),
+        _buildReadonlyConfirmField(statusLabel),
+        const SizedBox(height: 16),
+        Text(
+          '$remarksLabel *',
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+        ),
+        const SizedBox(height: 8),
+        _buildReadonlyConfirmField(
+          remarks.isEmpty ? '—' : remarks,
+          minLines: 3,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildReadonlyConfirmField(String value, {int minLines = 1}) {
+    return Container(
+      width: double.infinity,
+      constraints: BoxConstraints(minHeight: minLines * 22.0),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.grey.shade300),
+      ),
+      child: Text(
+        value,
+        style: TextStyle(
+          fontSize: 14,
+          color: Colors.grey.shade800,
+          height: 1.35,
         ),
       ),
     );
@@ -2193,8 +2405,12 @@ class _StartInspectionOnlineScreenState
                                 context, notifier, name),
                           ),
                         ElevatedButton(
-                          onPressed: () =>
-                              _pickPDF(notifier, requiredEnclosureName: name),
+                          onPressed: state.isUploadingFile || state.isSubmitting
+                              ? null
+                              : () => _pickPDF(
+                                    notifier,
+                                    requiredEnclosureName: name,
+                                  ),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.grey.shade200,
                             foregroundColor: Colors.black87,
@@ -2219,9 +2435,10 @@ class _StartInspectionOnlineScreenState
                             mainAxisSize: MainAxisSize.min,
                             children: uploadedFiles.map((enc) {
                               final fileUrl = enc.id != null
-                                  ? "https://www.syntrackpro.com/rfiSystem/api/rfi/view-enclosure?id=${enc.id}"
+                                  ? '${Environment.baseUrl}api/rfi/view-enclosure?id=${enc.id}'
                                   : _getPublicUrl(
-                                      enc.enclosureUploadFile ?? "");
+                                      enc.enclosureUploadFile ?? '',
+                                    );
 
                               return Padding(
                                 padding: const EdgeInsets.only(right: 4.0),
@@ -2342,19 +2559,61 @@ class _StartInspectionOnlineScreenState
   }
 
   Future<void> _downloadFile(String path) async {
-    if (path.startsWith('http')) {
-      final uri = Uri.parse(path);
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
-      } else {
-        if (mounted) {
-          GlobalAlertDialog.show(
-            context,
-            title: 'Unable to download',
-            message: 'Could not launch download URL',
-            type: DialogType.error,
-          );
+    if (!mounted) return;
+
+    if (path.startsWith('http') ||
+        path.contains('view-enclosure') ||
+        path.contains('previewFiles')) {
+      showDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => const Center(child: CircularProgressIndicator()),
+      );
+
+      try {
+        final dio = ref.read(dioProvider);
+        final dir = await getApplicationDocumentsDirectory();
+        var fileName = path.split('/').last.split('?').first;
+        if (fileName.isEmpty || fileName.contains('=')) {
+          fileName = 'enclosure_${DateTime.now().millisecondsSinceEpoch}.pdf';
         }
+        fileName = fileName.replaceAll(RegExp(r'[\\/:*?"<>|]'), '_');
+        final savePath = '${dir.path}/$fileName';
+
+        if (path.contains('view-enclosure')) {
+          final idMatch =
+              RegExp(r'id=(\d+)').firstMatch(path)?.group(1);
+          if (idMatch != null) {
+            await dio.download(
+              'api/rfi/view-enclosure',
+              savePath,
+              queryParameters: <String, String>{'id': idMatch},
+              options: Options(extra: <String, dynamic>{'silentError': true}),
+            );
+          } else {
+            await dio.download(
+              path,
+              savePath,
+              options: Options(extra: <String, dynamic>{'silentError': true}),
+            );
+          }
+        } else {
+          final bytes = await RfiPreviewFetch.fetchBytes(dio, path);
+          await File(savePath).writeAsBytes(bytes);
+        }
+
+        if (!mounted) return;
+        Navigator.of(context, rootNavigator: true).pop();
+        await OpenFile.open(savePath);
+      } catch (e) {
+        if (!mounted) return;
+        Navigator.of(context, rootNavigator: true).pop();
+        GlobalAlertDialog.show(
+          context,
+          title: 'Download failed',
+          message: e.toString(),
+          type: DialogType.error,
+        );
       }
       return;
     }

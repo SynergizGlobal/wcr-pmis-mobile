@@ -159,4 +159,25 @@ abstract final class RfiPreviewFetch {
 
     return bytes;
   }
+
+  static bool looksLikePdfPath(String path) {
+    final lower = path.toLowerCase();
+    if (lower.contains('view-enclosure')) return true;
+    if (lower.endsWith('.pdf')) return true;
+    if (_needsPreviewFilesEndpoint(path)) {
+      return !lower.endsWith('.jpg') &&
+          !lower.endsWith('.jpeg') &&
+          !lower.endsWith('.png') &&
+          !lower.endsWith('.webp');
+    }
+    return false;
+  }
+
+  static bool looksLikePdfBytes(Uint8List bytes) {
+    return bytes.length > 4 &&
+        bytes[0] == 0x25 &&
+        bytes[1] == 0x50 &&
+        bytes[2] == 0x44 &&
+        bytes[3] == 0x46;
+  }
 }

@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pdfx/pdfx.dart';
 import 'package:dio/dio.dart';
 import '../../../core/providers/dio_provider.dart';
+import '../../../core/utils/rfi_file_paths.dart';
 import '../../../core/utils/rfi_preview_fetch.dart';
 import '../../../providers/rfi_log/rfi_report_details_provider.dart';
 import '../../../domain/rfi_log/rfi_report_details.dart';
@@ -407,37 +408,91 @@ class RfiPreviewDialog extends ConsumerWidget {
               ],
             ),
 
-          // Enclosures Section
-          if (data.enclosures.isNotEmpty) ...[
-            Center(
-              child: Text(
-                'Enclosures Uploaded',
-                style: const TextStyle(fontSize: 18),
-              ),
-            ),
-            const SizedBox(height: 16),
-            ...data.enclosures.map((enc) => Column(
-                  children: [
-                    Center(
-                      child: Text(
-                        enc.enclosureName ?? 'Attachment',
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    if (enc.file != null)
-                      Center(child: _buildFilePreview(context, ref, enc.file!)),
-                    const SizedBox(height: 24),
-                  ],
-                )),
-          ]
+          ..._buildEnclosuresSection(context, ref, data, info),
         ],
       ),
     );
   }
 
-  Widget _buildFilePreview(BuildContext context, WidgetRef ref, String url) {
-    if (url.isEmpty) {
+  List<Widget> _buildEnclosuresSection(
+    BuildContext context,
+    WidgetRef ref,
+    RfiReportDetailsData data,
+    ReportDetailsInfo info,
+  ) {
+    final groups = <String, List<String>>{};
+
+    void addGroup(String name, List<String> paths) {
+      if (paths.isEmpty) return;
+      groups.putIfAbsent(name, () => []).addAll(paths);
+    }
+
+    for (final enc in data.enclosures) {
+      final name = enc.enclosureName?.trim().isNotEmpty == true
+          ? enc.enclosureName!.trim()
+          : 'Enclosure';
+      addGroup(name, extractFilePaths(enc.file));
+    }
+
+    addGroup(
+      'Test Site Documents (Contractor)',
+      extractFilePaths(info.testSiteDocumentsContractor),
+    );
+    addGroup(
+      'Supporting Documents (Contractor)',
+      extractFilePaths(info.conSupportFilePaths),
+    );
+    addGroup(
+      'Supporting Documents (Engineer)',
+      extractFilePaths(info.enggSupportFilePaths),
+    );
+
+    final entries =
+        groups.entries.where((e) => e.value.isNotEmpty).toList();
+    if (entries.isEmpty) {
+      return [];
+    }
+
+    final ColorScheme scheme = Theme.of(context).colorScheme;
+
+    return [
+      Center(
+        child: Text(
+          'Enclosures & Documents',
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+        ),
+      ),
+      const SizedBox(height: 16),
+      ...entries.expand((entry) {
+        final uniquePaths = entry.value.toSet().toList();
+        return [
+          Center(
+            child: Text(
+              entry.key,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 15,
+                color: scheme.primary,
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          ...uniquePaths.map(
+            (path) => Padding(
+              padding: const EdgeInsets.only(bottom: 24),
+              child: _buildFilePreview(context, ref, path),
+            ),
+          ),
+          const SizedBox(height: 8),
+        ];
+      }),
+    ];
+  }
+
+  Widget _buildFilePreview(BuildContext context, WidgetRef ref, String source) {
+    if (source.trim().isEmpty) {
       return Container(
         width: 120,
         height: 120,
@@ -449,11 +504,10 @@ class RfiPreviewDialog extends ConsumerWidget {
       );
     }
 
-    final String lowerUrl = url.toLowerCase();
-    final bool isPDF = lowerUrl.endsWith('.pdf');
-    final Dio dio = ref.read(dioProvider);
+    final dio = ref.read(dioProvider);
+    final treatAsPdf = RfiPreviewFetch.looksLikePdfPath(source);
 
-    if (isPDF) {
+    if (treatAsPdf) {
       return Container(
         height: 500,
         width: double.infinity,
@@ -464,11 +518,16 @@ class RfiPreviewDialog extends ConsumerWidget {
           ),
           borderRadius: BorderRadius.circular(8),
         ),
-        child: _PdfRemoteViewer(source: url, dio: dio),
+        child: _PdfRemoteViewer(source: source, dio: dio),
       );
     }
 
-    return _RemoteImageLoader(source: url, dio: dio);
+    final resolvedUrl = RfiPreviewFetch.resolvePublicUrl(source);
+    return _RemoteImageLoader(
+      url: resolvedUrl,
+      dio: dio,
+      fallbackSource: source,
+    );
   }
 
   Widget _buildInfoItem(String label, String? value) {
@@ -681,10 +740,15 @@ class RfiPreviewDialog extends ConsumerWidget {
 }
 
 class _RemoteImageLoader extends StatefulWidget {
-  final String source;
+  final String url;
   final Dio dio;
+  final String? fallbackSource;
 
-  const _RemoteImageLoader({required this.source, required this.dio});
+  const _RemoteImageLoader({
+    required this.url,
+    required this.dio,
+    this.fallbackSource,
+  });
 
   @override
   State<_RemoteImageLoader> createState() => _RemoteImageLoaderState();
@@ -705,10 +769,31 @@ class _RemoteImageLoaderState extends State<_RemoteImageLoader> {
     try {
       // Add a small staggered delay to avoid concurrent connection limits
       await Future.delayed(
-          Duration(milliseconds: 100 + (widget.source.hashCode % 500)));
+          Duration(milliseconds: 100 + (widget.url.hashCode % 500)));
 
-      final Uint8List bytes =
-          await RfiPreviewFetch.fetchBytes(widget.dio, widget.source);
+      Uint8List bytes;
+      try {
+        bytes = await RfiPreviewFetch.fetchBytes(
+          widget.dio,
+          widget.fallbackSource ?? widget.url,
+        );
+      } catch (_) {
+        final response = await widget.dio.get<List<int>>(
+          widget.url,
+          options: Options(
+            responseType: ResponseType.bytes,
+            extra: const <String, dynamic>{'silentError': true},
+          ),
+        );
+        if (response.data == null || response.data!.isEmpty) {
+          throw Exception('Empty image data');
+        }
+        bytes = Uint8List.fromList(response.data!);
+      }
+
+      if (RfiPreviewFetch.looksLikePdfBytes(bytes)) {
+        throw Exception('File is a PDF, not an image');
+      }
 
       if (mounted) {
         setState(() {
@@ -717,7 +802,7 @@ class _RemoteImageLoaderState extends State<_RemoteImageLoader> {
         });
       }
     } catch (e) {
-      debugPrint('Image load error for ${widget.source}: $e');
+      debugPrint('Image load error for ${widget.url}: $e');
       if (mounted) {
         setState(() {
           _error = e.toString();
@@ -790,8 +875,12 @@ class _PdfRemoteViewerState extends State<_PdfRemoteViewer> {
       await Future.delayed(
           Duration(milliseconds: 200 + (widget.source.hashCode % 500)));
 
-      final Uint8List bytes =
+      final bytes =
           await RfiPreviewFetch.fetchBytes(widget.dio, widget.source);
+
+      if (!RfiPreviewFetch.looksLikePdfBytes(bytes)) {
+        throw Exception('Downloaded file is not a valid PDF');
+      }
 
       _pdfController = PdfControllerPinch(
         document: PdfDocument.openData(bytes),

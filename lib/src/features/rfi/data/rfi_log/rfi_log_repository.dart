@@ -1,5 +1,6 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../core/providers/dio_provider.dart';
+import '../../core/utils/rfi_file_paths.dart';
 import '../../domain/rfi_log/rfi_log_item.dart';
 import '../../domain/rfi_log/rfi_report_details.dart';
 import 'rfi_log_api.dart';
@@ -62,7 +63,88 @@ class RfiLogRepository {
 
   Future<RfiReportDetailsData> fetchRfiReportDetails(String id) async {
     final rawData = await api.getRfiReportDetails(id);
-    return RfiReportDetailsData.fromJson(rawData);
+    final normalized = _normalizeReportPayload(rawData);
+    var data = RfiReportDetailsData.fromJson(normalized);
+
+    final needsMoreEnclosures = data.enclosures.isEmpty ||
+        data.enclosures.every(
+          (e) => extractFilePaths(e.file).isEmpty,
+        );
+    if (needsMoreEnclosures) {
+      final fromDetails = await _enclosuresFromRfiDetails(id);
+      if (fromDetails.isNotEmpty) {
+        data = data.copyWith(enclosures: fromDetails);
+      }
+    }
+
+    return data;
+  }
+
+  Map<String, dynamic> _normalizeReportPayload(Map<String, dynamic> raw) {
+    final copy = Map<String, dynamic>.from(raw);
+    final enclosuresRaw = copy['enclosures'];
+    if (enclosuresRaw is List) {
+      copy['enclosures'] = enclosuresRaw.map((item) {
+        if (item is! Map) return item;
+        final map = Map<String, dynamic>.from(item);
+        final paths = extractFilePaths(map);
+        if (paths.isEmpty) return map;
+
+        final id = map['id'];
+        if (id != null &&
+            paths.length == 1 &&
+            paths.first.contains('view-enclosure')) {
+          map['file'] = paths.first;
+        } else {
+          map['file'] = paths.join(',');
+        }
+        return map;
+      }).toList();
+    }
+    return copy;
+  }
+
+  Future<List<EnclosureInfo>> _enclosuresFromRfiDetails(String id) async {
+    try {
+      final response = await api.dio.get('/rfi/rfi-details/$id');
+      final body = response.data;
+      if (body is! Map<String, dynamic>) return [];
+
+      final items = <EnclosureInfo>[];
+      final enclosureList = body['enclosure'];
+      if (enclosureList is List) {
+        for (final entry in enclosureList) {
+          if (entry is! Map) continue;
+          final map = Map<String, dynamic>.from(entry);
+          final name = map['enclosureName']?.toString();
+          final paths = extractFilePaths(map);
+          if (paths.isEmpty) continue;
+
+          for (final path in paths) {
+            items.add(
+              EnclosureInfo(
+                enclosureName: name,
+                file: path,
+              ),
+            );
+          }
+        }
+      }
+
+      final names = body['enclosuresList'];
+      if (items.isEmpty && names is List) {
+        for (final name in names) {
+          final label = name?.toString().trim();
+          if (label != null && label.isNotEmpty) {
+            items.add(EnclosureInfo(enclosureName: label, file: null));
+          }
+        }
+      }
+
+      return items;
+    } catch (_) {
+      return [];
+    }
   }
 
   Future<Map<String, dynamic>> getFilterList() async {

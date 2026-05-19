@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:wcr_pmis_mobile/src/core/widgets/app_dialog.dart';
 import 'package:wcr_pmis_mobile/src/features/rfi/data/repositories/rfi_repository_impl.dart';
 import 'package:wcr_pmis_mobile/src/features/rfi/domain/entities/rfi_list_item.dart';
+import 'package:wcr_pmis_mobile/src/features/rfi/domain/rfi_list_kind.dart';
 import 'package:wcr_pmis_mobile/src/features/rfi/presentation/providers/rfi_providers.dart';
+import 'package:wcr_pmis_mobile/src/features/rfi/providers/inspection/inspection_provider.dart';
 
 class DeleteRfiDialog extends ConsumerStatefulWidget {
   const DeleteRfiDialog({
@@ -31,6 +33,15 @@ class _DeleteRfiDialogState extends ConsumerState<DeleteRfiDialog> {
     super.dispose();
   }
 
+  void _invalidateRfiCaches() {
+    ref.invalidate(rfiDashboardProvider);
+    ref.invalidate(rfiHandoffProvider);
+    for (final RfiListKind kind in RfiListKind.values) {
+      ref.invalidate(rfiListProvider(kind));
+    }
+    ref.read(inspectionProvider.notifier).fetchInspections();
+  }
+
   Future<void> _submit() async {
     setState(() => _loading = true);
     try {
@@ -46,8 +57,7 @@ class _DeleteRfiDialogState extends ConsumerState<DeleteRfiDialog> {
       if (!mounted) {
         return;
       }
-      ref.invalidate(rfiDashboardProvider);
-      ref.invalidate(rfiHandoffProvider);
+      _invalidateRfiCaches();
       widget.onSuccess?.call();
       Navigator.pop(context);
       await AppDialog.show(
