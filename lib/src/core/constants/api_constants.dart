@@ -1,17 +1,19 @@
 class ApiConstants {
   const ApiConstants._();
 
-  static const bool useDevServer = false;
+  static const bool useQaServer = true;
 
   // static const String wcrDevBaseUrl =
   //     'http://115.124.125.227:92/wcrpmis_qa/';
-  static const String wcrDevBaseUrl =
+  static const String wcrQaBaseUrl =
       'https://pmis-wcrindianrailways.org/wcrpmis_qa/';
+
   static const String wcrProdBaseUrl =
       'https://pmis-wcrindianrailways.org/wcrpmis/';
 
-  static const String rfiDevBaseUrl =
+  static const String rfiQaBaseUrl =
       'https://pmis-wcrindianrailways.org/rfiSystem_qa/';
+
   static const String rfiProdBaseUrl =
       'https://pmis-wcrindianrailways.org/rfiSystem/';
 
@@ -26,13 +28,12 @@ class ApiConstants {
     if (fromEnv.isNotEmpty) {
       return fromEnv;
     }
-    return useDevServer ? wcrDevBaseUrl : wcrProdBaseUrl;
+    return useQaServer ? wcrQaBaseUrl : wcrProdBaseUrl;
   }
 
   static String get baseUrl => wcrBaseUrl;
 
-  static String get rfiBaseUrl =>
-      useDevServer ? rfiDevBaseUrl : rfiProdBaseUrl;
+  static String get rfiBaseUrl => useQaServer ? rfiQaBaseUrl : rfiProdBaseUrl;
 
   static Uri originUriFor(String baseUrl) {
     final Uri parsed = Uri.parse(baseUrl);
