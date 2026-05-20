@@ -15,6 +15,7 @@ import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/dashbo
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/issues_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/project_details_page.dart';
 import 'package:wcr_pmis_mobile/src/features/rfi/presentation/rfi_routes.dart';
+import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/new_activities_update_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/utility_shifting_page.dart';
 import 'package:wcr_pmis_mobile/src/features/profile/presentation/pages/profile_page.dart';
 import 'package:wcr_pmis_mobile/src/features/settings/presentation/pages/settings_page.dart';
@@ -68,6 +69,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         return LoginPage.routePath;
       }
       if (!loggedIn && loc == AddIssueFormPage.routePath) {
+        return LoginPage.routePath;
+      }
+      if (!loggedIn && loc == NewActivitiesUpdatePage.routePath) {
         return LoginPage.routePath;
       }
       if (!loggedIn && loc == UtilityShiftingPage.routePath) {
@@ -161,6 +165,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             session: session,
           );
         },
+      ),
+      GoRoute(
+        path: NewActivitiesUpdatePage.routePath,
+        name: NewActivitiesUpdatePage.routeName,
+        builder: (BuildContext context, GoRouterState state) =>
+            NewActivitiesUpdatePage(
+              dataSource: ref.read(dashboardRemoteDataSourceProvider),
+            ),
       ),
       GoRoute(
         path: UtilityShiftingPage.routePath,

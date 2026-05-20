@@ -466,6 +466,203 @@ class DashboardRemoteDataSource {
     return _normalizeResponse(response.data);
   }
 
+  Future<Map<String, dynamic>> fetchNewActivitiesUpdateBootstrap() async {
+    final Response<dynamic> response = await _dio.post<dynamic>(
+      '/newActivitiesUpdate',
+      data: const <String, dynamic>{},
+      options: _requestOptions,
+    );
+    return _normalizeResponse(response.data);
+  }
+
+  Future<Map<String, dynamic>> fetchNewActivitiesContractsForProject({
+    required String projectIdFk,
+  }) async {
+    final Response<dynamic> response = await _dio.post<dynamic>(
+      '/getContractListForProject',
+      data: <String, dynamic>{'project_id_fk': projectIdFk},
+      options: _requestOptions,
+    );
+    return _normalizeResponse(response.data);
+  }
+
+  Future<Map<String, dynamic>> fetchNewActivitiesStructureTypes({
+    required String contractIdFk,
+  }) async {
+    final Response<dynamic> response = await _dio.post<dynamic>(
+      '/ajax/getStructureTypesInActivitiesUpdate',
+      data: <String, dynamic>{'contract_id_fk': contractIdFk},
+      options: _requestOptions,
+    );
+    return _normalizeResponse(response.data);
+  }
+
+  Future<Map<String, dynamic>> fetchNewActivitiesStructures({
+    required String contractIdFk,
+    required String structureTypeFk,
+  }) async {
+    final Response<dynamic> response = await _dio.post<dynamic>(
+      '/ajax/getNewActivitiesUpdateStructures',
+      data: <String, dynamic>{
+        'contract_id_fk': contractIdFk,
+        'structure_type_fk': structureTypeFk,
+      },
+      options: _requestOptions,
+    );
+    return _normalizeResponse(response.data);
+  }
+
+  Future<Map<String, dynamic>> fetchNewActivitiesComponents({
+    required String contractIdFk,
+    required String structureTypeFk,
+    required String stripChartStructureIdFk,
+  }) async {
+    final Response<dynamic> response = await _dio.post<dynamic>(
+      '/ajax/getNewActivitiesUpdateComponentsList',
+      data: <String, dynamic>{
+        'contract_id_fk': contractIdFk,
+        'structure_type_fk': structureTypeFk,
+        'strip_chart_structure_id_fk': stripChartStructureIdFk,
+      },
+      options: _requestOptions,
+    );
+    return _normalizeResponse(response.data);
+  }
+
+  Future<Map<String, dynamic>> fetchNewActivitiesElements({
+    required String contractIdFk,
+    required String structureTypeFk,
+    required String stripChartStructureIdFk,
+    required String stripChartComponent,
+  }) async {
+    final Response<dynamic> response = await _dio.post<dynamic>(
+      '/ajax/getNewActivitiesUpdateComponentIdsList',
+      data: <String, dynamic>{
+        'contract_id_fk': contractIdFk,
+        'structure_type_fk': structureTypeFk,
+        'strip_chart_structure_id_fk': stripChartStructureIdFk,
+        'strip_chart_component': stripChartComponent,
+      },
+      options: _requestOptions,
+    );
+    return _normalizeResponse(response.data);
+  }
+
+  Future<Map<String, dynamic>> fetchNewActivitiesLatestRowData() async {
+    final Response<dynamic> response = await _dio.post<dynamic>(
+      '/ajax/getLatestRowData',
+      data: const <String, dynamic>{},
+      options: _requestOptions,
+    );
+    return _normalizeResponse(response.data);
+  }
+
+  Future<Map<String, dynamic>> fetchNewActivitiesLastUpdateRows() async {
+    final Response<dynamic> response = await _dio.post<dynamic>(
+      '/ajax/getLastUpdateRows',
+      data: const <String, dynamic>{},
+      options: _requestOptions,
+    );
+    return _normalizeResponse(response.data);
+  }
+
+  Future<Map<String, dynamic>> fetchNewActivitiesBindData({
+    required String activityId,
+  }) async {
+    final Response<dynamic> response = await _dio.get<dynamic>(
+      '/ajax/bindData',
+      queryParameters: <String, dynamic>{
+        'activity_id': activityId,
+        '_t': DateTime.now().millisecondsSinceEpoch.toString(),
+      },
+      options: _requestOptions,
+    );
+    return _normalizeResponse(response.data);
+  }
+
+  Future<Map<String, dynamic>> fetchNewActivitiesFilterList({
+    String? projectIdFk,
+    String? contractIdFk,
+    String? structureTypeFk,
+    String? stripChartStructureIdFk,
+    String? stripChartComponent,
+    String? stripChartComponentId,
+  }) async {
+    final Response<dynamic> response = await _dio.post<dynamic>(
+      '/ajax/getNewActivitiesfiltersList',
+      data: <String, dynamic>{
+        'project_id_fk': projectIdFk ?? '',
+        'contract_id_fk': contractIdFk ?? '',
+        'structure_type_fk': structureTypeFk ?? '',
+        'strip_chart_structure_id_fk': stripChartStructureIdFk ?? '',
+        'strip_chart_component': stripChartComponent ?? '',
+        'strip_chart_component_id': stripChartComponentId ?? '',
+      },
+      options: _requestOptions,
+    );
+    return _normalizeResponse(response.data);
+  }
+
+  Future<({Uint8List bytes, String? fileName})> exportActivitiesByContract({
+    required String contractIdFk,
+    required String structureTypeFk,
+    required String stripChartStructureIdFk,
+    required String progressDate,
+  }) async {
+    final Response<dynamic> response = await _dio.post<dynamic>(
+      '/exportActivitiesbyContract',
+      data: <String, dynamic>{
+        'contract_id_fk': contractIdFk,
+        'structure_type_fk': structureTypeFk,
+        'strip_chart_structure_id_fk': stripChartStructureIdFk,
+        'progress_date': progressDate,
+      },
+      options: Options(
+        receiveTimeout: _dashboardReceiveTimeout,
+        connectTimeout: _dashboardConnectTimeout,
+        responseType: ResponseType.bytes,
+      ),
+    );
+    final dynamic data = response.data;
+    final List<int> raw = data is List<int> ? data : <int>[];
+    final String? contentDisposition =
+        response.headers.value('content-disposition');
+    final String? fileName =
+        _fileNameFromContentDisposition(contentDisposition);
+    return (bytes: Uint8List.fromList(raw), fileName: fileName);
+  }
+
+  Future<Map<String, dynamic>> submitNewActivitiesBulkUpdate({
+    required Map<String, dynamic> payload,
+  }) async {
+    final Response<dynamic> response = await _dio.post<dynamic>(
+      '/update-new-activities-bulk',
+      data: payload,
+      options: _requestOptions,
+    );
+    return _normalizeResponse(response.data);
+  }
+
+  Future<Map<String, dynamic>> uploadNewActivitiesUpdateFile({
+    required String fileName,
+    required Uint8List bytes,
+  }) async {
+    final FormData formData = FormData.fromMap(<String, dynamic>{
+      'stripChartFile': MultipartFile.fromBytes(
+        bytes,
+        filename: fileName,
+      ),
+    });
+    final Response<dynamic> response = await _dio.post<dynamic>(
+      '/upload-new-activities',
+      data: formData,
+      options: _requestOptions.copyWith(
+        contentType: 'multipart/form-data',
+      ),
+    );
+    return _normalizeResponse(response.data);
+  }
+
   String? _fileNameFromContentDisposition(String? header) {
     if (header == null || header.trim().isEmpty) {
       return null;

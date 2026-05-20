@@ -14,6 +14,7 @@ import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/ai_cus
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/issues_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/project_details_page.dart';
 import 'package:wcr_pmis_mobile/src/features/rfi/presentation/pages/rfi_dashboard_page.dart';
+import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/new_activities_update_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/utility_shifting_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/providers/home_dashboard_provider.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/providers/update_forms_provider.dart';
@@ -457,7 +458,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         );
       },
       loading: () => ListView(
-        key: viewKey,
+        key: ValueKey<String>('${viewKey.toString()}-loading'),
         children: const <Widget>[
           Center(
             child: Padding(
@@ -468,7 +469,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         ],
       ),
       error: (Object error, StackTrace _) => ListView(
-        key: viewKey,
+        key: ValueKey<String>('${viewKey.toString()}-error'),
         children: <Widget>[
           AppActionCard(
             title: 'Unable to load home data (tap for error)',
@@ -526,7 +527,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
             .toList();
         if (cards.isEmpty) {
           return ListView(
-            key: viewKey,
+            key: ValueKey<String>('${viewKey.toString()}-empty'),
             children: const <Widget>[
               AppActionCard(title: 'No update forms available right now.'),
             ],
@@ -539,7 +540,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         );
       },
       loading: () => ListView(
-        key: viewKey,
+        key: ValueKey<String>('${viewKey.toString()}-loading'),
         children: const <Widget>[
           Center(
             child: Padding(
@@ -550,7 +551,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         ],
       ),
       error: (Object error, StackTrace _) => ListView(
-        key: viewKey,
+        key: ValueKey<String>('${viewKey.toString()}-error'),
         children: <Widget>[
           AppActionCard(
             title: 'Unable to load update forms',
@@ -807,6 +808,21 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         return;
       }
       context.pushNamed(UtilityShiftingPage.routeName);
+      return;
+    }
+    if (normalized.contains('new') && normalized.contains('activit')) {
+      if (!mounted) {
+        return;
+      }
+      context.pushNamed(NewActivitiesUpdatePage.routeName);
+      return;
+    }
+    if (normalized == 'newactivitiesupdate' ||
+        normalized.contains('activitiesupdate')) {
+      if (!mounted) {
+        return;
+      }
+      context.pushNamed(NewActivitiesUpdatePage.routeName);
       return;
     }
     await AppDialog.show(
