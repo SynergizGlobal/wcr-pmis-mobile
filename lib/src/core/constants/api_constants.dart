@@ -3,6 +3,8 @@ class ApiConstants {
 
   static const bool useDevServer = false;
 
+  // static const String wcrDevBaseUrl =
+  //     'http://115.124.125.227:92/wcrpmis_qa/';
   static const String wcrDevBaseUrl =
       'https://pmis-wcrindianrailways.org/wcrpmis_qa/';
   static const String wcrProdBaseUrl =

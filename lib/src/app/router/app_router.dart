@@ -143,10 +143,15 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AddUtilityShiftingFormPage.routePath,
         name: AddUtilityShiftingFormPage.routeName,
-        builder: (BuildContext context, GoRouterState state) =>
-            AddUtilityShiftingFormPage(
-              dataSource: ref.read(dashboardRemoteDataSourceProvider),
-            ),
+        builder: (BuildContext context, GoRouterState state) {
+          final String? editId =
+              state.uri.queryParameters['utility_shifting_id']?.trim();
+          return AddUtilityShiftingFormPage(
+            dataSource: ref.read(dashboardRemoteDataSourceProvider),
+            utilityShiftingId:
+                editId != null && editId.isNotEmpty ? editId : null,
+          );
+        },
       ),
       GoRoute(
         path: IssuesPage.routePath,

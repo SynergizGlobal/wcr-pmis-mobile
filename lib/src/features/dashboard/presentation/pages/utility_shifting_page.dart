@@ -470,7 +470,7 @@ class _UtilityShiftingPageState extends State<UtilityShiftingPage>
               SizedBox(
                 width: 80,
                 child: IconButton(
-                  onPressed: () => _showEditComingSoon(row),
+                  onPressed: () => _openEditUtility(row),
                   icon: Icon(Icons.edit_square, color: cs.primary),
                 ),
               ),
@@ -1050,13 +1050,18 @@ class _UtilityShiftingPageState extends State<UtilityShiftingPage>
     }
   }
 
-  Future<void> _showEditComingSoon(Map<String, dynamic> row) async {
-    await AppDialog.show(
-      context: context,
-      title: 'Edit Utility Shifting',
-      message: 'Edit form for ${_string(row['utility_shifting_id'])} will be connected next.',
-      type: AppDialogType.info,
+  Future<void> _openEditUtility(Map<String, dynamic> row) async {
+    final String id = _string(row['utility_shifting_id']);
+    if (id.isEmpty) {
+      return;
+    }
+    final bool? saved = await context.pushNamed<bool>(
+      AddUtilityShiftingFormPage.routeName,
+      queryParameters: <String, String>{'utility_shifting_id': id},
     );
+    if (saved == true && mounted) {
+      await _loadAll();
+    }
   }
 
   Future<void> _uploadTemplatePlaceholder() async {

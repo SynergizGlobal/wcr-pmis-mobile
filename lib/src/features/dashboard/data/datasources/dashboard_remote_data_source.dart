@@ -455,12 +455,38 @@ class DashboardRemoteDataSource {
     return _normalizeResponse(response.data);
   }
 
+  Future<Map<String, dynamic>> fetchUtilityShiftingForEdit({
+    required String utilityShiftingId,
+  }) async {
+    final Response<dynamic> response = await _dio.post<dynamic>(
+      '/utility-shifting/ajax/form/get-utility-shifting/get-utility-shifting',
+      data: <String, dynamic>{
+        'utility_shifting_id': utilityShiftingId,
+      },
+      options: _requestOptions,
+    );
+    return _normalizeResponse(response.data);
+  }
+
   Future<Map<String, dynamic>> submitAddUtilityShifting({
     required Map<String, dynamic> payload,
   }) async {
     final Response<dynamic> response = await _dio.post<dynamic>(
       '/utility-shifting/ajax/form/add-utility-shifting',
       data: payload,
+      options: _requestOptions,
+    );
+    return _normalizeResponse(response.data);
+  }
+
+  /// Flat multipart form (same field names as web) for edit save.
+  Future<Map<String, dynamic>> submitUpdateUtilityShifting({
+    required Map<String, String> fields,
+  }) async {
+    final FormData formData = FormData.fromMap(fields);
+    final Response<dynamic> response = await _dio.post<dynamic>(
+      '/utility-shifting/updateUtilityShifting',
+      data: formData,
       options: _requestOptions,
     );
     return _normalizeResponse(response.data);
@@ -724,6 +750,9 @@ class DashboardRemoteDataSource {
         'message': message,
         'success': success,
       };
+    }
+    if (data is bool) {
+      return <String, dynamic>{'success': data, 'result': data};
     }
     return <String, dynamic>{};
   }

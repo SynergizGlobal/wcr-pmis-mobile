@@ -207,7 +207,7 @@ String _inferOptionLabel(Map<String, dynamic> map) {
     'file_type',
   ]);
   if (picked.isNotEmpty) {
-    return picked.length > 120 ? '${picked.substring(0, 117)}...' : picked;
+    return picked;
   }
   for (final MapEntry<String, dynamic> e in map.entries) {
     final String key = e.key.toString().toLowerCase();
@@ -223,7 +223,7 @@ String _inferOptionLabel(Map<String, dynamic> map) {
         key.contains('label') ||
         key.contains('title') ||
         key.contains('description')) {
-      return val.length > 120 ? '${val.substring(0, 117)}...' : val;
+      return val;
     }
   }
   for (final MapEntry<String, dynamic> e in map.entries) {
@@ -279,12 +279,19 @@ class _AttachmentRow {
 }
 
 class AddUtilityShiftingFormPage extends StatefulWidget {
-  const AddUtilityShiftingFormPage({super.key, required this.dataSource});
+  const AddUtilityShiftingFormPage({
+    super.key,
+    required this.dataSource,
+    this.utilityShiftingId,
+  });
 
   static const String routeName = 'add-utility-shifting-form';
   static const String routePath = '/add-utility-shifting-form';
 
   final DashboardRemoteDataSource dataSource;
+
+  /// When set, form loads this record for edit (same steps as add).
+  final String? utilityShiftingId;
 
   @override
   State<AddUtilityShiftingFormPage> createState() =>
@@ -298,6 +305,9 @@ class _AddUtilityShiftingFormPageState
   bool _loading = false;
   bool _saving = false;
   int _currentStep = 0;
+
+  /// Server row id when editing (from get response `id`).
+  String? _editNumericId;
 
   List<_OptionItem> _projects = <_OptionItem>[];
   List<_OptionItem> _executionAgencies = <_OptionItem>[];
@@ -372,11 +382,17 @@ class _AddUtilityShiftingFormPageState
     super.dispose();
   }
 
+  bool get _isEditMode =>
+      widget.utilityShiftingId != null &&
+      widget.utilityShiftingId!.trim().isNotEmpty;
+
   @override
   Widget build(BuildContext context) {
     final ColorScheme cs = Theme.of(context).colorScheme;
     return Scaffold(
-      appBar: AppBar(title: const Text('Add Utility Shifting')),
+      appBar: AppBar(
+        title: Text(_isEditMode ? 'Edit Utility Shifting' : 'Add Utility Shifting'),
+      ),
       body: SafeArea(
         child: Column(
           children: <Widget>[
@@ -663,13 +679,17 @@ class _AddUtilityShiftingFormPageState
           ),
         ),
         const SizedBox(height: 20),
-        _stepSectionTitle(context, 'Attachments', requiredField: true),
+        _stepSectionTitle(context, 'Attachments', requiredField: !_isEditMode),
         if (_attachmentRows.isEmpty)
           Padding(
             padding: const EdgeInsets.only(bottom: 8),
             child: Text(
-              'At least one attachment is required before save.',
-              style: tt.bodyMedium?.copyWith(color: cs.error),
+              _isEditMode
+                  ? 'Existing files stay on the server. Add new rows only if you need more attachments.'
+                  : 'At least one attachment is required before save.',
+              style: tt.bodyMedium?.copyWith(
+                color: _isEditMode ? cs.onSurfaceVariant : cs.error,
+              ),
             ),
           ),
         for (int i = 0; i < _attachmentRows.length; i++)
@@ -1073,111 +1093,501 @@ class _AddUtilityShiftingFormPageState
     );
   }
 
+  void _populateDropdownsFromMerged(Map<String, dynamic> merged) {
+    _projects = _toOptions(
+      _utilityFormList(merged, const <String>[
+        'projectsList',
+        'projectList',
+        'workList',
+        'worksList',
+      ]),
+    );
+    _executionAgencies = _toOptions(
+      _utilityFormList(merged, const <String>[
+        'utilityExecutionAgencyList',
+        'executionAgencyList',
+        'execution_agency_list',
+        'utility_execution_agency_list',
+        'utilityExecutionagencyList',
+      ]),
+    );
+    _hods = _toOptions(
+      _utilityFormList(merged, const <String>[
+        'utilityHODList',
+        'utilityHodList',
+        'hodList',
+        'hod_list',
+        'utility_hod_list',
+      ]),
+    );
+    _utilityTypes = _toOptions(
+      _utilityFormList(merged, const <String>[
+        'utilityTypeList',
+        'utility_type_list',
+        'utilityTypesList',
+      ]),
+    );
+    _utilityCategories = _toOptions(
+      _utilityFormList(merged, const <String>[
+        'utilityCategoryList',
+        'utility_category_list',
+        'utilityCategoriesList',
+      ]),
+    );
+    _impactedContracts = _toOptionsWithPreferredIdKeys(
+      _utilityFormList(merged, const <String>[
+        'impactedContractsList',
+        'impactedContractList',
+        'impacted_contract_list',
+        'contractsList',
+        'contractList',
+      ]),
+      idKeys: const <String>[
+        'contract_id_fk',
+        'contract_id',
+        'impacted_contract_id_fk',
+      ],
+      labelKeys: const <String>[
+        'contract_short_name',
+        'contract_name',
+        'contract_code',
+      ],
+    );
+    _requirementStages = _toOptionsWithPreferredIdKeys(
+      _utilityFormList(merged, const <String>[
+        'reqStageList',
+        'requirementStageList',
+        'requirement_stage_list',
+        'requirementStagesList',
+      ]),
+      idKeys: const <String>[
+        'requirement_stage_fk',
+        'requirement_state_fk',
+        'requirement_stage',
+        'requirement_state',
+      ],
+      labelKeys: const <String>[
+        'requirement_stage',
+        'requirement_stage_name',
+        'stage_name',
+        'requirement_state',
+        'requirement_stage_fk',
+      ],
+    );
+    _impactedElements = _toOptionsWithPreferredIdKeys(
+      _utilityFormList(merged, const <String>[
+        'impactedElementList',
+        'impacted_element_list',
+        'impactedElementsList',
+      ]),
+      idKeys: const <String>[
+        'impacted_element',
+        'impacted_element_fk',
+        'element_name',
+      ],
+      labelKeys: const <String>[
+        'impacted_element',
+        'element_name',
+        'impacted_element_fk',
+      ],
+    );
+    _units = _toOptions(
+      _utilityFormList(merged, const <String>[
+        'unitList',
+        'unit_list',
+        'unitsList',
+      ]),
+    );
+    _statuses = _toOptions(
+      _utilityFormList(merged, const <String>[
+        'statusList',
+        'shiftingStatusList',
+        'shifting_status_list',
+        'utilityStatusList',
+      ]),
+    );
+    _fileTypes = _toOptions(
+      _utilityFormList(merged, const <String>[
+        'utilityshiftingfiletypeList',
+        'utilityShiftingFileTypeList',
+        'utility_shifting_file_type_list',
+        'utilityShiftingFiletypeList',
+        'fileTypeList',
+        'file_type_list',
+      ]),
+    );
+  }
+
+  Map<String, dynamic> _normalizeUtilityRecordForPrefill(
+    Map<String, dynamic> response,
+  ) {
+    final Map<String, dynamic> merged = _mergedUtilityFormRoot(response);
+    final String directId = _pickMapValue(
+      merged,
+      const <String>['utility_shifting_id', 'utilityShiftingId'],
+    );
+    if (directId.isNotEmpty) {
+      return merged;
+    }
+    final dynamic d = merged['data'];
+    if (d is Map) {
+      return _mergedUtilityFormRoot(_asStringKeyedMap(d));
+    }
+    if (d is List && d.isNotEmpty) {
+      final Object? first = d.first;
+      if (first is Map) {
+        return _mergedUtilityFormRoot(_asStringKeyedMap(first));
+      }
+    }
+    return merged;
+  }
+
+  String _sanitizeCoordLiteral(String raw) {
+    final String t = raw.trim();
+    if (t.isEmpty || t.toLowerCase() == 'null') {
+      return '';
+    }
+    return t;
+  }
+
+  DateTime? _parseUtilityDateString(String? raw) {
+    final String s = raw?.trim() ?? '';
+    if (s.isEmpty || s.toLowerCase() == 'null') {
+      return null;
+    }
+    if (RegExp(r'^\d{4}-\d{2}-\d{2}').hasMatch(s)) {
+      return DateTime.tryParse(s.length >= 10 ? s.substring(0, 10) : s);
+    }
+    final RegExpMatch? m = RegExp(
+      r'^(\d{1,2})[-/](\d{1,2})[-/](\d{4})$',
+    ).firstMatch(s);
+    if (m != null) {
+      return DateTime(
+        int.parse(m.group(3)!),
+        int.parse(m.group(2)!),
+        int.parse(m.group(1)!),
+      );
+    }
+    return null;
+  }
+
+  String _normalizeMatchKey(String raw) {
+    return raw
+        .trim()
+        .toLowerCase()
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .replaceAll(RegExp(r'\s*-\s*'), '-');
+  }
+
+  _OptionItem? _matchOptionByValue(List<_OptionItem> items, String? raw) {
+    final String v = (raw?.trim() ?? '');
+    if (v.isEmpty || v.toLowerCase() == 'null') {
+      return null;
+    }
+    for (final _OptionItem o in items) {
+      if (o.id == v) {
+        return o;
+      }
+    }
+    for (final _OptionItem o in items) {
+      if (o.label == v) {
+        return o;
+      }
+    }
+    final String nv = _normalizeMatchKey(v);
+    for (final _OptionItem o in items) {
+      if (_normalizeMatchKey(o.id) == nv ||
+          _normalizeMatchKey(o.label) == nv) {
+        return o;
+      }
+    }
+    for (final _OptionItem o in items) {
+      final String nl = _normalizeMatchKey(o.label);
+      if (nl.startsWith(nv) || nv.startsWith(nl)) {
+        return o;
+      }
+    }
+    for (final _OptionItem o in items) {
+      if (o.label.contains(v) || (v.length >= 6 && o.id.contains(v))) {
+        return o;
+      }
+    }
+    return null;
+  }
+
+  bool _listHasOption(List<_OptionItem> items, _OptionItem option) {
+    for (final _OptionItem o in items) {
+      if (o.id == option.id && o.label == option.label) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /// Match edit-record value to a dropdown option; inject if missing (web may use fk text as value).
+  ({List<_OptionItem> items, _OptionItem? selected}) _resolveEditDropdown({
+    required List<_OptionItem> items,
+    required List<String> matchCandidates,
+    required String submitId,
+    required String displayLabel,
+  }) {
+    final _OptionItem? found = _firstMatchOption(items, matchCandidates);
+    if (found != null) {
+      return (items: items, selected: found);
+    }
+    final String id = submitId.trim().isNotEmpty
+        ? submitId.trim()
+        : displayLabel.trim();
+    final String label = displayLabel.trim().isNotEmpty
+        ? displayLabel.trim()
+        : id;
+    if (id.isEmpty) {
+      return (items: items, selected: null);
+    }
+    final _OptionItem synthetic = _OptionItem(id: id, label: label);
+    final List<_OptionItem> merged = List<_OptionItem>.from(items);
+    if (!_listHasOption(merged, synthetic)) {
+      merged.insert(0, synthetic);
+    }
+    return (items: merged, selected: synthetic);
+  }
+
+  /// Tries each non-empty [candidates] string until one matches an option.
+  _OptionItem? _firstMatchOption(
+    List<_OptionItem> items,
+    List<String> candidates,
+  ) {
+    for (final String raw in candidates) {
+      final String v = raw.trim();
+      if (v.isEmpty || v.toLowerCase() == 'null') {
+        continue;
+      }
+      final _OptionItem? m = _matchOptionByValue(items, v);
+      if (m != null) {
+        return m;
+      }
+    }
+    return null;
+  }
+
+  void _applyEditPrefill(Map<String, dynamic> r) {
+    _editNumericId = _pickMapValue(r, const <String>['id']);
+
+    _project = _matchOptionByValue(
+      _projects,
+      _pickMapValue(r, const <String>[
+        'project_id_fk',
+        'work_id_fk',
+        'project_id',
+      ]),
+    );
+    _executionAgency = _matchOptionByValue(
+      _executionAgencies,
+      _pickMapValue(r, const <String>['execution_agency_fk']),
+    );
+    _hod = _firstMatchOption(
+      _hods,
+      <String>[
+        _pickMapValue(r, const <String>['user_name']),
+        _pickMapValue(r, const <String>[
+          'hod_user_id_fk',
+          'hod_fk',
+          'hod',
+        ]),
+      ],
+    );
+    _utilityType = _matchOptionByValue(
+      _utilityTypes,
+      _pickMapValue(r, const <String>['utility_type_fk', 'utility_type']),
+    );
+    _utilityCategory = _matchOptionByValue(
+      _utilityCategories,
+      _pickMapValue(r, const <String>[
+        'utility_category_fk',
+        'category_fk',
+      ]),
+    );
+    final ({
+      List<_OptionItem> items,
+      _OptionItem? selected,
+    }) contractResolved = _resolveEditDropdown(
+      items: _impactedContracts,
+      matchCandidates: <String>[
+        _pickMapValue(r, const <String>['contract_short_name']),
+        _pickMapValue(r, const <String>[
+          'impacted_contract_id_fk',
+          'contract_id_fk',
+        ]),
+      ],
+      submitId: _pickMapValue(r, const <String>[
+        'impacted_contract_id_fk',
+        'contract_id_fk',
+      ]),
+      displayLabel: _pickMapValue(r, const <String>['contract_short_name']),
+    );
+    _impactedContracts = contractResolved.items;
+    _impactedContract = contractResolved.selected;
+
+    final ({
+      List<_OptionItem> items,
+      _OptionItem? selected,
+    }) stageResolved = _resolveEditDropdown(
+      items: _requirementStages,
+      matchCandidates: <String>[
+        _pickMapValue(r, const <String>['requirement_stage_fk']),
+        _pickMapValue(r, const <String>[
+          'requirement_stage',
+          'requirement_state_fk',
+          'requirement_state',
+        ]),
+      ],
+      submitId: _pickMapValue(r, const <String>['requirement_stage_fk']),
+      displayLabel: _pickMapValue(r, const <String>[
+        'requirement_stage_fk',
+        'requirement_stage',
+        'requirement_state_fk',
+      ]),
+    );
+    _requirementStages = stageResolved.items;
+    _requirementStage = stageResolved.selected;
+
+    final ({
+      List<_OptionItem> items,
+      _OptionItem? selected,
+    }) elementResolved = _resolveEditDropdown(
+      items: _impactedElements,
+      matchCandidates: <String>[
+        _pickMapValue(r, const <String>['impacted_element']),
+        _pickMapValue(r, const <String>['impacted_element_fk']),
+      ],
+      submitId: _pickMapValue(r, const <String>[
+        'impacted_element',
+        'impacted_element_fk',
+      ]),
+      displayLabel: _pickMapValue(r, const <String>['impacted_element']),
+    );
+    _impactedElements = elementResolved.items;
+    _impactedElement = elementResolved.selected;
+    _unit = _matchOptionByValue(
+      _units,
+      _pickMapValue(r, const <String>['unit_fk', 'unit']),
+    );
+    _status = _matchOptionByValue(
+      _statuses,
+      _pickMapValue(r, const <String>[
+        'shifting_status_fk',
+        'status_fk',
+        'shifting_status',
+      ]),
+    );
+
+    _utilityDescriptionCtrl.text =
+        _pickMapValue(r, const <String>['utility_description']);
+    _locationCtrl.text = _pickMapValue(r, const <String>['location_name']);
+    _custodianCtrl.text = _pickMapValue(
+      r,
+      const <String>['custodian', 'owner_name'],
+    );
+    _referenceNumberCtrl.text =
+        _pickMapValue(r, const <String>['reference_number']);
+    _executedByCtrl.text = _pickMapValue(
+      r,
+      const <String>['executed_by', 'execution_agency_fk'],
+    );
+    _chainageCtrl.text = _pickMapValue(r, const <String>['chainage']);
+    _latitudeCtrl.text =
+        _sanitizeCoordLiteral(_pickMapValue(r, const <String>['latitude']));
+    _longitudeCtrl.text =
+        _sanitizeCoordLiteral(_pickMapValue(r, const <String>['longitude']));
+    _affectedStructuresCtrl.text =
+        _pickMapValue(r, const <String>['affected_structures']);
+    _scopeCtrl.text = _pickMapValue(r, const <String>['scope']);
+    _completedCtrl.text = _pickMapValue(r, const <String>['completed']);
+    _remarksCtrl.text = _pickMapValue(r, const <String>['remarks']);
+
+    _identificationDate =
+        _parseUtilityDateString(_pickMapValue(r, const <String>['identification']));
+    _startDate =
+        _parseUtilityDateString(_pickMapValue(r, const <String>['start_date']));
+    _targetDate = _parseUtilityDateString(
+      _pickMapValue(r, const <String>[
+        'target_date',
+        'planned_completion_date',
+      ]),
+    );
+    _completionDate = _parseUtilityDateString(
+      _pickMapValue(r, const <String>['shifting_completion_date']),
+    );
+
+    for (final _ProgressRow row in _progressRows) {
+      row.dispose();
+    }
+    _progressRows.clear();
+    final List<dynamic> progressList = _utilityFormList(
+      r,
+      const <String>[
+        'utilityShiftingProgressDetailsList',
+        'utility_shifting_progress_details_list',
+        'progressList',
+      ],
+    );
+    for (final dynamic item in progressList) {
+      if (item is! Map) {
+        continue;
+      }
+      final Map<String, dynamic> m = _asStringKeyedMap(item);
+      final _ProgressRow pr = _ProgressRow();
+      pr.date = _parseUtilityDateString(
+        _pickMapValue(m, const <String>['progress_date', 'date']),
+      );
+      pr.workCtrl.text = _pickMapValue(
+        m,
+        const <String>['progress_of_work', 'progress', 'remarks'],
+      );
+      _progressRows.add(pr);
+    }
+  }
+
   Future<void> _loadForm() async {
     setState(() => _loading = true);
     try {
-      final Map<String, dynamic> data = await widget.dataSource
-          .fetchAddUtilityShiftingFormData();
-      if (!mounted) return;
-      final Map<String, dynamic> merged = _mergedUtilityFormRoot(data);
+      final Map<String, dynamic> addData =
+          await widget.dataSource.fetchAddUtilityShiftingFormData();
+      if (!mounted) {
+        return;
+      }
+      final Map<String, dynamic> merged = _mergedUtilityFormRoot(addData);
+      Map<String, dynamic>? record;
+      if (_isEditMode) {
+        final Map<String, dynamic> editResp =
+            await widget.dataSource.fetchUtilityShiftingForEdit(
+          utilityShiftingId: widget.utilityShiftingId!.trim(),
+        );
+        if (!mounted) {
+          return;
+        }
+        record = _normalizeUtilityRecordForPrefill(editResp);
+      }
+      if (!mounted) {
+        return;
+      }
       setState(() {
-        _projects = _toOptions(
-          _utilityFormList(merged, const <String>[
-            'projectsList',
-            'projectList',
-            'workList',
-            'worksList',
-          ]),
-        );
-        _executionAgencies = _toOptions(
-          _utilityFormList(merged, const <String>[
-            'utilityExecutionAgencyList',
-            'executionAgencyList',
-            'execution_agency_list',
-            'utility_execution_agency_list',
-            'utilityExecutionagencyList',
-          ]),
-        );
-        _hods = _toOptions(
-          _utilityFormList(merged, const <String>[
-            'utilityHODList',
-            'utilityHodList',
-            'hodList',
-            'hod_list',
-            'utility_hod_list',
-          ]),
-        );
-        _utilityTypes = _toOptions(
-          _utilityFormList(merged, const <String>[
-            'utilityTypeList',
-            'utility_type_list',
-            'utilityTypesList',
-          ]),
-        );
-        _utilityCategories = _toOptions(
-          _utilityFormList(merged, const <String>[
-            'utilityCategoryList',
-            'utility_category_list',
-            'utilityCategoriesList',
-          ]),
-        );
-        _impactedContracts = _toOptions(
-          _utilityFormList(merged, const <String>[
-            'impactedContractsList',
-            'impactedContractList',
-            'impacted_contract_list',
-            'contractsList',
-            'contractList',
-          ]),
-        );
-        _requirementStages = _toOptions(
-          _utilityFormList(merged, const <String>[
-            'reqStageList',
-            'requirementStageList',
-            'requirement_stage_list',
-            'requirementStagesList',
-          ]),
-        );
-        _impactedElements = _toOptions(
-          _utilityFormList(merged, const <String>[
-            'impactedElementList',
-            'impacted_element_list',
-            'impactedElementsList',
-          ]),
-        );
-        _units = _toOptions(
-          _utilityFormList(merged, const <String>[
-            'unitList',
-            'unit_list',
-            'unitsList',
-          ]),
-        );
-        _statuses = _toOptions(
-          _utilityFormList(merged, const <String>[
-            'statusList',
-            'shiftingStatusList',
-            'shifting_status_list',
-            'utilityStatusList',
-          ]),
-        );
-        _fileTypes = _toOptions(
-          _utilityFormList(merged, const <String>[
-            'utilityshiftingfiletypeList',
-            'utilityShiftingFileTypeList',
-            'utility_shifting_file_type_list',
-            'utilityShiftingFiletypeList',
-            'fileTypeList',
-            'file_type_list',
-          ]),
-        );
+        _populateDropdownsFromMerged(merged);
+        if (record != null) {
+          _applyEditPrefill(record);
+        }
       });
     } catch (error) {
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
       await AppDialog.show(
         context: context,
         type: AppDialogType.error,
         title: 'Unable to Load Form',
-        message: 'Could not fetch Add Utility form data. Please try again.',
+        message: _isEditMode
+            ? 'Could not load this utility shifting for edit. Please try again.\n$error'
+            : 'Could not fetch Add Utility form data. Please try again.',
       );
     } finally {
       if (mounted) {
@@ -1216,6 +1626,9 @@ class _AddUtilityShiftingFormPageState
       return true;
     }
     if (step == 2) {
+      if (_isEditMode && _attachmentRows.isEmpty) {
+        return true;
+      }
       if (_attachmentRows.isEmpty) {
         _showRequiredMessage(
           'Add at least one attachment. File type, name, and file are required.',
@@ -1256,9 +1669,15 @@ class _AddUtilityShiftingFormPageState
     }
     setState(() => _saving = true);
     try {
-      await widget.dataSource.submitAddUtilityShifting(
-        payload: _buildPayload(),
-      );
+      if (_isEditMode) {
+        await widget.dataSource.submitUpdateUtilityShifting(
+          fields: _buildUpdateUtilityFormFields(),
+        );
+      } else {
+        await widget.dataSource.submitAddUtilityShifting(
+          payload: _buildPayload(),
+        );
+      }
       if (!mounted) return;
       await AppDialog.show(
         context: context,
@@ -1282,6 +1701,61 @@ class _AddUtilityShiftingFormPageState
         setState(() => _saving = false);
       }
     }
+  }
+
+  Map<String, String> _buildUpdateUtilityFormFields() {
+    String formatDate(DateTime? date) {
+      if (date == null) {
+        return '';
+      }
+      return '${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+    }
+
+    String latLonOrNull(String raw) {
+      final String t = raw.trim();
+      if (t.isEmpty || t.toLowerCase() == 'null') {
+        return 'null';
+      }
+      return t;
+    }
+
+    final String impactedElement = _impactedElement == null
+        ? ''
+        : (_impactedElement!.label.trim().isNotEmpty
+            ? _impactedElement!.label.trim()
+            : _impactedElement!.id);
+
+    return <String, String>{
+      'utility_description': _utilityDescriptionCtrl.text.trim(),
+      'location_name': _locationCtrl.text.trim(),
+      'custodian': _custodianCtrl.text.trim(),
+      'identification': formatDate(_identificationDate),
+      'executed_by': _executedByCtrl.text.trim(),
+      'chainage': _chainageCtrl.text.trim(),
+      'latitude': latLonOrNull(_latitudeCtrl.text),
+      'longitude': latLonOrNull(_longitudeCtrl.text),
+      'affected_structures': _affectedStructuresCtrl.text.trim(),
+      'scope': _scopeCtrl.text.trim(),
+      'start_date': formatDate(_startDate),
+      'project_id_fk': _project?.id ?? '',
+      'execution_agency_fk': _executionAgency?.id ?? '',
+      'hod_user_id_fk': _hod?.id ?? '',
+      'utility_type_fk': _utilityType?.id ?? '',
+      'utility_category_fk': _utilityCategory?.id ?? '',
+      'impacted_contract_id_fk': _impactedContract?.id ?? '',
+      'requirement_stage_fk': _requirementStage?.id ?? '',
+      'unit_fk': _unit?.id ?? '',
+      'shifting_status_fk': _status?.id ?? '',
+      'impacted_element': impactedElement,
+      'work_code': _project?.id ?? '',
+      'id': _editNumericId?.trim() ?? '',
+      'utility_shifting_id': widget.utilityShiftingId!.trim(),
+      'reference_number': _referenceNumberCtrl.text.trim(),
+      'completed': _completedCtrl.text.trim(),
+      'planned_completion_date': formatDate(_targetDate),
+      'shifting_completion_date': formatDate(_completionDate),
+      'remarks': _remarksCtrl.text.trim(),
+    };
   }
 
   Map<String, dynamic> _buildPayload() {
@@ -1336,6 +1810,49 @@ class _AddUtilityShiftingFormPageState
           },
       ],
     };
+  }
+
+  List<_OptionItem> _toOptionsWithPreferredIdKeys(
+    List<dynamic> raw, {
+    required List<String> idKeys,
+    required List<String> labelKeys,
+  }) {
+    final List<_OptionItem> items = <_OptionItem>[];
+    final Set<String> seen = <String>{};
+    for (final dynamic row in raw) {
+      if (row is String) {
+        final String s = row.trim();
+        if (s.isEmpty || !seen.add(s)) {
+          continue;
+        }
+        items.add(_OptionItem(id: s, label: s));
+        continue;
+      }
+      if (row is! Map) {
+        continue;
+      }
+      final Map<String, dynamic> map = _asStringKeyedMap(row);
+      String id = _pickMapValue(map, idKeys);
+      String label = _pickMapValue(map, labelKeys);
+      if (label.isEmpty) {
+        label = _inferOptionLabel(map);
+      }
+      if (id.isEmpty) {
+        id = _inferOptionId(map);
+      }
+      if (label.isEmpty) {
+        continue;
+      }
+      if (id.isEmpty) {
+        id = label;
+      }
+      final String dedupe = '${id}_$label';
+      if (!seen.add(dedupe)) {
+        continue;
+      }
+      items.add(_OptionItem(id: id, label: label));
+    }
+    return items;
   }
 
   List<_OptionItem> _toOptions(List<dynamic> raw) {
