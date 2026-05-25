@@ -22,8 +22,28 @@ class GlobalAlertDialog extends StatelessWidget {
     this.cancelText = 'Cancel',
   });
 
+  static String sanitizeMessage(String raw, {int maxLength = 400}) {
+    var text = raw.trim();
+    if (text.isEmpty) return text;
+
+    final lower = text.toLowerCase();
+    if (lower.contains('<!doctype') ||
+        lower.contains('<html') ||
+        lower.contains('nginx error')) {
+      return 'Server returned an error page. Please try again later.';
+    }
+
+    text = text.replaceAll(RegExp(r'\s+'), ' ');
+    if (text.length > maxLength) {
+      return '${text.substring(0, maxLength)}…';
+    }
+    return text;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final displayMessage = sanitizeMessage(message);
+    final maxDialogHeight = MediaQuery.sizeOf(context).height * 0.75;
     final ColorScheme scheme = Theme.of(context).colorScheme;
 
     Color getHeaderColor() {
@@ -58,39 +78,47 @@ class GlobalAlertDialog extends StatelessWidget {
       ),
       elevation: 4,
       backgroundColor: scheme.surface,
-      child: Container(
-        padding:
-            const EdgeInsets.only(top: 24, bottom: 16, left: 16, right: 16),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          color: scheme.surface,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxWidth: 400,
+          maxHeight: maxDialogHeight,
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              getIcon(),
-              size: 48,
-              color: getHeaderColor(),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              title,
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: scheme.onSurface,
+        child: Padding(
+          padding:
+              const EdgeInsets.only(top: 24, bottom: 16, left: 16, right: 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                getIcon(),
+                size: 48,
+                color: getHeaderColor(),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                title,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: scheme.onSurface,
+                    ),
+              ),
+              const SizedBox(height: 12),
+              ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxHeight: MediaQuery.sizeOf(context).height * 0.4,
+                ),
+                child: SingleChildScrollView(
+                  child: Text(
+                    displayMessage,
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                          color: scheme.onSurfaceVariant,
+                        ),
                   ),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              message,
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: scheme.onSurfaceVariant,
-                  ),
-            ),
-            const SizedBox(height: 24),
+                ),
+              ),
+              const SizedBox(height: 24),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -141,13 +169,13 @@ class GlobalAlertDialog extends StatelessWidget {
                 ),
               ],
             ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
 
-  // Helper method to show the dialog
   static Future<void> show(
     BuildContext context, {
     required String title,
@@ -166,7 +194,7 @@ class GlobalAlertDialog extends StatelessWidget {
       builder: (BuildContext context) {
         return GlobalAlertDialog(
           title: title,
-          message: message,
+          message: sanitizeMessage(message),
           dialogType: type,
           onConfirm: onConfirm,
           onCancel: onCancel,

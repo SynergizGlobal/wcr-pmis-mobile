@@ -82,7 +82,13 @@ class InspectionSubmitPdfBuilder {
       ),
     );
 
-    final attachmentPages = await _loadAttachmentPdfPages(state, rfi, dio);
+    final attachmentPages = await _loadAttachmentPdfPages(
+      state,
+      rfi,
+      dio,
+      rfiId: rfiId,
+      isEngineer: isEngineer,
+    );
     var totalAttached = 0;
     for (final attachment in attachmentPages) {
       if (totalAttached >= _maxTotalAttachmentPages) break;
@@ -640,36 +646,44 @@ class InspectionSubmitPdfBuilder {
     }
   }
 
+  /// Web [pdfUtils]: merge enclosure → supporting → test report PDFs only.
+  /// Do not append prior inspection master PDFs from [inspectionDetails].
   static Future<List<_LabeledPdf>> _loadAttachmentPdfPages(
     InspectionFormState state,
     InspectionItem rfi,
-    Dio dio,
-  ) async {
+    Dio dio, {
+    required int rfiId,
+    required bool isEngineer,
+  }) async {
+    final rfiIdLabel = rfi.rfiId;
     final ordered = <_PathLabel>[];
 
-    void addPath(String? path, String label) {
+    void addSourcePdf(String? path, String label) {
       if (path == null || path.trim().isEmpty) return;
       for (final p in _splitPaths(path)) {
-        if (_isPdf(p)) ordered.add(_PathLabel(p, label));
+        if (!_isPdf(p)) continue;
+        if (_isInspectionMasterPdfPath(p, rfiId, rfiIdLabel)) continue;
+        ordered.add(_PathLabel(p, label));
       }
     }
 
     for (final path in state.enclosurePaths) {
-      ordered.add(_PathLabel(path, 'Enclosure'));
+      addSourcePdf(path, 'Enclosure');
     }
     for (final enc in rfi.enclosure ?? <Enclosure>[]) {
-      addPath(enc.enclosureUploadFile, 'Enclosure');
+      addSourcePdf(enc.enclosureUploadFile, 'Enclosure');
     }
-    if (rfi.inspectionDetails != null) {
-      for (final detail in rfi.inspectionDetails!) {
-        addPath(detail.testSiteDocuments, 'Enclosure');
-        addPath(detail.supportingDocuments, 'Supporting Document');
-        addPath(detail.postTestReportPath, 'Test Report');
-      }
-    }
+
     for (final path in state.supportingDocPaths) {
-      ordered.add(_PathLabel(path, 'Supporting Document'));
+      addSourcePdf(path, 'Supporting Document');
     }
+
+    final testReportPath = isEngineer
+        ? (rfi.testResEngg?.trim().isNotEmpty == true
+            ? rfi.testResEngg
+            : rfi.testResCon)
+        : rfi.testResCon;
+    addSourcePdf(testReportPath, 'Test Report');
 
     final seen = <String>{};
     final result = <_LabeledPdf>[];
@@ -683,6 +697,35 @@ class InspectionSubmitPdfBuilder {
       }
     }
     return result;
+  }
+
+  static bool _isInspectionMasterPdfPath(
+    String path,
+    int rfiId,
+    String? rfiIdLabel,
+  ) {
+    final lower = path.trim().toLowerCase();
+    if (lower.isEmpty) return false;
+
+    final ids = <String>{rfiId.toString()};
+    if (rfiIdLabel != null && rfiIdLabel.trim().isNotEmpty) {
+      ids.add(rfiIdLabel.trim().toLowerCase());
+    }
+
+    for (final id in ids) {
+      if (lower.endsWith('$id.pdf') || lower.contains('/$id.pdf')) {
+        return true;
+      }
+      if (lower.contains('report_$id')) return true;
+      if (lower.contains('inspection_submit_$id')) return true;
+    }
+
+    if (lower.contains('uploadpdf') ||
+        lower.contains('stampedpdf') ||
+        lower.contains('stamppdffromxml')) {
+      return true;
+    }
+    return false;
   }
 
   static Future<List<pw.MemoryImage>> _loadSiteImages(

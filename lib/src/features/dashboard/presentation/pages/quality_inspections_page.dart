@@ -1,9 +1,9 @@
-import 'dart:io';
-
-import 'package:excel/excel.dart' hide Border;
+// import 'dart:io';
+//
+// import 'package:excel/excel.dart' hide Border;
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:path_provider/path_provider.dart';
+// import 'package:flutter/services.dart';
+// import 'package:path_provider/path_provider.dart';
 import 'package:wcr_pmis_mobile/src/core/widgets/app_dialog.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/data/datasources/dashboard_remote_data_source.dart';
 
@@ -20,9 +20,9 @@ class QualityInspectionsPage extends StatefulWidget {
 }
 
 class _QualityInspectionsPageState extends State<QualityInspectionsPage> {
-  static const MethodChannel _fileExportChannel = MethodChannel(
-    'wcr_pmis_mobile/file_export',
-  );
+  // static const MethodChannel _fileExportChannel = MethodChannel(
+  //   'wcr_pmis_mobile/file_export',
+  // );
   static const List<int> _pageSizeOptions = <int>[5, 10, 25, 50, 100];
   static const List<String> _headers = <String>[
     'Inspection ID',
@@ -53,7 +53,8 @@ class _QualityInspectionsPageState extends State<QualityInspectionsPage> {
   int _pageSize = 10;
   int _currentPage = 0;
 
-  bool _loading = false;
+  bool _loading = true;
+  bool _listLoaded = false;
   bool _filtersLoading = false;
   String? _loadError;
   String? _filtersLoadError;
@@ -178,6 +179,8 @@ class _QualityInspectionsPageState extends State<QualityInspectionsPage> {
       setState(() {
         _allRows = rows;
         _loading = false;
+        _listLoaded = true;
+        _loadError = null;
         _currentPage = 0;
       });
     } catch (error) {
@@ -186,6 +189,7 @@ class _QualityInspectionsPageState extends State<QualityInspectionsPage> {
       }
       setState(() {
         _loading = false;
+        _listLoaded = true;
         _loadError = error.toString();
         _allRows = <Map<String, dynamic>>[];
       });
@@ -359,17 +363,13 @@ class _QualityInspectionsPageState extends State<QualityInspectionsPage> {
         : filteredRows.sublist(start, end);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Quality Inspections'),
-        actions: <Widget>[
-          IconButton(
-            tooltip: 'Refresh',
-            onPressed: _loading ? null : _loadList,
-            icon: const Icon(Icons.refresh_rounded),
-          ),
-        ],
+      appBar: AppBar(title: const Text('Quality Inspections')),
+      bottomNavigationBar: _stickyFooter(
+        total: total,
+        start: start,
+        end: end,
+        loading: _loading,
       ),
-      bottomNavigationBar: _stickyFooter(total: total, start: start, end: end),
       body: GestureDetector(
         behavior: HitTestBehavior.translucent,
         onTap: () => FocusScope.of(context).unfocus(),
@@ -379,8 +379,8 @@ class _QualityInspectionsPageState extends State<QualityInspectionsPage> {
             children: <Widget>[
               if (_loadError != null) ...<Widget>[
                 MaterialBanner(
-                  content: Text(
-                    'Unable to load inspections. Pull refresh or tap retry.',
+                  content: const Text(
+                    'Unable to load inspections. Tap retry to try again.',
                   ),
                   actions: <Widget>[
                     TextButton(onPressed: _loadList, child: const Text('Retry')),
@@ -399,7 +399,7 @@ class _QualityInspectionsPageState extends State<QualityInspectionsPage> {
   }
 
   Widget _toolbar(BuildContext context, List<Map<String, dynamic>> rows) {
-    final bool canExport = rows.isNotEmpty;
+    // final bool canExport = rows.isNotEmpty;
     final int activeFilterCount = _activeFilterCount;
     final bool narrow = MediaQuery.sizeOf(context).width < 720;
 
@@ -520,26 +520,35 @@ class _QualityInspectionsPageState extends State<QualityInspectionsPage> {
                     ],
                   ),
                   const SizedBox(height: 8),
-                  Row(
-                    children: <Widget>[
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: canExport
-                              ? () => _confirmExportExcel(rows)
-                              : null,
-                          icon: const Icon(Icons.table_view_rounded),
-                          label: const Text('Export'),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: FilledButton.icon(
-                          onPressed: _onAddTap,
-                          icon: const Icon(Icons.add_rounded),
-                          label: const Text('Add'),
-                        ),
-                      ),
-                    ],
+                  // Export disabled for now — re-enable when export API/flow is ready.
+                  // Row(
+                  //   children: <Widget>[
+                  //     Expanded(
+                  //       child: OutlinedButton.icon(
+                  //         onPressed: canExport
+                  //             ? () => _confirmExportExcel(rows)
+                  //             : null,
+                  //         icon: const Icon(Icons.table_view_rounded),
+                  //         label: const Text('Export'),
+                  //       ),
+                  //     ),
+                  //     const SizedBox(width: 8),
+                  //     Expanded(
+                  //       child: FilledButton.icon(
+                  //         onPressed: _onAddTap,
+                  //         icon: const Icon(Icons.add_rounded),
+                  //         label: const Text('Add'),
+                  //       ),
+                  //     ),
+                  //   ],
+                  // ),
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton.icon(
+                      onPressed: _onAddTap,
+                      icon: const Icon(Icons.add_rounded),
+                      label: const Text('Add'),
+                    ),
                   ),
                 ],
               ),
@@ -557,23 +566,24 @@ class _QualityInspectionsPageState extends State<QualityInspectionsPage> {
       (double sum, String item) => sum + _columnWidth(item),
     );
 
-    if (_loading) {
+    if (_loading || !_listLoaded) {
       return Card(
         margin: EdgeInsets.zero,
-        child: const Center(child: CircularProgressIndicator()),
+        child: _loadingPlaceholder(context),
       );
     }
 
-    if (rows.isEmpty && _search.isEmpty && _activeFilterCount == 0) {
+    if (rows.isEmpty &&
+        _search.isEmpty &&
+        _activeFilterCount == 0 &&
+        _loadError == null) {
       return Card(
         margin: EdgeInsets.zero,
         child: Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
             child: Text(
-              _loadError == null
-                  ? 'No quality inspection records found.'
-                  : 'No quality inspection records loaded.',
+              'No quality inspection records found.',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: colorScheme.onSurfaceVariant,
@@ -748,11 +758,62 @@ class _QualityInspectionsPageState extends State<QualityInspectionsPage> {
     );
   }
 
+  Widget _loadingPlaceholder(BuildContext context) {
+    final ColorScheme colorScheme = Theme.of(context).colorScheme;
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 48, horizontal: 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            const CircularProgressIndicator(),
+            const SizedBox(height: 16),
+            Text(
+              'Loading quality inspections...',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _stickyFooter({
     required int total,
     required int start,
     required int end,
+    required bool loading,
   }) {
+    if (loading || !_listLoaded) {
+      final ColorScheme cs = Theme.of(context).colorScheme;
+      return SafeArea(
+        top: false,
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+          decoration: BoxDecoration(
+            color: cs.surface,
+            border: Border(
+              top: BorderSide(
+                color: cs.outlineVariant.withValues(alpha: 0.6),
+              ),
+            ),
+          ),
+          child: Text(
+            'Loading...',
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              fontWeight: FontWeight.w600,
+              color: cs.onSurfaceVariant,
+            ),
+          ),
+        ),
+      );
+    }
+
     final int pageCount = total == 0 ? 1 : (total / _pageSize).ceil();
     final String summary = total == 0
         ? 'Showing 0 to 0 of 0 entries'
@@ -1030,98 +1091,98 @@ class _QualityInspectionsPageState extends State<QualityInspectionsPage> {
     );
   }
 
-  Future<void> _confirmExportExcel(List<Map<String, dynamic>> rows) async {
-    await AppDialog.show(
-      context: context,
-      title: 'Export to Excel',
-      message: 'Download the current list as an Excel file?',
-      type: AppDialogType.confirmation,
-      leadingIcon: Icons.table_view_rounded,
-      actions: <AppDialogAction>[
-        const AppDialogAction(label: 'Cancel'),
-        AppDialogAction(
-          label: 'Export',
-          isPrimary: true,
-          onPressed: () => _exportExcel(rows),
-        ),
-      ],
-    );
-  }
-
-  Future<void> _exportExcel(List<Map<String, dynamic>> rows) async {
-    final Excel workbook = Excel.createExcel();
-    final String sheetName = workbook.getDefaultSheet() ?? 'Sheet1';
-    final Sheet sheet = workbook[sheetName];
-    sheet.appendRow(_headers.map(TextCellValue.new).toList());
-    for (final Map<String, dynamic> row in rows) {
-      sheet.appendRow(<CellValue>[
-        TextCellValue(_displayInspectionId(row)),
-        TextCellValue(_string(row['project_name'])),
-        TextCellValue(_string(row['section_name'])),
-        TextCellValue(_string(row['contract_short_name'])),
-        TextCellValue(_string(row['structure_type_fk'])),
-        TextCellValue(_string(row['structure'])),
-        TextCellValue(_string(row['item_name'])),
-        TextCellValue(_string(row['location'])),
-        TextCellValue(_string(row['sub_category'])),
-        TextCellValue(_string(row['ncr_compliance'])),
-        TextCellValue(_formatDate(row['ncr_date'])),
-        TextCellValue(_formatDate(row['closed_on'])),
-        TextCellValue(_string(row['inspection_status'])),
-        TextCellValue(''),
-      ]);
-    }
-    final List<int>? bytes = workbook.encode();
-    if (bytes == null || bytes.isEmpty) {
-      if (!mounted) return;
-      await AppDialog.show(
-        context: context,
-        title: 'Export failed',
-        message: 'Unable to generate Excel file.',
-        type: AppDialogType.error,
-      );
-      return;
-    }
-    final String fileName =
-        'quality_inspections_${DateTime.now().millisecondsSinceEpoch}.xlsx';
-    final String savedPath = await _saveExportFile(
-      fileName: fileName,
-      bytes: bytes,
-    );
-    if (!mounted) return;
-    await AppDialog.show(
-      context: context,
-      title: 'Export complete',
-      message: 'Saved to:\n$savedPath',
-      type: AppDialogType.success,
-      actions: <AppDialogAction>[
-        AppDialogAction(
-          label: 'Open',
-          isPrimary: true,
-          onPressed: () async {
-            try {
-              await _fileExportChannel.invokeMethod<void>(
-                'openFile',
-                <String, String>{'path': savedPath},
-              );
-            } catch (_) {}
-          },
-        ),
-        const AppDialogAction(label: 'OK', isPrimary: true),
-      ],
-    );
-  }
-
-  Future<String> _saveExportFile({
-    required String fileName,
-    required List<int> bytes,
-  }) async {
-    final Directory dir = await getApplicationDocumentsDirectory();
-    final String path = '${dir.path}/$fileName';
-    final File file = File(path);
-    await file.writeAsBytes(bytes, flush: true);
-    return path;
-  }
+  // Future<void> _confirmExportExcel(List<Map<String, dynamic>> rows) async {
+  //   await AppDialog.show(
+  //     context: context,
+  //     title: 'Export to Excel',
+  //     message: 'Download the current list as an Excel file?',
+  //     type: AppDialogType.confirmation,
+  //     leadingIcon: Icons.table_view_rounded,
+  //     actions: <AppDialogAction>[
+  //       const AppDialogAction(label: 'Cancel'),
+  //       AppDialogAction(
+  //         label: 'Export',
+  //         isPrimary: true,
+  //         onPressed: () => _exportExcel(rows),
+  //       ),
+  //     ],
+  //   );
+  // }
+  //
+  // Future<void> _exportExcel(List<Map<String, dynamic>> rows) async {
+  //   final Excel workbook = Excel.createExcel();
+  //   final String sheetName = workbook.getDefaultSheet() ?? 'Sheet1';
+  //   final Sheet sheet = workbook[sheetName];
+  //   sheet.appendRow(_headers.map(TextCellValue.new).toList());
+  //   for (final Map<String, dynamic> row in rows) {
+  //     sheet.appendRow(<CellValue>[
+  //       TextCellValue(_displayInspectionId(row)),
+  //       TextCellValue(_string(row['project_name'])),
+  //       TextCellValue(_string(row['section_name'])),
+  //       TextCellValue(_string(row['contract_short_name'])),
+  //       TextCellValue(_string(row['structure_type_fk'])),
+  //       TextCellValue(_string(row['structure'])),
+  //       TextCellValue(_string(row['item_name'])),
+  //       TextCellValue(_string(row['location'])),
+  //       TextCellValue(_string(row['sub_category'])),
+  //       TextCellValue(_string(row['ncr_compliance'])),
+  //       TextCellValue(_formatDate(row['ncr_date'])),
+  //       TextCellValue(_formatDate(row['closed_on'])),
+  //       TextCellValue(_string(row['inspection_status'])),
+  //       TextCellValue(''),
+  //     ]);
+  //   }
+  //   final List<int>? bytes = workbook.encode();
+  //   if (bytes == null || bytes.isEmpty) {
+  //     if (!mounted) return;
+  //     await AppDialog.show(
+  //       context: context,
+  //       title: 'Export failed',
+  //       message: 'Unable to generate Excel file.',
+  //       type: AppDialogType.error,
+  //     );
+  //     return;
+  //   }
+  //   final String fileName =
+  //       'quality_inspections_${DateTime.now().millisecondsSinceEpoch}.xlsx';
+  //   final String savedPath = await _saveExportFile(
+  //     fileName: fileName,
+  //     bytes: bytes,
+  //   );
+  //   if (!mounted) return;
+  //   await AppDialog.show(
+  //     context: context,
+  //     title: 'Export complete',
+  //     message: 'Saved to:\n$savedPath',
+  //     type: AppDialogType.success,
+  //     actions: <AppDialogAction>[
+  //       AppDialogAction(
+  //         label: 'Open',
+  //         isPrimary: true,
+  //         onPressed: () async {
+  //           try {
+  //             await _fileExportChannel.invokeMethod<void>(
+  //               'openFile',
+  //               <String, String>{'path': savedPath},
+  //             );
+  //           } catch (_) {}
+  //         },
+  //       ),
+  //       const AppDialogAction(label: 'OK', isPrimary: true),
+  //     ],
+  //   );
+  // }
+  //
+  // Future<String> _saveExportFile({
+  //   required String fileName,
+  //   required List<int> bytes,
+  // }) async {
+  //   final Directory dir = await getApplicationDocumentsDirectory();
+  //   final String path = '${dir.path}/$fileName';
+  //   final File file = File(path);
+  //   await file.writeAsBytes(bytes, flush: true);
+  //   return path;
+  // }
 
   double _columnWidth(String header) {
     switch (header) {

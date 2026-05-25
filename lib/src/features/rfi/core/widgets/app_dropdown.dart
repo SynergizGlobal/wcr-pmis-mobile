@@ -23,10 +23,22 @@ class AppDropdown<T> extends StatelessWidget {
   final double? width;
   final bool enabled;
 
+  List<T> _uniqueItems(List<T> source) {
+    final unique = <T>[];
+    for (final item in source) {
+      if (!unique.contains(item)) {
+        unique.add(item);
+      }
+    }
+    return unique;
+  }
+
   @override
   Widget build(BuildContext context) {
     final ColorScheme scheme = Theme.of(context).colorScheme;
     final TextTheme textTheme = Theme.of(context).textTheme;
+    final uniqueItems = _uniqueItems(items);
+    final resolvedValue = _resolveValue(value, uniqueItems);
 
     final Widget dropdown = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -43,7 +55,7 @@ class AppDropdown<T> extends StatelessWidget {
           const SizedBox(height: 6),
         ],
         DropdownButtonFormField<T>(
-          value: _resolveValue<T>(value, items),
+          value: resolvedValue,
           isExpanded: true,
           hint: Text(
             hint,
@@ -79,7 +91,7 @@ class AppDropdown<T> extends StatelessWidget {
               ),
             ),
           ),
-          items: items
+          items: uniqueItems
               .map(
                 (T item) => DropdownMenuItem<T>(
                   value: item,
@@ -88,9 +100,12 @@ class AppDropdown<T> extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     maxLines: 2,
                     style: textTheme.bodyMedium?.copyWith(
-                      color: item == value ? scheme.primary : scheme.onSurface,
-                      fontWeight:
-                          item == value ? FontWeight.w600 : FontWeight.normal,
+                      color: item == resolvedValue
+                          ? scheme.primary
+                          : scheme.onSurface,
+                      fontWeight: item == resolvedValue
+                          ? FontWeight.w600
+                          : FontWeight.normal,
                     ),
                   ),
                 ),

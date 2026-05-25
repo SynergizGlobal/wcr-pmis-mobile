@@ -5,16 +5,30 @@ class CreateRfiRepository {
   final CreateRfiApi api;
   CreateRfiRepository(this.api);
 
+  List<DropdownItem> _dedupeDropdownItems(List<DropdownItem> items) {
+    final seen = <String>{};
+    final result = <DropdownItem>[];
+    for (final item in items) {
+      final key = item.id.trim().isNotEmpty ? item.id.trim() : item.name.trim();
+      if (seen.add(key)) {
+        result.add(item);
+      }
+    }
+    return result;
+  }
+
   List<DropdownItem> _mapToDropdownItems(List<dynamic> data) {
     if (data.isEmpty) return [];
 
     // If the API returns a list of strings instead of JSON objects:
     if (data.first is String) {
-      return data.map((str) => DropdownItem(id: str, name: str)).toList();
+      return _dedupeDropdownItems(
+        data.map((str) => DropdownItem(id: str, name: str)).toList(),
+      );
     }
 
     // If it's a list of JSON objects:
-    return data.map((dynamic item) {
+    return _dedupeDropdownItems(data.map((dynamic item) {
       final json = item as Map<String, dynamic>;
 
       // We look for ID keys:
@@ -78,7 +92,7 @@ class CreateRfiRepository {
         p6ActivityIdFk: p6ActivityIdFk,
         pmisCalcFk: pmisCalcFk,
       );
-    }).toList();
+    }).toList());
   }
 
   Future<List<DropdownItem>> getProjectNames() async {
