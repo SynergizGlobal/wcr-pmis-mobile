@@ -206,10 +206,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AddQualityInspectionFormPage.routePath,
         name: AddQualityInspectionFormPage.routeName,
-        builder: (BuildContext context, GoRouterState state) =>
-            AddQualityInspectionFormPage(
-              dataSource: ref.read(dashboardRemoteDataSourceProvider),
-            ),
+        builder: (BuildContext context, GoRouterState state) {
+          final String? editId =
+              state.uri.queryParameters['inspection_id']?.trim();
+          return AddQualityInspectionFormPage(
+            dataSource: ref.read(dashboardRemoteDataSourceProvider),
+            inspectionId: editId != null && editId.isNotEmpty ? editId : null,
+          );
+        },
       ),
       ...RfiRoutes.routes,
     ],

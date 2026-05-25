@@ -10,12 +10,19 @@ import 'package:wcr_pmis_mobile/src/core/widgets/app_text_form_field.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/data/datasources/dashboard_remote_data_source.dart';
 
 class AddQualityInspectionFormPage extends StatefulWidget {
-  const AddQualityInspectionFormPage({super.key, required this.dataSource});
+  const AddQualityInspectionFormPage({
+    super.key,
+    required this.dataSource,
+    this.inspectionId,
+  });
 
   static const String routeName = 'add-quality-inspection';
   static const String routePath = '/add-quality-inspection';
 
   final DashboardRemoteDataSource dataSource;
+
+  /// When set, loads inspection-view API and prefills the form.
+  final String? inspectionId;
 
   @override
   State<AddQualityInspectionFormPage> createState() =>
@@ -63,6 +70,7 @@ class _AddQualityInspectionFormPageState
   bool _cascadeBusy = false;
   bool _saving = false;
   String? _loadError;
+  String? _inspectionNo;
 
   List<_QiOption> _projects = <_QiOption>[];
   List<_QiOption> _sections = <_QiOption>[];
@@ -145,6 +153,9 @@ class _AddQualityInspectionFormPageState
   bool get _canSaveDraft =>
       !_loading && !_cascadeBusy && _project != null;
 
+  bool get _isEditMode =>
+      widget.inspectionId != null && widget.inspectionId!.trim().isNotEmpty;
+
   @override
   void initState() {
     super.initState();
@@ -188,8 +199,12 @@ class _AddQualityInspectionFormPageState
         _sections = _parseSections(results[1]);
         _inspectionTypes = _parseInspectionTypes(results[2]);
         _categories = _parseCategories(results[3]);
-        _loading = false;
       });
+      if (_isEditMode) {
+        await _loadInspectionForEdit(widget.inspectionId!.trim());
+      } else if (mounted) {
+        setState(() => _loading = false);
+      }
     } catch (error) {
       if (!mounted) {
         return;
@@ -396,6 +411,325 @@ class _AddQualityInspectionFormPageState
     }
   }
 
+  _QiOption? _findOption(List<_QiOption> items, String id) {
+    if (id.isEmpty) {
+      return null;
+    }
+    for (final _QiOption item in items) {
+      if (item.id == id) {
+        return item;
+      }
+    }
+    return null;
+  }
+
+  _QiOption _optionOrFallback(
+    List<_QiOption> items,
+    String id,
+    String label,
+  ) {
+    return _findOption(items, id) ??
+        _QiOption(id: id, label: label.isNotEmpty ? label : id);
+  }
+
+  _QiOption? _findStructureOption(List<_QiOption> items, String value) {
+    if (value.isEmpty) {
+      return null;
+    }
+    final _QiOption? byId = _findOption(items, value);
+    if (byId != null) {
+      return byId;
+    }
+    for (final _QiOption item in items) {
+      if (item.label == value) {
+        return item;
+      }
+    }
+    return _QiOption(id: value, label: value);
+  }
+
+  DateTime? _parseApiDate(dynamic value) {
+    final String raw = _str(value);
+    if (raw.isEmpty) {
+      return null;
+    }
+    String normalized = raw;
+    if (normalized.contains(' ')) {
+      normalized = normalized.replaceFirst(' ', 'T');
+    }
+    final int dot = normalized.indexOf('.');
+    if (dot > 0) {
+      normalized = normalized.substring(0, dot);
+    }
+    try {
+      return DateTime.parse(normalized);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Map<String, dynamic> _asStringKeyedMap(dynamic value) {
+    if (value is! Map) {
+      return <String, dynamic>{};
+    }
+    return Map<String, dynamic>.from(
+      value.map(
+        (dynamic k, dynamic v) => MapEntry<String, dynamic>(k.toString(), v),
+      ),
+    );
+  }
+
+  String _normFieldKey(String key) =>
+      key.toLowerCase().replaceAll('_', '').replaceAll('-', '');
+
+  dynamic _pickMapValue(Map<String, dynamic> map, List<String> keys) {
+    final Set<String> wanted = keys.map(_normFieldKey).toSet();
+    for (final MapEntry<String, dynamic> entry in map.entries) {
+      if (wanted.contains(_normFieldKey(entry.key))) {
+        return entry.value;
+      }
+    }
+    return null;
+  }
+
+  String _inspectedByFromProject(_QiOption? project) {
+    if (project?.raw == null) {
+      return '';
+    }
+    return _str(
+      _pickMapValue(
+        project!.raw!,
+        const <String>['inspectedBy', 'inspected_by'],
+      ),
+    );
+  }
+
+  void _applyInspectionByFromProject(_QiOption? project) {
+    _inspectionByCtrl.text = _inspectedByFromProject(project);
+  }
+
+  Future<void> _reloadContractsAndStructureTypes(String projectId) async {
+    final List<Map<String, dynamic>> results =
+        await Future.wait<Map<String, dynamic>>(
+      <Future<Map<String, dynamic>>>[
+        widget.dataSource.fetchQualityInspectionDropdownContracts(
+          projectIdFk: projectId,
+        ),
+        widget.dataSource.fetchQualityInspectionDropdownStructureTypes(
+          projectIdFk: projectId,
+        ),
+      ],
+    );
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _contracts = _parseIdName(results[0], idKey: 'id', nameKey: 'name');
+      _structureTypes = _parseStructureTypes(results[1]);
+    });
+  }
+
+  Future<void> _reloadStructuresAndItems({
+    required String projectId,
+    required String structureTypeFk,
+  }) async {
+    final List<Map<String, dynamic>> results =
+        await Future.wait<Map<String, dynamic>>(
+      <Future<Map<String, dynamic>>>[
+        widget.dataSource.fetchQualityInspectionDropdownStructures(
+          projectIdFk: projectId,
+          structureTypeFk: structureTypeFk,
+        ),
+        widget.dataSource.fetchQualityInspectionDropdownItems(
+          structureTypeFk: structureTypeFk,
+        ),
+      ],
+    );
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _structures = _parseStructures(results[0]);
+      _items = _parseItems(results[1]);
+    });
+  }
+
+  Future<void> _reloadSubCategories(String categoryId) async {
+    final Map<String, dynamic> response = await widget.dataSource
+        .fetchQualityInspectionDropdownSubCategories(categoryIdFk: categoryId);
+    if (!mounted) {
+      return;
+    }
+    setState(() => _subCategories = _parseSubCategories(response));
+  }
+
+  void _applyNcrRows(List<dynamic> rows) {
+    _clearParameterRows();
+    final List<_TestParameterRow> out = <_TestParameterRow>[];
+    for (final dynamic row in rows) {
+      if (row is! Map) {
+        continue;
+      }
+      final Map<String, dynamic> map = _asStringKeyedMap(row);
+      final _TestParameterRow paramRow = _TestParameterRow(
+        parameterId: _str(map['parameter_id']),
+        parameter: _str(map['test_description']),
+        acceptanceCriteria: _str(map['acceptance_criteria']),
+        uom: _str(map['unit_of_measure']),
+        frequency: _str(map['frequency']),
+      );
+      final String result = _str(map['result']);
+      if (result.isNotEmpty) {
+        paramRow.resultCtrl.text = result;
+      }
+      final String passFail = _str(map['pass_fail']);
+      if (passFail.isNotEmpty) {
+        paramRow.passFail = passFail;
+      }
+      final String ncr = _str(map['is_ncr_required']);
+      if (ncr.isNotEmpty) {
+        paramRow.ncrRequired = ncr;
+      }
+      final String fileName = _str(map['file_name']);
+      if (fileName.isNotEmpty) {
+        paramRow.attachmentName = fileName;
+      }
+      out.add(paramRow);
+    }
+    setState(() => _parameterRows = out);
+    _attachParameterListeners();
+  }
+
+  Future<void> _loadInspectionForEdit(String inspectionId) async {
+    try {
+      final Map<String, dynamic> response =
+          await widget.dataSource.fetchQualityInspectionView(
+        inspectionId: inspectionId,
+      );
+      if (!mounted) {
+        return;
+      }
+      final Map<String, dynamic> data = _asStringKeyedMap(response['data']);
+      if (data.isEmpty) {
+        throw Exception('Inspection details were not returned.');
+      }
+      await _applyInspectionView(data);
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _loading = false;
+        _loadError = null;
+        _inspectionNo = _str(data['inspection_no']);
+      });
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _loading = false;
+        _loadError = error.toString();
+      });
+    }
+  }
+
+  Future<void> _applyInspectionView(Map<String, dynamic> data) async {
+    setState(() => _cascadeBusy = true);
+    try {
+      _locationCtrl.text = _str(data['location']);
+      _lotBatchCtrl.text = _str(data['lot_no']);
+      _correctiveActionCtrl.text = _str(data['corrective_action_reqd']);
+      _targetDate = _parseApiDate(data['action_target_date']);
+
+      final String projectId = _str(data['project_id_fk']);
+      _project = _optionOrFallback(
+        _projects,
+        projectId,
+        _str(data['project_name']),
+      );
+      _applyInspectionByFromProject(_project);
+      if (_inspectionByCtrl.text.isEmpty) {
+        _inspectionByCtrl.text = _str(data['inspected_by_name']);
+        if (_inspectionByCtrl.text.isEmpty) {
+          _inspectionByCtrl.text = _str(data['inspected_by_fk']);
+        }
+      }
+
+      if (projectId.isNotEmpty) {
+        await _reloadContractsAndStructureTypes(projectId);
+      }
+
+      _section = _optionOrFallback(
+        _sections,
+        _str(data['section_id_fk']),
+        _str(data['section_name']),
+      );
+      final String contractLabel = _str(data['contract_short_name']).isNotEmpty
+          ? _str(data['contract_short_name'])
+          : _str(data['contract_name']);
+      _contract = _optionOrFallback(
+        _contracts,
+        _str(data['contract_id_fk']),
+        contractLabel,
+      );
+
+      final String structureTypeFk = _str(data['structure_type_fk']);
+      _structureType = _optionOrFallback(
+        _structureTypes,
+        structureTypeFk,
+        structureTypeFk,
+      );
+
+      if (projectId.isNotEmpty && structureTypeFk.isNotEmpty) {
+        await _reloadStructuresAndItems(
+          projectId: projectId,
+          structureTypeFk: structureTypeFk,
+        );
+      }
+
+      _structure = _findStructureOption(_structures, _str(data['structure']));
+      final String itemLabel = _str(data['item_code']).isNotEmpty
+          ? '${_str(data['item_name'])} (${_str(data['item_code'])})'
+          : _str(data['item_name']);
+      _item = _optionOrFallback(_items, _str(data['item_id_fk']), itemLabel);
+      _inspectionType = _optionOrFallback(
+        _inspectionTypes,
+        _str(data['type_id_fk']),
+        _str(data['inspection_type']),
+      );
+      _category = _optionOrFallback(
+        _categories,
+        _str(data['category_id_fk']),
+        _str(data['category']),
+      );
+
+      if (_category != null) {
+        await _reloadSubCategories(_category!.id);
+      }
+
+      _subCategory = _optionOrFallback(
+        _subCategories,
+        _str(data['sub_category_id_fk']),
+        _str(data['sub_category']),
+      );
+
+      final dynamic ncrRows = data['ncrRows'];
+      if (ncrRows is List && ncrRows.isNotEmpty) {
+        _applyNcrRows(ncrRows);
+      } else if (_item != null && _category != null && _subCategory != null) {
+        await _loadTestParameters();
+      }
+
+      if (mounted) {
+        setState(() {});
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _cascadeBusy = false);
+      }
+    }
+  }
+
   Future<void> _onProjectChanged(_QiOption? value) async {
     setState(() {
       _project = value;
@@ -407,7 +741,7 @@ class _AddQualityInspectionFormPageState
       _structureTypes = <_QiOption>[];
       _structures = <_QiOption>[];
       _items = <_QiOption>[];
-      _inspectionByCtrl.text = _str(value?.raw?['inspectedBy']);
+      _applyInspectionByFromProject(value);
       _clearParameterRows();
     });
     if (value == null) {
@@ -415,28 +749,7 @@ class _AddQualityInspectionFormPageState
     }
     setState(() => _cascadeBusy = true);
     try {
-      final List<Map<String, dynamic>> results =
-          await Future.wait<Map<String, dynamic>>(
-        <Future<Map<String, dynamic>>>[
-          widget.dataSource.fetchQualityInspectionDropdownContracts(
-            projectIdFk: value.id,
-          ),
-          widget.dataSource.fetchQualityInspectionDropdownStructureTypes(
-            projectIdFk: value.id,
-          ),
-        ],
-      );
-      if (!mounted) {
-        return;
-      }
-      setState(() {
-        _contracts = _parseIdName(
-          results[0],
-          idKey: 'id',
-          nameKey: 'name',
-        );
-        _structureTypes = _parseStructureTypes(results[1]);
-      });
+      await _reloadContractsAndStructureTypes(value.id);
     } finally {
       if (mounted) {
         setState(() => _cascadeBusy = false);
@@ -458,25 +771,10 @@ class _AddQualityInspectionFormPageState
     }
     setState(() => _cascadeBusy = true);
     try {
-      final List<Map<String, dynamic>> results =
-          await Future.wait<Map<String, dynamic>>(
-        <Future<Map<String, dynamic>>>[
-          widget.dataSource.fetchQualityInspectionDropdownStructures(
-            projectIdFk: _project!.id,
-            structureTypeFk: value.id,
-          ),
-          widget.dataSource.fetchQualityInspectionDropdownItems(
-            structureTypeFk: value.id,
-          ),
-        ],
+      await _reloadStructuresAndItems(
+        projectId: _project!.id,
+        structureTypeFk: value.id,
       );
-      if (!mounted) {
-        return;
-      }
-      setState(() {
-        _structures = _parseStructures(results[0]);
-        _items = _parseItems(results[1]);
-      });
     } finally {
       if (mounted) {
         setState(() => _cascadeBusy = false);
@@ -496,14 +794,7 @@ class _AddQualityInspectionFormPageState
     }
     setState(() => _cascadeBusy = true);
     try {
-      final Map<String, dynamic> response = await widget.dataSource
-          .fetchQualityInspectionDropdownSubCategories(categoryIdFk: value.id);
-      if (!mounted) {
-        return;
-      }
-      setState(() {
-        _subCategories = _parseSubCategories(response);
-      });
+      await _reloadSubCategories(value.id);
     } finally {
       if (mounted) {
         setState(() => _cascadeBusy = false);
@@ -709,7 +1000,27 @@ class _AddQualityInspectionFormPageState
   Widget build(BuildContext context) {
     final ColorScheme cs = Theme.of(context).colorScheme;
     return Scaffold(
-      appBar: AppBar(title: const Text('Add Quality Inspection Form')),
+      appBar: AppBar(
+        title: _isEditMode && (_inspectionNo?.isNotEmpty ?? false)
+            ? Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  const Text('Edit Quality Inspection'),
+                  Text(
+                    _inspectionNo!,
+                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              )
+            : Text(
+                _isEditMode
+                    ? 'Edit Quality Inspection'
+                    : 'Add Quality Inspection',
+              ),
+      ),
       body: SafeArea(
         child: Column(
           children: <Widget>[
@@ -726,7 +1037,9 @@ class _AddQualityInspectionFormPageState
                           mainAxisSize: MainAxisSize.min,
                           children: <Widget>[
                             Text(
-                              'Unable to load form.',
+                              _isEditMode
+                                  ? 'Unable to load inspection for edit.'
+                                  : 'Unable to load form.',
                               style: Theme.of(context).textTheme.titleMedium,
                             ),
                             const SizedBox(height: 12),
@@ -849,8 +1162,11 @@ class _AddQualityInspectionFormPageState
                               AppTextFormField(
                                 controller: _inspectionByCtrl,
                                 label: 'Inspection By',
-                                hintText: '—',
+                                hintText: _project == null
+                                    ? 'Select project first'
+                                    : '—',
                                 readOnly: true,
+                                enabled: false,
                               ),
                               const SizedBox(height: 10),
                               AppTextFormField(

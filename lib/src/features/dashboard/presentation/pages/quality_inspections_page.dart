@@ -1082,13 +1082,24 @@ class _QualityInspectionsPageState extends State<QualityInspectionsPage> {
   }
 
   Future<void> _onEditTap(Map<String, dynamic> row) async {
-    await AppDialog.show(
-      context: context,
-      title: 'Edit Quality Inspection',
-      message:
-          'Edit for ${_displayInspectionId(row)} will open here once the API is connected.',
-      type: AppDialogType.info,
+    final String id = _string(row['inspection_id']);
+    if (id.isEmpty) {
+      await AppDialog.show(
+        context: context,
+        title: 'Edit Quality Inspection',
+        message: 'Inspection id is missing for this row.',
+        type: AppDialogType.error,
+      );
+      return;
+    }
+    await context.pushNamed(
+      AddQualityInspectionFormPage.routeName,
+      queryParameters: <String, String>{'inspection_id': id},
     );
+    if (!mounted) {
+      return;
+    }
+    await _loadList();
   }
 
   // Future<void> _confirmExportExcel(List<Map<String, dynamic>> rows) async {

@@ -510,6 +510,19 @@ class DashboardRemoteDataSource {
     return _normalizeResponse(response.data);
   }
 
+  Future<Map<String, dynamic>> fetchQualityInspectionView({
+    required String inspectionId,
+  }) async {
+    final response = await _dio.get<dynamic>(
+      '/quality-inspection/inspection-view/$inspectionId',
+      queryParameters: <String, String>{
+        '_t': DateTime.now().millisecondsSinceEpoch.toString(),
+      },
+      options: _requestOptions,
+    );
+    return _normalizeResponse(response.data);
+  }
+
   Future<Map<String, dynamic>> fetchUtilityShiftingList({
     int start = 0,
     int length = 10,
