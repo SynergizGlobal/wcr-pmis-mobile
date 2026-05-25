@@ -402,6 +402,114 @@ class DashboardRemoteDataSource {
     return _normalizeResponse(response.data);
   }
 
+  Future<Map<String, dynamic>> fetchQualityInspectionDropdownProjects() async {
+    final response = await _dio.get<dynamic>(
+      '/quality-inspection/dropdown-projects',
+      options: _requestOptions,
+    );
+    return _normalizeResponse(response.data);
+  }
+
+  Future<Map<String, dynamic>> fetchQualityInspectionDropdownSections() async {
+    final response = await _dio.get<dynamic>(
+      '/quality-inspection/dropdown-sections',
+      options: _requestOptions,
+    );
+    return _normalizeResponse(response.data);
+  }
+
+  Future<Map<String, dynamic>> fetchQualityInspectionDropdownContracts({
+    required String projectIdFk,
+  }) async {
+    final response = await _dio.get<dynamic>(
+      '/quality-inspection/dropdown-contracts',
+      queryParameters: <String, String>{'projectIdFk': projectIdFk},
+      options: _requestOptions,
+    );
+    return _normalizeResponse(response.data);
+  }
+
+  Future<Map<String, dynamic>> fetchQualityInspectionDropdownStructureTypes({
+    required String projectIdFk,
+  }) async {
+    final response = await _dio.get<dynamic>(
+      '/quality-inspection/dropdown-structure-types',
+      queryParameters: <String, String>{'projectIdFk': projectIdFk},
+      options: _requestOptions,
+    );
+    return _normalizeResponse(response.data);
+  }
+
+  Future<Map<String, dynamic>> fetchQualityInspectionDropdownStructures({
+    required String projectIdFk,
+    required String structureTypeFk,
+  }) async {
+    final response = await _dio.get<dynamic>(
+      '/quality-inspection/dropdown-structures',
+      queryParameters: <String, String>{
+        'projectIdFk': projectIdFk,
+        'structureTypeFk': structureTypeFk,
+      },
+      options: _requestOptions,
+    );
+    return _normalizeResponse(response.data);
+  }
+
+  Future<Map<String, dynamic>> fetchQualityInspectionDropdownItems({
+    required String structureTypeFk,
+  }) async {
+    final response = await _dio.get<dynamic>(
+      '/quality-inspection/dropdown-items',
+      queryParameters: <String, String>{'structureTypeFk': structureTypeFk},
+      options: _requestOptions,
+    );
+    return _normalizeResponse(response.data);
+  }
+
+  Future<Map<String, dynamic>> fetchQualityInspectionDropdownInspectionTypes() async {
+    final response = await _dio.get<dynamic>(
+      '/quality-inspection/dropdown-inspection-types',
+      options: _requestOptions,
+    );
+    return _normalizeResponse(response.data);
+  }
+
+  Future<Map<String, dynamic>> fetchQualityInspectionDropdownCategories() async {
+    final response = await _dio.get<dynamic>(
+      '/quality-inspection/dropdown-categories',
+      options: _requestOptions,
+    );
+    return _normalizeResponse(response.data);
+  }
+
+  Future<Map<String, dynamic>> fetchQualityInspectionDropdownSubCategories({
+    required String categoryIdFk,
+  }) async {
+    final response = await _dio.get<dynamic>(
+      '/quality-inspection/dropdown-sub-categories',
+      queryParameters: <String, String>{'categoryIdFk': categoryIdFk},
+      options: _requestOptions,
+    );
+    return _normalizeResponse(response.data);
+  }
+
+  Future<Map<String, dynamic>> fetchQualityInspectionTestParameters({
+    required String itemIdFk,
+    required String categoryIdFk,
+    required String subCategoryIdFk,
+  }) async {
+    final response = await _dio.get<dynamic>(
+      '/quality-inspection/test-parameters',
+      queryParameters: <String, String>{
+        'itemIdFk': itemIdFk,
+        'categoryIdFk': categoryIdFk,
+        'subCategoryIdFk': subCategoryIdFk,
+      },
+      options: _requestOptions,
+    );
+    return _normalizeResponse(response.data);
+  }
+
   Future<Map<String, dynamic>> fetchUtilityShiftingList({
     int start = 0,
     int length = 10,

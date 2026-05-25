@@ -16,6 +16,7 @@ import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/issues
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/project_details_page.dart';
 import 'package:wcr_pmis_mobile/src/features/rfi/presentation/rfi_routes.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/new_activities_update_page.dart';
+import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/add_quality_inspection_form_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/quality_inspections_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/utility_shifting_page.dart';
 import 'package:wcr_pmis_mobile/src/features/profile/presentation/pages/profile_page.dart';
@@ -79,6 +80,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         return LoginPage.routePath;
       }
       if (!loggedIn && loc == QualityInspectionsPage.routePath) {
+        return LoginPage.routePath;
+      }
+      if (!loggedIn && loc == AddQualityInspectionFormPage.routePath) {
         return LoginPage.routePath;
       }
       if (!loggedIn && loc.startsWith('/rfi')) {
@@ -196,6 +200,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         name: QualityInspectionsPage.routeName,
         builder: (BuildContext context, GoRouterState state) =>
             QualityInspectionsPage(
+              dataSource: ref.read(dashboardRemoteDataSourceProvider),
+            ),
+      ),
+      GoRoute(
+        path: AddQualityInspectionFormPage.routePath,
+        name: AddQualityInspectionFormPage.routeName,
+        builder: (BuildContext context, GoRouterState state) =>
+            AddQualityInspectionFormPage(
               dataSource: ref.read(dashboardRemoteDataSourceProvider),
             ),
       ),

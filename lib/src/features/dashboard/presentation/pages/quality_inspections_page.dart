@@ -2,10 +2,12 @@
 //
 // import 'package:excel/excel.dart' hide Border;
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 // import 'package:flutter/services.dart';
 // import 'package:path_provider/path_provider.dart';
 import 'package:wcr_pmis_mobile/src/core/widgets/app_dialog.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/data/datasources/dashboard_remote_data_source.dart';
+import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/add_quality_inspection_form_page.dart';
 
 class QualityInspectionsPage extends StatefulWidget {
   const QualityInspectionsPage({super.key, required this.dataSource});
@@ -1072,13 +1074,11 @@ class _QualityInspectionsPageState extends State<QualityInspectionsPage> {
   }
 
   Future<void> _onAddTap() async {
-    await AppDialog.show(
-      context: context,
-      title: 'Add Quality Inspection',
-      message:
-          'Add form will open here once the API is connected. UI shell is ready.',
-      type: AppDialogType.info,
-    );
+    await context.pushNamed(AddQualityInspectionFormPage.routeName);
+    if (!mounted) {
+      return;
+    }
+    await _loadList();
   }
 
   Future<void> _onEditTap(Map<String, dynamic> row) async {
