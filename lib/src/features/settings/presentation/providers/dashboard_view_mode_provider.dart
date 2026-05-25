@@ -4,7 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 enum DashboardViewMode { grid, list }
 
 class DashboardViewModeController extends StateNotifier<DashboardViewMode> {
-  DashboardViewModeController() : super(DashboardViewMode.grid) {
+  DashboardViewModeController() : super(DashboardViewMode.list) {
     Future<void>.microtask(_load);
   }
 
@@ -12,7 +12,7 @@ class DashboardViewModeController extends StateNotifier<DashboardViewMode> {
 
   Future<void> _load() async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
-    final String value = prefs.getString(_key) ?? 'grid';
+    final String value = prefs.getString(_key) ?? 'list';
     state = value == 'list' ? DashboardViewMode.list : DashboardViewMode.grid;
   }
 
