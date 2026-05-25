@@ -15,6 +15,7 @@ import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/issues
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/project_details_page.dart';
 import 'package:wcr_pmis_mobile/src/features/rfi/presentation/pages/rfi_dashboard_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/new_activities_update_page.dart';
+import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/quality_inspections_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/utility_shifting_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/providers/home_dashboard_provider.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/providers/update_forms_provider.dart';
@@ -505,26 +506,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
   }) {
     return updateFormsAsync.when(
       data: (List<UpdateFormItem> forms) {
-        final List<UpdateFormItem> visibleForms = forms.where((UpdateFormItem item) {
-          final String key = _normalizeFormKey(item.formName);
-          final bool isProjects = key.contains('project');
-          final bool isExecutionMonitoring = key.contains('execution') &&
-              (key.contains('monitoring') || key.contains('monitering'));
-          final bool isIssues = key.contains('issue');
-          final bool isUtilityShifting =
-              key.contains('utility') && key.contains('shifting');
-          return isProjects || isExecutionMonitoring || isIssues || isUtilityShifting;
-        }).toList();
-        final List<_DashboardCardSpec> cards = visibleForms
-            .map(
-              (UpdateFormItem item) => _DashboardCardSpec(
-                title: item.formName,
-                payload: item,
-                icon: null,
-                leftPlaceholder: _updateFormAssetIcon(item),
-              ),
-            )
-            .toList();
+        final List<_DashboardCardSpec> cards = _collectUpdateFormCards(forms);
         if (cards.isEmpty) {
           return ListView(
             key: ValueKey<String>('${viewKey.toString()}-empty'),
@@ -734,10 +716,32 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
 
   Future<void> _onUpdateFormTap(UpdateFormItem form) async {
     final List<UpdateFormSubItem> subMenus = form.orderedSubMenus;
+
+    // Projects has a single submenu (Add Project) — open it directly.
+    if (_isProjectsUpdateForm(form)) {
+      if (subMenus.isEmpty) {
+        await _handleUpdateFormNavigation(
+          label: 'Add Project',
+          webFormUrl: 'project',
+        );
+        return;
+      }
+      if (subMenus.length == 1) {
+        final UpdateFormSubItem only = subMenus.first;
+        await _handleUpdateFormNavigation(
+          label: only.formName,
+          webFormUrl: only.webFormUrl,
+          mobileFormUrl: only.mobileFormUrl,
+        );
+        return;
+      }
+    }
+
     if (subMenus.isEmpty) {
       await _handleUpdateFormNavigation(
         label: form.formName,
         webFormUrl: form.webFormUrl,
+        mobileFormUrl: form.mobileFormUrl,
       );
       return;
     }
@@ -781,44 +785,113 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     await _handleUpdateFormNavigation(
       label: selected.formName,
       webFormUrl: selected.webFormUrl,
+      mobileFormUrl: selected.mobileFormUrl,
     );
+  }
+
+  /// Mobile Update Forms rollout — show only implemented / in-progress forms.
+  /// Other API forms (Works, Contracts, etc.) are added here as they are built.
+  bool _isEnabledUpdateForm(UpdateFormItem item) {
+    if (_isProjectsUpdateForm(item)) {
+      return true;
+    }
+    if (_isExecutionMonitoringUpdateForm(item)) {
+      return true;
+    }
+    final String key = _normalizeFormKey(item.formName);
+    if (key.contains('issue')) {
+      return true;
+    }
+    if (key.contains('utility') && key.contains('shifting')) {
+      return true;
+    }
+    if (key.contains('quality') && key.contains('inspection')) {
+      return true;
+    }
+    return false;
+  }
+
+  bool _isProjectsUpdateForm(UpdateFormItem item) {
+    final String key = _normalizeFormKey(item.formName);
+    return key.contains('project') &&
+        !key.contains('quality') &&
+        !key.contains('inspection');
+  }
+
+  bool _isExecutionMonitoringUpdateForm(UpdateFormItem item) {
+    final String key = _normalizeFormKey(item.formName);
+    return key.contains('execution') &&
+        (key.contains('monitoring') || key.contains('monitering'));
+  }
+
+  List<_DashboardCardSpec> _collectUpdateFormCards(List<UpdateFormItem> forms) {
+    final List<_DashboardCardSpec> cards = <_DashboardCardSpec>[];
+
+    for (final UpdateFormItem item in forms) {
+      if (!_isEnabledUpdateForm(item)) {
+        continue;
+      }
+      cards.add(
+        _DashboardCardSpec(
+          title: item.formName,
+          payload: item,
+          icon: null,
+          leftPlaceholder: _updateFormAssetIcon(item),
+        ),
+      );
+    }
+
+    return cards;
   }
 
   Future<void> _handleUpdateFormNavigation({
     required String label,
     String? webFormUrl,
+    String? mobileFormUrl,
   }) async {
-    final String normalized = _normalizeFormKey(webFormUrl ?? '');
-    if (normalized == 'project') {
+    final String urlKey = _normalizeFormKey(
+      webFormUrl ?? mobileFormUrl ?? '',
+    );
+    final String combinedKey = _normalizeFormKey(
+      '${webFormUrl ?? ''} ${mobileFormUrl ?? ''} $label',
+    );
+
+    if (urlKey == 'project' ||
+        combinedKey.contains('add project') ||
+        combinedKey == 'project') {
       if (!mounted) {
         return;
       }
       context.pushNamed(AddProjectPage.routeName);
       return;
     }
-    if (normalized.contains('issue')) {
+    if (urlKey == 'issues' || combinedKey.contains('issue')) {
       if (!mounted) {
         return;
       }
       context.pushNamed(IssuesPage.routeName);
       return;
     }
-    if (normalized.contains('utility') && normalized.contains('shifting')) {
+    if (urlKey.contains('utilityshifting') ||
+        (combinedKey.contains('utility') && combinedKey.contains('shifting'))) {
       if (!mounted) {
         return;
       }
       context.pushNamed(UtilityShiftingPage.routeName);
       return;
     }
-    if (normalized.contains('new') && normalized.contains('activit')) {
+    if (urlKey.contains('qualityinspection') ||
+        (combinedKey.contains('quality') && combinedKey.contains('inspection'))) {
       if (!mounted) {
         return;
       }
-      context.pushNamed(NewActivitiesUpdatePage.routeName);
+      context.pushNamed(QualityInspectionsPage.routeName);
       return;
     }
-    if (normalized == 'newactivitiesupdate' ||
-        normalized.contains('activitiesupdate')) {
+    if (urlKey.contains('new-activities-update') ||
+        urlKey.contains('newactivitiesupdate') ||
+        combinedKey.contains('new activit') ||
+        combinedKey.contains('activitiesupdate')) {
       if (!mounted) {
         return;
       }
@@ -834,8 +907,13 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
   }
 
   Widget? _updateFormAssetIcon(UpdateFormItem item) {
-    final String formId = item.formId.trim();
-    final String key = _normalizeFormKey(item.formName);
+    return _updateFormAssetIconFromKey(
+      _normalizeFormKey(item.formName),
+      formId: item.formId.trim(),
+    );
+  }
+
+  Widget? _updateFormAssetIconFromKey(String key, {String formId = ''}) {
     final String? assetPath = switch (formId) {
       '38' => 'assets/update_forms_icons/projects.png',
       '9' => 'assets/update_forms_icons/works.png',
@@ -845,6 +923,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
       '1391' => 'assets/update_forms_icons/dms.png',
       '43' => 'assets/update_forms_icons/land_acquisition.png',
       '1240' => 'assets/update_forms_icons/utility_shifting.png',
+      '1394' => 'assets/update_forms_icons/quality_inspection.png',
       '40' => 'assets/update_forms_icons/validate_data.png',
       _ => _assetPathFromFormNameKey(key),
     };
@@ -912,6 +991,15 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     }
     if (key.contains('utility') && key.contains('shifting')) {
       return 'assets/update_forms_icons/utility_shifting.png';
+    }
+    if (key.contains('new') && key.contains('activit')) {
+      return 'assets/update_forms_icons/execution_monitoring.png';
+    }
+    if (key.contains('structure') && key.contains('p6')) {
+      return 'assets/update_forms_icons/execution_monitoring.png';
+    }
+    if (key.contains('quality') && key.contains('inspection')) {
+      return 'assets/update_forms_icons/quality_inspection.png';
     }
     if (key.contains('validate') && key.contains('data')) {
       return 'assets/update_forms_icons/validate_data.png';

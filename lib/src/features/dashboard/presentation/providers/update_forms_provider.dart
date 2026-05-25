@@ -12,7 +12,6 @@ final updateFormsProvider = FutureProvider<List<UpdateFormItem>>((ref) async {
       rows
           .whereType<Map<String, dynamic>>()
           .map(UpdateFormItem.fromJson)
-          .where((UpdateFormItem item) => item.displayInMobile)
           .toList()
         ..sort(
           (UpdateFormItem a, UpdateFormItem b) =>

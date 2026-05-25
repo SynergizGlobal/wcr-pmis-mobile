@@ -6,14 +6,16 @@ class UpdateFormSubItem {
     required this.formName,
     required this.priority,
     this.webFormUrl,
-    required this.displayInMobile,
+    this.mobileFormUrl,
+    this.level2Menus = const <UpdateFormSubItem>[],
   });
 
   final String formId;
   final String formName;
   final int priority;
   final String? webFormUrl;
-  final bool displayInMobile;
+  final String? mobileFormUrl;
+  final List<UpdateFormSubItem> level2Menus;
 
   factory UpdateFormSubItem.fromJson(Map<String, dynamic> json) {
     return UpdateFormSubItem(
@@ -21,7 +23,8 @@ class UpdateFormSubItem {
       formName: json['formName']?.toString() ?? '',
       priority: int.tryParse(json['priority']?.toString() ?? '') ?? 0,
       webFormUrl: json['webFormUrl']?.toString(),
-      displayInMobile: _isVisibleInMobile(json['displayInMobile']),
+      mobileFormUrl: json['mobileFormUrl']?.toString(),
+      level2Menus: _parseSubMenus(json['formsSubMenuLevel2']),
     );
   }
 }
@@ -32,7 +35,7 @@ class UpdateFormItem {
     required this.formName,
     required this.priority,
     this.webFormUrl,
-    required this.displayInMobile,
+    this.mobileFormUrl,
     required this.subMenus,
   });
 
@@ -40,7 +43,7 @@ class UpdateFormItem {
   final String formName;
   final int priority;
   final String? webFormUrl;
-  final bool displayInMobile;
+  final String? mobileFormUrl;
   final List<UpdateFormSubItem> subMenus;
 
   List<UpdateFormSubItem> get orderedSubMenus {
@@ -64,17 +67,10 @@ class UpdateFormItem {
       formName: json['formName']?.toString() ?? '',
       priority: int.tryParse(json['priority']?.toString() ?? '') ?? 0,
       webFormUrl: json['webFormUrl']?.toString(),
-      displayInMobile: _isVisibleInMobile(json['displayInMobile']),
+      mobileFormUrl: json['mobileFormUrl']?.toString(),
       subMenus: parsedSubMenus,
     );
   }
-}
-
-bool _isVisibleInMobile(dynamic rawValue) {
-  if (rawValue == null) {
-    return false;
-  }
-  return rawValue.toString().trim().toLowerCase() == 'yes';
 }
 
 List<UpdateFormSubItem> _parseSubMenus(dynamic raw) {

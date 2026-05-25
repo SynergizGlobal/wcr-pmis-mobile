@@ -346,6 +346,62 @@ class DashboardRemoteDataSource {
     return _normalizeResponse(response.data);
   }
 
+  Future<Map<String, dynamic>> fetchQualityInspectionList({
+    Map<String, dynamic> filters = const <String, dynamic>{},
+  }) async {
+    final response = await _dio.post<dynamic>(
+      '/quality-inspection/get-inspection-list',
+      data: filters,
+      options: _requestOptions,
+    );
+    return _normalizeResponse(response.data);
+  }
+
+  Future<Map<String, dynamic>> fetchQualityInspectionProjectFilter() async {
+    final response = await _dio.post<dynamic>(
+      '/quality-inspection/get-project-filter',
+      data: const <String, dynamic>{},
+      options: _requestOptions,
+    );
+    return _normalizeResponse(response.data);
+  }
+
+  Future<Map<String, dynamic>> fetchQualityInspectionSectionFilter() async {
+    final response = await _dio.post<dynamic>(
+      '/quality-inspection/get-section-filter',
+      data: const <String, dynamic>{},
+      options: _requestOptions,
+    );
+    return _normalizeResponse(response.data);
+  }
+
+  Future<Map<String, dynamic>> fetchQualityInspectionContractFilter() async {
+    final response = await _dio.post<dynamic>(
+      '/quality-inspection/get-contract-filter',
+      data: const <String, dynamic>{},
+      options: _requestOptions,
+    );
+    return _normalizeResponse(response.data);
+  }
+
+  Future<Map<String, dynamic>> fetchQualityInspectionStructureTypeFilter() async {
+    final response = await _dio.post<dynamic>(
+      '/quality-inspection/get-structure-type-filter',
+      data: const <String, dynamic>{},
+      options: _requestOptions,
+    );
+    return _normalizeResponse(response.data);
+  }
+
+  Future<Map<String, dynamic>> fetchQualityInspectionStructureFilter() async {
+    final response = await _dio.post<dynamic>(
+      '/quality-inspection/get-structure-filter',
+      data: const <String, dynamic>{},
+      options: _requestOptions,
+    );
+    return _normalizeResponse(response.data);
+  }
+
   Future<Map<String, dynamic>> fetchUtilityShiftingList({
     int start = 0,
     int length = 10,
