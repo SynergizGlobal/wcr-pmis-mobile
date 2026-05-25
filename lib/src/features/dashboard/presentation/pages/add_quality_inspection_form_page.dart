@@ -2,9 +2,11 @@ import 'dart:typed_data';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
+import 'package:wcr_pmis_mobile/src/core/widgets/app_compact_form_field.dart';
+import 'package:wcr_pmis_mobile/src/core/widgets/app_date_form_field.dart';
 import 'package:wcr_pmis_mobile/src/core/widgets/app_dialog.dart';
 import 'package:wcr_pmis_mobile/src/core/widgets/app_select_sheet_field.dart';
+import 'package:wcr_pmis_mobile/src/core/widgets/app_text_form_field.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/data/datasources/dashboard_remote_data_source.dart';
 
 class AddQualityInspectionFormPage extends StatefulWidget {
@@ -89,26 +91,79 @@ class _AddQualityInspectionFormPageState
   static const List<String> _passFailOptions = <String>['Pass', 'Fail'];
   static const List<String> _ncrOptions = <String>['Yes', 'No'];
 
+  void _onFormChanged() {
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  bool get _hasAnyFail =>
+      _parameterRows.any(( _TestParameterRow r) => r.passFail == 'Fail');
+
+  bool get _hasRequiredSelections =>
+      _project != null &&
+      _section != null &&
+      _contract != null &&
+      _structureType != null &&
+      _structure != null &&
+      _item != null &&
+      _inspectionType != null &&
+      _category != null &&
+      _subCategory != null;
+
+  bool get _hasRequiredParameters {
+    if (_parametersLoading || _parameterRows.isEmpty) {
+      return false;
+    }
+    for (final _TestParameterRow row in _parameterRows) {
+      if (row.resultCtrl.text.trim().isEmpty) {
+        return false;
+      }
+      if (row.passFail == null || row.passFail!.isEmpty) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  bool get _hasRequiredFollowUp {
+    if (!_hasAnyFail) {
+      return true;
+    }
+    return _correctiveActionCtrl.text.trim().isNotEmpty && _targetDate != null;
+  }
+
+  bool get _canSubmit =>
+      !_loading &&
+      !_cascadeBusy &&
+      !_parametersLoading &&
+      _hasRequiredSelections &&
+      _locationCtrl.text.trim().isNotEmpty &&
+      _hasRequiredParameters &&
+      _hasRequiredFollowUp;
+
+  bool get _canSaveDraft =>
+      !_loading && !_cascadeBusy && _project != null;
+
   @override
   void initState() {
     super.initState();
+    _locationCtrl.addListener(_onFormChanged);
+    _correctiveActionCtrl.addListener(_onFormChanged);
     WidgetsBinding.instance.addPostFrameCallback((_) => _loadInitial());
   }
 
   @override
   void dispose() {
+    _locationCtrl.removeListener(_onFormChanged);
+    _correctiveActionCtrl.removeListener(_onFormChanged);
     _locationCtrl.dispose();
     _inspectionByCtrl.dispose();
     _lotBatchCtrl.dispose();
     _correctiveActionCtrl.dispose();
-    for (final _TestParameterRow row in _parameterRows) {
-      row.resultCtrl.dispose();
-    }
+    _clearParameterRows();
     super.dispose();
   }
-
-  bool get _hasAnyFail =>
-      _parameterRows.any(( _TestParameterRow r) => r.passFail == 'Fail');
 
   Future<void> _loadInitial() async {
     setState(() {
@@ -329,9 +384,16 @@ class _AddQualityInspectionFormPageState
 
   void _clearParameterRows() {
     for (final _TestParameterRow row in _parameterRows) {
+      row.resultCtrl.removeListener(_onFormChanged);
       row.resultCtrl.dispose();
     }
     _parameterRows = <_TestParameterRow>[];
+  }
+
+  void _attachParameterListeners() {
+    for (final _TestParameterRow row in _parameterRows) {
+      row.resultCtrl.addListener(_onFormChanged);
+    }
   }
 
   Future<void> _onProjectChanged(_QiOption? value) async {
@@ -490,6 +552,7 @@ class _AddQualityInspectionFormPageState
         _parameterRows = rows;
         _parametersLoading = false;
       });
+      _attachParameterListeners();
     } catch (_) {
       if (!mounted) {
         return;
@@ -559,83 +622,74 @@ class _AddQualityInspectionFormPageState
     );
   }
 
-  bool _validateForm() {
+  String? _firstSubmitMissingRequirement() {
+    if (_parametersLoading) {
+      return 'Test parameters are still loading. Please wait.';
+    }
     if (_project == null) {
-      _showRequired('Please select project.');
-      return false;
+      return 'Please select project.';
     }
     if (_section == null) {
-      _showRequired('Please select section.');
-      return false;
+      return 'Please select section.';
     }
     if (_contract == null) {
-      _showRequired('Please select contract.');
-      return false;
+      return 'Please select contract.';
     }
     if (_structureType == null) {
-      _showRequired('Please select structure type.');
-      return false;
+      return 'Please select structure type.';
     }
     if (_structure == null) {
-      _showRequired('Please select structure.');
-      return false;
+      return 'Please select structure.';
     }
     if (_item == null) {
-      _showRequired('Please select item.');
-      return false;
+      return 'Please select item.';
     }
     if (_inspectionType == null) {
-      _showRequired('Please select inspection type.');
-      return false;
+      return 'Please select inspection type.';
     }
     if (_category == null) {
-      _showRequired('Please select category.');
-      return false;
+      return 'Please select category.';
     }
     if (_subCategory == null) {
-      _showRequired('Please select sub-category.');
-      return false;
+      return 'Please select sub-category.';
     }
     if (_locationCtrl.text.trim().isEmpty) {
-      _showRequired('Please enter location.');
-      return false;
+      return 'Please enter location.';
     }
     if (_parameterRows.isEmpty) {
-      _showRequired('Test parameters are required for the selected item.');
-      return false;
+      return 'Test parameters are required for the selected item.';
     }
     for (final _TestParameterRow row in _parameterRows) {
       if (row.resultCtrl.text.trim().isEmpty) {
-        _showRequired('Please enter result for all test parameters.');
-        return false;
+        return 'Please enter result for all test parameters.';
       }
       if (row.passFail == null || row.passFail!.isEmpty) {
-        _showRequired('Please select Pass / Fail for all test parameters.');
-        return false;
+        return 'Please select Pass / Fail for all test parameters.';
       }
     }
     if (_hasAnyFail) {
       if (_correctiveActionCtrl.text.trim().isEmpty) {
-        _showRequired('Please enter corrective action when a test has failed.');
-        return false;
+        return 'Please enter corrective action when a test has failed.';
       }
       if (_targetDate == null) {
-        _showRequired('Please select target date when a test has failed.');
-        return false;
+        return 'Please select target date when a test has failed.';
       }
     }
-    return true;
+    return null;
   }
 
   Future<void> _saveDraft() async {
-    if (!_validateForm()) {
+    if (_project == null) {
+      await _showRequired('Please select project to save draft.');
       return;
     }
     await _showPendingApi('Save as draft');
   }
 
   Future<void> _submit() async {
-    if (!_validateForm()) {
+    final String? missing = _firstSubmitMissingRequirement();
+    if (missing != null) {
+      await _showRequired(missing);
       return;
     }
     await _showPendingApi('Submit');
@@ -786,19 +840,20 @@ class _AddQualityInspectionFormPageState
                                 onChanged: ( _QiOption v) => _onSubCategoryChanged(v),
                               ),
                               const SizedBox(height: 10),
-                              _textField(
+                              AppTextFormField(
                                 controller: _locationCtrl,
                                 label: 'Location *',
                                 hintText: 'Enter location',
                               ),
                               const SizedBox(height: 10),
-                              _textField(
+                              AppTextFormField(
                                 controller: _inspectionByCtrl,
                                 label: 'Inspection By',
+                                hintText: '—',
                                 readOnly: true,
                               ),
                               const SizedBox(height: 10),
-                              _textField(
+                              AppTextFormField(
                                 controller: _lotBatchCtrl,
                                 label: 'Lot/Batch No.',
                                 hintText: 'Enter lot or batch number',
@@ -816,7 +871,7 @@ class _AddQualityInspectionFormPageState
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.stretch,
                                   children: <Widget>[
-                                    _textField(
+                                    AppTextFormField(
                                       controller: _correctiveActionCtrl,
                                       label: 'Corrective Action Required *',
                                       hintText: 'Enter corrective action',
@@ -824,7 +879,7 @@ class _AddQualityInspectionFormPageState
                                       maxLines: 5,
                                     ),
                                     const SizedBox(height: 10),
-                                    _dateField(
+                                    AppDateFormField(
                                       label: 'Target Date *',
                                       value: _targetDate,
                                       onTap: _pickTargetDate,
@@ -870,7 +925,7 @@ class _AddQualityInspectionFormPageState
                   children: <Widget>[
                     Expanded(
                       child: FilledButton.tonal(
-                        onPressed: _saving ? null : _saveDraft,
+                        onPressed: _saving || !_canSaveDraft ? null : _saveDraft,
                         child: _saving
                             ? const SizedBox(
                                 height: 20,
@@ -885,7 +940,7 @@ class _AddQualityInspectionFormPageState
                     const SizedBox(width: 8),
                     Expanded(
                       child: FilledButton(
-                        onPressed: _saving ? null : _submit,
+                        onPressed: _saving || !_canSubmit ? null : _submit,
                         child: const Text('Submit'),
                       ),
                     ),
@@ -935,93 +990,6 @@ class _AddQualityInspectionFormPageState
       placeholderText: placeholder,
       itemLabelBuilder: ( _QiOption o) => o.label,
       onChanged: onChanged,
-    );
-  }
-
-  InputBorder get _fieldBorder => OutlineInputBorder(
-    borderRadius: BorderRadius.circular(12),
-  );
-
-  Widget _fieldLabel(String label) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 2, bottom: 8),
-      child: Text(
-        label,
-        style: Theme.of(context).textTheme.titleSmall?.copyWith(
-          fontWeight: FontWeight.w700,
-        ),
-      ),
-    );
-  }
-
-  Widget _textField({
-    required TextEditingController controller,
-    required String label,
-    String? hintText,
-    bool readOnly = false,
-    int minLines = 1,
-    int maxLines = 1,
-    TextInputType? keyboardType,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        _fieldLabel(label),
-        TextFormField(
-          controller: controller,
-          readOnly: readOnly,
-          minLines: minLines,
-          maxLines: maxLines,
-          keyboardType: keyboardType,
-          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-            fontWeight: FontWeight.w600,
-          ),
-          decoration: InputDecoration(
-            hintText: hintText,
-            border: _fieldBorder,
-            enabledBorder: _fieldBorder,
-            focusedBorder: _fieldBorder,
-            disabledBorder: _fieldBorder,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _dateField({
-    required String label,
-    required DateTime? value,
-    required VoidCallback onTap,
-  }) {
-    final String display = value == null
-        ? 'Select date'
-        : DateFormat('dd/MM/yyyy').format(value);
-    final ColorScheme colorScheme = Theme.of(context).colorScheme;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        _fieldLabel(label),
-        InkWell(
-          borderRadius: BorderRadius.circular(12),
-          onTap: onTap,
-          child: InputDecorator(
-            decoration: InputDecoration(
-              border: _fieldBorder,
-              enabledBorder: _fieldBorder,
-              focusedBorder: _fieldBorder,
-              suffixIcon: const Icon(Icons.calendar_today_rounded),
-            ),
-            child: Text(
-              display,
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                fontWeight: FontWeight.w600,
-                color: value == null ? colorScheme.onSurfaceVariant : null,
-              ),
-            ),
-          ),
-        ),
-      ],
     );
   }
 
@@ -1133,16 +1101,8 @@ class _AddQualityInspectionFormPageState
                           width: _paramColWidth('Result'),
                           child: Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 6),
-                            child: TextFormField(
+                            child: AppCompactTextFormField(
                               controller: row.resultCtrl,
-                              style: Theme.of(context).textTheme.bodyMedium
-                                  ?.copyWith(fontWeight: FontWeight.w600),
-                              decoration: InputDecoration(
-                                isDense: true,
-                                hintText: 'Enter here...',
-                                hintStyle: _paramFieldHintStyle(context),
-                                border: const OutlineInputBorder(),
-                              ),
                             ),
                           ),
                         ),
@@ -1195,30 +1155,15 @@ class _AddQualityInspectionFormPageState
     );
   }
 
-  TextStyle? _paramFieldHintStyle(BuildContext context) {
-    return Theme.of(context).textTheme.bodyMedium?.copyWith(
-      color: Theme.of(context).colorScheme.onSurfaceVariant,
-      fontWeight: FontWeight.w500,
-    );
-  }
-
   Widget _paramPassFailCell(_TestParameterRow row) {
     return SizedBox(
       width: _paramColWidth('Pass / Fail'),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 6),
-        child: DropdownButtonFormField<String>(
+        child: AppCompactDropdownField<String>(
           value: row.passFail,
-          hint: Text('Select', style: _paramFieldHintStyle(context)),
-          decoration: const InputDecoration(
-            isDense: true,
-            border: OutlineInputBorder(),
-          ),
-          items: _passFailOptions
-              .map(
-                (String v) => DropdownMenuItem<String>(value: v, child: Text(v)),
-              )
-              .toList(),
+          items: _passFailOptions,
+          itemLabelBuilder: (String v) => v,
           onChanged: (String? value) {
             setState(() {
               row.passFail = value;
@@ -1241,17 +1186,10 @@ class _AddQualityInspectionFormPageState
       width: _paramColWidth('Is NCR Required'),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 6),
-        child: DropdownButtonFormField<String>(
+        child: AppCompactDropdownField<String>(
           value: row.ncrRequired,
-          decoration: const InputDecoration(
-            isDense: true,
-            border: OutlineInputBorder(),
-          ),
-          items: _ncrOptions
-              .map(
-                (String v) => DropdownMenuItem<String>(value: v, child: Text(v)),
-              )
-              .toList(),
+          items: _ncrOptions,
+          itemLabelBuilder: (String v) => v,
           onChanged: null,
         ),
       ),

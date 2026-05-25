@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:wcr_pmis_mobile/src/core/widgets/app_form_field_style.dart';
 
 class AppSelectSheetField<T> extends StatelessWidget {
   const AppSelectSheetField({
@@ -30,6 +31,7 @@ class AppSelectSheetField<T> extends StatelessWidget {
     final String selectedLabel = value != null
         ? itemLabelBuilder(value as T)
         : '';
+    final bool filled = value != null;
 
     return Material(
       color: Colors.transparent,
@@ -185,29 +187,23 @@ class AppSelectSheetField<T> extends StatelessWidget {
                 padding: const EdgeInsets.only(left: 2, bottom: 8),
                 child: Text(
                   label,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+                  style: AppFormFieldStyle.labelStyle(context),
                 ),
               ),
             ],
             InputDecorator(
-              decoration: InputDecoration(
+              decoration: AppFormFieldStyle.decoration(
+                context,
+                filled: filled,
+                enabled: enabled,
                 prefixIcon: leadingIcon != null ? Icon(leadingIcon) : null,
                 suffixIcon: const Icon(Icons.keyboard_arrow_down_rounded),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                enabled: enabled,
               ),
               child: Text(
-                selectedLabel.isEmpty ? placeholderText : selectedLabel,
+                filled ? selectedLabel : placeholderText,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: selectedLabel.isEmpty
-                      ? Theme.of(context).colorScheme.onSurfaceVariant
-                      : null,
-                ),
+                style: AppFormFieldStyle.valueStyle(context, filled: filled),
               ),
             ),
           ],

@@ -4,8 +4,10 @@ import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:wcr_pmis_mobile/src/core/widgets/app_date_form_field.dart';
 import 'package:wcr_pmis_mobile/src/core/widgets/app_dialog.dart';
 import 'package:wcr_pmis_mobile/src/core/widgets/app_select_sheet_field.dart';
+import 'package:wcr_pmis_mobile/src/core/widgets/app_text_form_field.dart';
 import 'package:wcr_pmis_mobile/src/core/widgets/app_step_header.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/data/datasources/dashboard_remote_data_source.dart';
 
@@ -787,31 +789,14 @@ class _AddUtilityShiftingFormPageState
               onPick: (DateTime value) => setState(() => row.date = value),
             ),
             const SizedBox(height: 10),
-            TextFormField(
+            AppTextFormField(
               controller: row.workCtrl,
+              label: 'Progress of work',
+              hintText: 'Enter progress details',
+              minLines: 4,
               maxLines: 4,
               maxLength: 1000,
               onChanged: (_) => setState(() {}),
-              decoration: const InputDecoration(
-                labelText: 'Progress of work',
-                hintText: 'Enter progress details',
-                border: OutlineInputBorder(),
-                alignLabelWithHint: true,
-              ),
-              buildCounter: (
-                BuildContext _, {
-                required int currentLength,
-                required bool isFocused,
-                required int? maxLength,
-              }) {
-                return Align(
-                  alignment: Alignment.centerRight,
-                  child: Text(
-                    '$currentLength/${maxLength ?? 1000}',
-                    style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
-                  ),
-                );
-              },
             ),
           ],
         ),
@@ -873,13 +858,10 @@ class _AddUtilityShiftingFormPageState
               enabled: _fileTypes.isNotEmpty,
             ),
             const SizedBox(height: 10),
-            TextFormField(
+            AppTextFormField(
               controller: row.nameCtrl,
-              decoration: const InputDecoration(
-                labelText: 'Name *',
-                hintText: 'Enter file name',
-                border: OutlineInputBorder(),
-              ),
+              label: 'Name *',
+              hintText: 'Enter file name',
             ),
             const SizedBox(height: 10),
             OutlinedButton.icon(
@@ -1028,15 +1010,15 @@ class _AddUtilityShiftingFormPageState
     required String label,
     required String hint,
     int maxLines = 1,
+    int? maxLength,
   }) {
-    return TextFormField(
+    return AppTextFormField(
       controller: controller,
+      label: label,
+      hintText: hint,
       maxLines: maxLines,
-      decoration: InputDecoration(
-        labelText: label,
-        hintText: hint,
-        border: const OutlineInputBorder(),
-      ),
+      minLines: maxLines > 1 ? maxLines : 1,
+      maxLength: maxLength,
     );
   }
 
@@ -1045,8 +1027,9 @@ class _AddUtilityShiftingFormPageState
     required DateTime? value,
     required ValueChanged<DateTime> onPick,
   }) {
-    return InkWell(
-      borderRadius: BorderRadius.circular(12),
+    return AppDateFormField(
+      label: label,
+      value: value,
       onTap: () async {
         final DateTime now = DateTime.now();
         final DateTime? picked = await showDatePicker(
@@ -1059,18 +1042,6 @@ class _AddUtilityShiftingFormPageState
           onPick(picked);
         }
       },
-      child: InputDecorator(
-        decoration: InputDecoration(
-          labelText: label,
-          border: const OutlineInputBorder(),
-        ),
-        child: Text(
-          value == null
-              ? 'Select date'
-              : '${value.day.toString().padLeft(2, '0')}/${value.month.toString().padLeft(2, '0')}/${value.year}',
-          style: Theme.of(context).textTheme.bodyLarge,
-        ),
-      ),
     );
   }
 
