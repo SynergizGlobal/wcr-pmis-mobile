@@ -1,7 +1,9 @@
 import 'dart:typed_data';
 
+import 'package:dio/dio.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:wcr_pmis_mobile/src/core/widgets/app_compact_form_field.dart';
 import 'package:wcr_pmis_mobile/src/core/widgets/app_date_form_field.dart';
 import 'package:wcr_pmis_mobile/src/core/widgets/app_dialog.dart';
@@ -44,6 +46,7 @@ class _TestParameterRow {
     required this.acceptanceCriteria,
     required this.uom,
     required this.frequency,
+    this.qualityNcrId,
   });
 
   final String parameterId;
@@ -51,6 +54,7 @@ class _TestParameterRow {
   final String acceptanceCriteria;
   final String uom;
   final String frequency;
+  final String? qualityNcrId;
   final TextEditingController resultCtrl = TextEditingController();
   String? passFail;
   String? ncrRequired;
@@ -71,6 +75,7 @@ class _AddQualityInspectionFormPageState
   bool _saving = false;
   String? _loadError;
   String? _inspectionNo;
+  String? _savedInspectionId;
 
   List<_QiOption> _projects = <_QiOption>[];
   List<_QiOption> _sections = <_QiOption>[];
@@ -159,10 +164,16 @@ class _AddQualityInspectionFormPageState
   @override
   void initState() {
     super.initState();
+    final String? editId = widget.inspectionId?.trim();
+    if (editId != null && editId.isNotEmpty) {
+      _savedInspectionId = editId;
+    }
     _locationCtrl.addListener(_onFormChanged);
     _correctiveActionCtrl.addListener(_onFormChanged);
     WidgetsBinding.instance.addPostFrameCallback((_) => _loadInitial());
   }
+
+  String get _effectiveInspectionId => _savedInspectionId ?? '';
 
   @override
   void dispose() {
@@ -577,6 +588,9 @@ class _AddQualityInspectionFormPageState
         acceptanceCriteria: _str(map['acceptance_criteria']),
         uom: _str(map['unit_of_measure']),
         frequency: _str(map['frequency']),
+        qualityNcrId: _str(map['quality_ncr_id']).isEmpty
+            ? null
+            : _str(map['quality_ncr_id']),
       );
       final String result = _str(map['result']);
       if (result.isNotEmpty) {
@@ -831,7 +845,9 @@ class _AddQualityInspectionFormPageState
         );
         rows.add(
           _TestParameterRow(
-            parameterId: _str(map['insp_test_parameter_id']),
+            parameterId: _str(
+              map['parameter_id'] ?? map['insp_test_parameter_id'],
+            ),
             parameter: _str(map['test_description']),
             acceptanceCriteria: _str(map['acceptance_criteria']),
             uom: _str(map['unit_of_measure']),
@@ -974,26 +990,180 @@ class _AddQualityInspectionFormPageState
       await _showRequired('Please select project to save draft.');
       return;
     }
-    await _showPendingApi('Save as draft');
+    await _saveInspection(asDraft: true);
+  }
+
+  String _formatSubmitDate(DateTime? date) {
+    if (date == null) {
+      return '';
+    }
+    return '${date.year.toString().padLeft(4, '0')}-'
+        '${date.month.toString().padLeft(2, '0')}-'
+        '${date.day.toString().padLeft(2, '0')}';
+  }
+
+  String _itemFieldValue(String key) {
+    if (_item?.raw == null) {
+      return '';
+    }
+    return _str(_pickMapValue(_item!.raw!, <String>[key]));
+  }
+
+  void _applySaveResponse(Map<String, dynamic> response) {
+    final Map<String, dynamic> data = _asStringKeyedMap(response['data']);
+    final String id = _str(data['inspection_id']);
+    final String no = _str(data['inspection_no']);
+    if (id.isNotEmpty || no.isNotEmpty) {
+      setState(() {
+        if (id.isNotEmpty) {
+          _savedInspectionId = id;
+        }
+        if (no.isNotEmpty) {
+          _inspectionNo = no;
+        }
+      });
+    }
+  }
+
+  FormData _buildSaveFormData({required bool asDraft}) {
+    final FormData formData = FormData();
+    void addField(String name, String value) {
+      formData.fields.add(MapEntry<String, String>(name, value));
+    }
+
+    addField('inspection_id', _effectiveInspectionId);
+    addField('inspection_no', _inspectionNo ?? '');
+    addField('inspection_status', asDraft ? 'Draft' : 'Passed');
+    addField('project_id_fk', _project?.id ?? '');
+    addField('section_id_fk', _section?.id ?? '');
+    addField('contract_id_fk', _contract?.id ?? '');
+    addField('structure_type_fk', _structureType?.id ?? '');
+    addField('structure', _structure?.id ?? '');
+    addField('item_id_fk', _item?.id ?? '');
+    addField('item_name', _itemFieldValue('item_name'));
+    addField('item_code', _itemFieldValue('item_code'));
+    addField('type_id_fk', _inspectionType?.id ?? '');
+    addField('category_id_fk', _category?.id ?? '');
+    addField('sub_category_id_fk', _subCategory?.id ?? '');
+    addField('location', _locationCtrl.text.trim());
+    addField('lot_no', _lotBatchCtrl.text.trim());
+    addField('ncr_compliance', '');
+    addField('ncr_compliance_by', '');
+    addField('ncr_date', '');
+    addField('inspection_step', asDraft ? '1' : '4');
+
+    for (final _TestParameterRow row in _parameterRows) {
+      addField('quality_ncr_ids', row.qualityNcrId ?? '');
+      addField('parameter_ids', row.parameterId);
+      addField('results', row.resultCtrl.text.trim());
+      addField('pass_fails', row.passFail ?? '');
+      addField('is_ncr_requireds', row.ncrRequired ?? '');
+      addField('re_inspected_ons', '');
+      addField('revised_results', '');
+      addField('revised_pass_fails', '');
+      if (row.attachmentBytes != null &&
+          row.attachmentName != null &&
+          row.attachmentName!.isNotEmpty) {
+        formData.files.add(
+          MapEntry<String, MultipartFile>(
+            'upload_files',
+            MultipartFile.fromBytes(
+              row.attachmentBytes!,
+              filename: row.attachmentName!,
+            ),
+          ),
+        );
+      }
+    }
+
+    addField('corrective_action_reqd', _correctiveActionCtrl.text.trim());
+    addField('action_target_date', _formatSubmitDate(_targetDate));
+    addField('corrective_action_taken', '');
+    addField('compliance_date', '');
+    addField('inspection_closed_on', '');
+    return formData;
+  }
+
+  bool _responseIndicatesSuccess(Map<String, dynamic> response) {
+    if (response['success'] == true) {
+      return true;
+    }
+    final String message = _str(response['message']);
+    final String lower = message.toLowerCase();
+    return lower.contains('success') ||
+        lower.contains('passed') ||
+        lower.contains('draft');
+  }
+
+  String _responseMessage(
+    Map<String, dynamic> response, {
+    required bool asDraft,
+  }) {
+    final String message = _str(response['message']);
+    if (message.isNotEmpty) {
+      return message;
+    }
+    return asDraft
+        ? 'Inspection saved as draft.'
+        : 'Inspection submitted successfully.';
+  }
+
+  Future<void> _saveInspection({required bool asDraft}) async {
+    if (!asDraft) {
+      final String? missing = _firstSubmitMissingRequirement();
+      if (missing != null) {
+        await _showRequired(missing);
+        return;
+      }
+    }
+
+    setState(() => _saving = true);
+    try {
+      final Map<String, dynamic> response =
+          await widget.dataSource.submitQualityInspectionSaveSubmit(
+        formData: _buildSaveFormData(asDraft: asDraft),
+      );
+      if (!mounted) {
+        return;
+      }
+      if (!_responseIndicatesSuccess(response)) {
+        await AppDialog.show(
+          context: context,
+          title: asDraft ? 'Save draft failed' : 'Submit failed',
+          message: _responseMessage(response, asDraft: asDraft),
+          type: AppDialogType.error,
+        );
+        return;
+      }
+      _applySaveResponse(response);
+      await AppDialog.show(
+        context: context,
+        title: asDraft ? 'Draft saved' : 'Submitted',
+        message: _responseMessage(response, asDraft: asDraft),
+        type: AppDialogType.success,
+      );
+      if (mounted) {
+        context.pop(true);
+      }
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      await AppDialog.show(
+        context: context,
+        title: asDraft ? 'Save draft failed' : 'Submit failed',
+        message: error.toString(),
+        type: AppDialogType.error,
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _saving = false);
+      }
+    }
   }
 
   Future<void> _submit() async {
-    final String? missing = _firstSubmitMissingRequirement();
-    if (missing != null) {
-      await _showRequired(missing);
-      return;
-    }
-    await _showPendingApi('Submit');
-  }
-
-  Future<void> _showPendingApi(String action) async {
-    await AppDialog.show(
-      context: context,
-      title: action,
-      message:
-          '$action API will be connected next. Form data is ready on the device.',
-      type: AppDialogType.info,
-    );
+    await _saveInspection(asDraft: false);
   }
 
   @override
@@ -1001,31 +1171,17 @@ class _AddQualityInspectionFormPageState
     final ColorScheme cs = Theme.of(context).colorScheme;
     return Scaffold(
       appBar: AppBar(
-        title: _isEditMode && (_inspectionNo?.isNotEmpty ?? false)
-            ? Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: <Widget>[
-                  const Text('Edit Quality Inspection'),
-                  Text(
-                    _inspectionNo!,
-                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              )
-            : Text(
-                _isEditMode
-                    ? 'Edit Quality Inspection'
-                    : 'Add Quality Inspection',
-              ),
+        title: Text(
+          _isEditMode ? 'Edit Quality Inspection' : 'Add Quality Inspection',
+        ),
       ),
-      body: SafeArea(
-        child: Column(
-          children: <Widget>[
-            Expanded(
-              child: Stack(
+      body: Stack(
+        children: <Widget>[
+          SafeArea(
+            child: Column(
+              children: <Widget>[
+                Expanded(
+                  child: Stack(
                 children: <Widget>[
                   if (_loading)
                     const Center(child: CircularProgressIndicator())
@@ -1223,48 +1379,80 @@ class _AddQualityInspectionFormPageState
                         ),
                       ),
                     ),
-                ],
-              ),
-            ),
-            if (!_loading && _loadError == null)
-              Container(
-                padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
-                decoration: BoxDecoration(
-                  color: cs.surface,
-                  border: Border(
-                    top: BorderSide(
-                      color: cs.outlineVariant.withValues(alpha: 0.7),
-                    ),
-                  ),
-                ),
-                child: Row(
-                  children: <Widget>[
-                    Expanded(
-                      child: FilledButton.tonal(
-                        onPressed: _saving || !_canSaveDraft ? null : _saveDraft,
-                        child: _saving
-                            ? const SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : const Text('Save as draft'),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: FilledButton(
-                        onPressed: _saving || !_canSubmit ? null : _submit,
-                        child: const Text('Submit'),
-                      ),
-                    ),
                   ],
                 ),
               ),
-          ],
-        ),
+                if (!_loading && _loadError == null)
+                  Container(
+                    padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+                    decoration: BoxDecoration(
+                      color: cs.surface,
+                      border: Border(
+                        top: BorderSide(
+                          color: cs.outlineVariant.withValues(alpha: 0.7),
+                        ),
+                      ),
+                    ),
+                    child: Row(
+                      children: <Widget>[
+                        Expanded(
+                          child: FilledButton.tonal(
+                            onPressed:
+                                _saving || !_canSaveDraft ? null : _saveDraft,
+                            child: const Text('Save as draft'),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: FilledButton(
+                            onPressed: _saving || !_canSubmit ? null : _submit,
+                            child: const Text('Submit'),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          if (_saving)
+            Positioned.fill(
+              child: AbsorbPointer(
+                child: ColoredBox(
+                  color: cs.scrim.withValues(alpha: 0.45),
+                  child: Center(
+                    child: Material(
+                      color: cs.surface,
+                      elevation: 6,
+                      borderRadius: BorderRadius.circular(16),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 28,
+                          vertical: 24,
+                        ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: <Widget>[
+                            const SizedBox(
+                              width: 36,
+                              height: 36,
+                              child: CircularProgressIndicator(strokeWidth: 3),
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              'Please wait...',
+                              style: Theme.of(context).textTheme.titleSmall
+                                  ?.copyWith(fontWeight: FontWeight.w700),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }

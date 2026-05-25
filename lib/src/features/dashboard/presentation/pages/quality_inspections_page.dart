@@ -1074,11 +1074,12 @@ class _QualityInspectionsPageState extends State<QualityInspectionsPage> {
   }
 
   Future<void> _onAddTap() async {
-    await context.pushNamed(AddQualityInspectionFormPage.routeName);
-    if (!mounted) {
-      return;
+    final bool? saved = await context.pushNamed<bool>(
+      AddQualityInspectionFormPage.routeName,
+    );
+    if (saved == true && mounted) {
+      await _loadList();
     }
-    await _loadList();
   }
 
   Future<void> _onEditTap(Map<String, dynamic> row) async {
@@ -1092,14 +1093,13 @@ class _QualityInspectionsPageState extends State<QualityInspectionsPage> {
       );
       return;
     }
-    await context.pushNamed(
+    final bool? saved = await context.pushNamed<bool>(
       AddQualityInspectionFormPage.routeName,
       queryParameters: <String, String>{'inspection_id': id},
     );
-    if (!mounted) {
-      return;
+    if (saved == true && mounted) {
+      await _loadList();
     }
-    await _loadList();
   }
 
   // Future<void> _confirmExportExcel(List<Map<String, dynamic>> rows) async {

@@ -523,6 +523,21 @@ class DashboardRemoteDataSource {
     return _normalizeResponse(response.data);
   }
 
+  Future<Map<String, dynamic>> submitQualityInspectionSaveSubmit({
+    required FormData formData,
+  }) async {
+    final Response<dynamic> response = await _dio.post<dynamic>(
+      '/quality-inspection/save-submit',
+      data: formData,
+      options: Options(
+        receiveTimeout: _dashboardReceiveTimeout,
+        connectTimeout: _dashboardConnectTimeout,
+        contentType: null,
+      ),
+    );
+    return _normalizeResponse(response.data);
+  }
+
   Future<Map<String, dynamic>> fetchUtilityShiftingList({
     int start = 0,
     int length = 10,
