@@ -1,7 +1,7 @@
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
-import 'dart:io';
+
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
@@ -11,6 +11,7 @@ import '../../data/inspection/inspection_repository.dart';
 import '../../core/providers/dio_provider.dart';
 import '../../core/providers/shared_prefs_provider.dart';
 import '../../core/services/inspection_submit_pdf_builder.dart';
+import '../../core/utils/final_submit_payload.dart';
 import '../../core/utils/txn_id.dart';
 import '../../core/utils/user_role.dart';
 import '../auth/auth_provider.dart';
@@ -42,14 +43,12 @@ class InspectionFormNotifier extends StateNotifier<InspectionFormState> {
     try {
       final details = await _repository.getRfiDetails(_rfiId);
       
-      // Extract initial values from the most recent inspection detail if available
       String? initialChainage;
       String? initialContractorDesc;
       if (details.inspectionDetails != null && details.inspectionDetails!.isNotEmpty) {
         final lastDetail = details.inspectionDetails!.first;
         initialChainage = lastDetail.chainage;
         
-        // Don't use previous description if it matches the previous location string exactly (fallback bug)
         if (lastDetail.descriptionEnclosure != null && 
             lastDetail.descriptionEnclosure!.isNotEmpty &&
             lastDetail.descriptionEnclosure != lastDetail.location) {
@@ -57,12 +56,10 @@ class InspectionFormNotifier extends StateNotifier<InspectionFormState> {
         }
       }
 
-      // If no valid previous description, fall back to the original RFI description
       if (initialContractorDesc == null || initialContractorDesc.isEmpty) {
         initialContractorDesc = details.description;
       }
 
-      // Prefill measurements if available from the RFI
       List<MeasurementRow> initialMeasurements = state.measurements;
       if (initialMeasurements.length == 1 && initialMeasurements.first.type == 'Select') {
         if (details.measurements != null) {
@@ -125,7 +122,6 @@ class InspectionFormNotifier extends StateNotifier<InspectionFormState> {
         statusMap[enclosureName] = items.isNotEmpty;
         if (items.isNotEmpty) {
           checklistMap[enclosureName] = items;
-          // Extract grade if available from any item
           final firstWithGrade = items.firstWhere((i) => i.gradeOfConcrete != null, orElse: () => const ChecklistItem());
           if (firstWithGrade.gradeOfConcrete != null) {
             gradeMap[enclosureName] = firstWithGrade.gradeOfConcrete!;
@@ -270,15 +266,29 @@ class InspectionFormNotifier extends StateNotifier<InspectionFormState> {
     state = state.copyWith(enclosurePaths: list);
   }
 
-  void addSupportingDoc(String path) {
+  void addSupportingDoc(String path, {String description = ''}) {
     state = state.copyWith(
-        supportingDocPaths: [...state.supportingDocPaths, path]);
+      supportingDocuments: [
+        ...state.supportingDocuments,
+        SupportingDocument(path: path, description: description.trim()),
+      ],
+    );
   }
 
   void removeSupportingDoc(int index) {
-    final list = List<String>.from(state.supportingDocPaths);
+    final list = List<SupportingDocument>.from(state.supportingDocuments);
     list.removeAt(index);
-    state = state.copyWith(supportingDocPaths: list);
+    state = state.copyWith(supportingDocuments: list);
+  }
+
+  void updateSupportingDocDescription(int index, String description) {
+    final list = List<SupportingDocument>.from(state.supportingDocuments);
+    if (index < 0 || index >= list.length) return;
+    list[index] = SupportingDocument(
+      path: list[index].path,
+      description: description.trim(),
+    );
+    state = state.copyWith(supportingDocuments: list);
   }
 
   Future<void> uploadEnclosureRealtime(
@@ -295,7 +305,6 @@ class InspectionFormNotifier extends StateNotifier<InspectionFormState> {
       });
 
       await _repository.uploadEnclosure(data);
-      // Refresh details to get new enclosure list with IDs and locked status
       await _init();
       state = state.copyWith(isUploadingFile: false);
     } catch (e) {
@@ -328,7 +337,6 @@ class InspectionFormNotifier extends StateNotifier<InspectionFormState> {
       });
 
       await _repository.uploadSiteImage(data);
-      // Refresh details to see new site images in inspectionDetails
       await _init();
       state = state.copyWith(isUploadingFile: false);
     } catch (e) {
@@ -345,7 +353,6 @@ class InspectionFormNotifier extends StateNotifier<InspectionFormState> {
         imgPath: imgPath,
         uploadedBy: uploadedBy,
       );
-      // Refresh details to see updated site images
       await _init();
       state = state.copyWith(isUploadingFile: false);
     } catch (e) {
@@ -354,7 +361,6 @@ class InspectionFormNotifier extends StateNotifier<InspectionFormState> {
     }
   }
 
-  // --- Measurements ---
   void addMeasurementRow() {
     state = state.copyWith(
         measurements: [...state.measurements, const MeasurementRow()]);
@@ -363,7 +369,6 @@ class InspectionFormNotifier extends StateNotifier<InspectionFormState> {
   void updateMeasurement(int index, MeasurementRow row) {
     final list = List<MeasurementRow>.from(state.measurements);
 
-    // Dynamic defaults if type changed
     MeasurementRow updatedRow = row;
     if (index < state.measurements.length &&
         state.measurements[index].type != row.type) {
@@ -395,7 +400,6 @@ class InspectionFormNotifier extends StateNotifier<InspectionFormState> {
       );
     }
 
-    // Auto-calculate Total Qty based on type and inputs
     double total = 0.0;
     double l = double.tryParse(updatedRow.l) ?? 0.0;
     double b = double.tryParse(updatedRow.b) ?? 0.0;
@@ -504,7 +508,6 @@ class InspectionFormNotifier extends StateNotifier<InspectionFormState> {
     state = state.copyWith(hasSigned: val);
   }
 
-  // --- Checklist Management ---
 
   Future<void> refreshChecklist(String enclosureName) async {
     try {
@@ -569,7 +572,6 @@ class InspectionFormNotifier extends StateNotifier<InspectionFormState> {
     final checklists = Map<String, List<ChecklistItem>>.from(state.enclosureChecklists);
     final items = List<ChecklistItem>.from(checklists[enclosureName] ?? []);
     
-    // Clear All handling
     final finalStatus = status == 'CLEAR' ? null : status;
 
     for (int i = 0; i < items.length; i++) {
@@ -614,7 +616,6 @@ class InspectionFormNotifier extends StateNotifier<InspectionFormState> {
       
       await _repository.saveEnclosureChecklist(formData);
       
-      // Refresh to update status
       await refreshChecklist(enclosureName);
       
       state = state.copyWith(isSavingChecklist: false);
@@ -656,14 +657,11 @@ class InspectionFormNotifier extends StateNotifier<InspectionFormState> {
   }
 
   bool checkIsStep2Valid(bool isOffline) {
-    // 1. Location
     if (state.location.isEmpty) return false;
 
-    // 2. Enclosures
     final hasRemoteEnclosures =
         state.rfiDetails?.enclosure?.isNotEmpty ?? false;
     if (isOffline) {
-      // Offline mode has no checklist workflow, so enclosure documents stay mandatory.
       if (state.enclosurePaths.isEmpty && !hasRemoteEnclosures) return false;
     } else {
       final requiredEnclosureNames = (state.rfiDetails?.enclosuresList ?? [])
@@ -685,12 +683,10 @@ class InspectionFormNotifier extends StateNotifier<InspectionFormState> {
       }
     }
 
-    // 3. Measurements
     final hasValidMeasurement = state.measurements.any((m) =>
         m.type != 'Select' && m.units != 'Select U' && m.totalQty > 0);
     if (!hasValidMeasurement) return false;
 
-    // 4. Confirm Inspection
     final userData = _ref.read(authNotifierProvider).value;
     final role = UserRole.fromLoginResponse(userData ?? {});
 
@@ -704,7 +700,6 @@ class InspectionFormNotifier extends StateNotifier<InspectionFormState> {
         return false;
       }
       
-      // Mandatory checklist check for Engineers
       if (!isOffline) {
         for (var entry in state.enclosureChecklists.entries) {
           final items = entry.value;
@@ -728,7 +723,6 @@ class InspectionFormNotifier extends StateNotifier<InspectionFormState> {
       final userId = userData?['userId'] ?? '';
       final dio = _ref.read(dioProvider);
 
-      // 1. Generate MRVC-style PDF (pages 1–2 + attachments + checklist)
       final pdfFile = await InspectionSubmitPdfBuilder.build(
         state: state,
         role: role,
@@ -737,7 +731,6 @@ class InspectionFormNotifier extends StateNotifier<InspectionFormState> {
         dio: dio,
       );
 
-      // 2. Upload PDF → 3. Stamp → 4. finalSubmit
       if (role == UserRole.contractor || role == UserRole.contractorRep) {
         final uploadData = FormData.fromMap({
           "rfiId": _rfiId,
@@ -758,8 +751,7 @@ class InspectionFormNotifier extends StateNotifier<InspectionFormState> {
           role == UserRole.hod ||
           role == UserRole.dyHod) {
         final uploadData = FormData.fromMap({
-          "inspectionStatus":
-              _mapInspectionStatus(state.inspectionStatus) ?? '',
+          "inspectionStatus": _mapTestType(state.inspectionStatus) ?? '',
           "engineerRemarks": state.engineerRemarks,
           "rfiId": _rfiId,
           "pdf": await MultipartFile.fromFile(
@@ -774,60 +766,27 @@ class InspectionFormNotifier extends StateNotifier<InspectionFormState> {
         }));
       }
 
-      // 4. Prepare Final Multi-part Data (DTO Pattern) - Matching React implementation
-      final firstM = state.measurements.isNotEmpty 
-          ? state.measurements.first 
-          : const MeasurementRow();
+      final isEngineerRole = role == UserRole.engineer ||
+          role == UserRole.dyHodEngineer ||
+          role == UserRole.hod ||
+          role == UserRole.dyHod;
 
-      final dataMap = {
-        "inspectionId": null,
-        "rfiId": _rfiId,
-        "location": state.location,
-        "chainage": state.chainage,
-        "nameOfRepresentative": state.rfiDetails?.nameOfRepresentative ?? userId,
-        "measurementType": firstM.type == 'Select' ? null : firstM.type,
-        "length": double.tryParse(firstM.l),
-        "breadth": double.tryParse(firstM.b),
-        "height": double.tryParse(firstM.h),
-        "weight": double.tryParse(firstM.weight),
-        "units": firstM.units == 'Select U' ? null : firstM.units,
-        "noOfItems": int.tryParse(firstM.no),
-        "totalQty": firstM.totalQty,
-        "inspectionStatus": _mapInspectionStatus(state.testInSiteLab),
-        "testInsiteLab": _mapTestType(state.inspectionStatus),
-        "engineerRemarks": state.engineerRemarks.isEmpty ? null : state.engineerRemarks,
-        "descriptionEnclosure": state.contractorDescription.isNotEmpty 
-            ? state.contractorDescription 
-            : (state.rfiDetails?.description ?? state.location),
-        "supportingDescriptions": [],
-      };
+      final dataMap = FinalSubmitPayload.buildDataJson(
+        rfiId: _rfiId,
+        state: state,
+        isEngineerRole: isEngineerRole,
+        userId: userId,
+        mapInspectionStatus: _mapInspectionStatus,
+        mapTestType: _mapTestType,
+      );
 
-      final finalFormData = FormData.fromMap({
-        "data": jsonEncode(dataMap),
-      });
+      final finalFormData = await FinalSubmitPayload.buildFormData(
+        dataJson: dataMap,
+        state: state,
+      );
 
-      // Add Selfie (as "selfie" key)
-      final selfie = state.selfiePath;
-      if (selfie != null && selfie.isNotEmpty) {
-        finalFormData.files.add(MapEntry(
-          "selfie",
-          await MultipartFile.fromFile(selfie),
-        ));
-      }
-
-      // Add Test Report (as "testReport" key)
-      finalFormData.files.add(MapEntry(
-        "testReport",
-        await MultipartFile.fromFile(
-          pdfFile.path,
-          filename: "report_$_rfiId.pdf",
-        ),
-      ));
-
-      // 5. Final Submit
       await _repository.finalSubmit(finalFormData);
 
-      // 5. Cleanup
       final prefs = _ref.read(sharedPrefsProvider);
       await prefs.remove(_draftKey);
       state = state.copyWith(isSubmitting: false);
@@ -878,7 +837,6 @@ class InspectionFormNotifier extends StateNotifier<InspectionFormState> {
   String? _mapInspectionStatus(String? value) {
     if (value == null || value == 'Select' || value.isEmpty) return null;
 
-    // Mapping to match backend Enum: [VISUAL, NO, LAB_TEST, Yes, SITE_TEST, Rejected, Accepted]
     switch (value) {
       case 'Visual':
         return 'VISUAL';
@@ -896,7 +854,6 @@ class InspectionFormNotifier extends StateNotifier<InspectionFormState> {
   String? _mapTestType(String? value) {
     if (value == null || value == 'Select' || value.isEmpty) return null;
 
-    // Mapping to match backend Enum: [VISUAL, NO, LAB_TEST, Yes, SITE_TEST, Rejected, Accepted, Returned_For_Rectification]
     switch (value) {
       case 'Accepted':
         return 'Accepted';

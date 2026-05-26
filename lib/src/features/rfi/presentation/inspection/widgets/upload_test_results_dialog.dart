@@ -43,9 +43,6 @@ class _UploadTestResultsDialogState extends ConsumerState<UploadTestResultsDialo
 
   Future<void> _pickFile() async {
     try {
-      // FilePicker uses system intents which handle their own permissions.
-      // We don't explicitly require storage permission on modern Android or iOS.
-      // If it's a version that requires it, the system picker will trigger it.
       final result = await FilePicker.platform.pickFiles();
       if (result != null) {
         setState(() {

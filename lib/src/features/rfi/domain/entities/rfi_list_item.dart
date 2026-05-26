@@ -64,7 +64,6 @@ class RfiListItem {
 
     return RfiListItem(
       rfiId: parsedId,
-      // API returns human-readable id as `rfi_Id` (e.g. MJB_77/2_000157_RFI0001_R0).
       rfiNo: strFromKeys(<String>['rfi_Id', 'rfiNo', 'rfi_id']),
       project: str('project'),
       structure: str('structure'),

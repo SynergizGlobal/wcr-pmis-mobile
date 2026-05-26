@@ -27,7 +27,6 @@ class RfiLogNotifier extends _$RfiLogNotifier {
         availableContracts: List<String>.from(filters['contracts'] ?? []),
       );
     } catch (e) {
-      // Silently fail
     }
   }
 
@@ -102,8 +101,6 @@ class RfiLogNotifier extends _$RfiLogNotifier {
   }
 
 
-
-  /// Global search across ALL fields
   List<RfiLogItem> _applySearch(List<RfiLogItem> items, String query) {
     if (query.isEmpty) return items;
     final lowerQuery = query.toLowerCase();

@@ -1,4 +1,3 @@
-// Removed unnecessary import
 import 'dart:convert';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
@@ -31,7 +30,6 @@ class RfiDetailsNotifier extends _$RfiDetailsNotifier {
     try {
       final api = ref.read(rfiDetailsApiProvider);
       
-      // Fetch details and inspections concurrently
       final responses = await Future.wait([
         api.getRfiDetails(id),
         api.getRfiInspections(id),
@@ -40,16 +38,13 @@ class RfiDetailsNotifier extends _$RfiDetailsNotifier {
       final detailsData = responses[0] as Map<String, dynamic>;
       final inspectionsFromDedicated = responses[1];
       
-      // Get inspections from both possible sources
       final List<dynamic> rawInspections = (inspectionsFromDedicated is List) ? inspectionsFromDedicated : [];
       final List<dynamic> fromDetailsPayload = (detailsData['inspectionDetails'] is List) 
           ? detailsData['inspectionDetails'] as List<dynamic> 
           : [];
       
-      // Combine and deduplicate by ID to ensure we have the best data
       final Map<int, dynamic> uniqueInspections = {};
       
-      // First, take from the dedicated API (if any)
       for (var item in rawInspections) {
         if (item is Map) {
           final id = _sanitizeDeep(item['id']);
@@ -57,12 +52,10 @@ class RfiDetailsNotifier extends _$RfiDetailsNotifier {
         }
       }
       
-      // Then, overwrite/supplement with data from rfi-details payload (often richer)
       for (var item in fromDetailsPayload) {
         if (item is Map) {
           final id = _sanitizeDeep(item['id']);
           if (id is int) {
-            // If the item in details payload has a siteImage, prefer it
             if (uniqueInspections.containsKey(id)) {
               final existing = uniqueInspections[id];
               if ((item['siteImage'] != null && item['siteImage'].toString().isNotEmpty) || 
@@ -76,10 +69,8 @@ class RfiDetailsNotifier extends _$RfiDetailsNotifier {
         }
       }
 
-      // Perform deep sanitization
       final cleanDetails = _sanitizeDeep(detailsData) as Map<String, dynamic>;
 
-      // Parse models
       final RfiDetailModel detailModel = RfiDetailModel.fromJson(cleanDetails);
       final List<RfiInspectionModel> inspectionModels = uniqueInspections.values
           .map((e) {
@@ -91,7 +82,6 @@ class RfiDetailsNotifier extends _$RfiDetailsNotifier {
           })
           .toList();
       
-      // Sort models by inspection date/time if available
       inspectionModels.sort((a, b) => (b.id ?? 0).compareTo(a.id ?? 0));
 
       state = state.copyWith(
@@ -101,7 +91,6 @@ class RfiDetailsNotifier extends _$RfiDetailsNotifier {
         errorMessage: null,
       );
 
-      // Trigger checklist fetching for enclosures
       _fetchChecklistsForEnclosures(id, detailModel);
     } catch (e) {
       state = state.copyWith(
@@ -132,7 +121,6 @@ class RfiDetailsNotifier extends _$RfiDetailsNotifier {
           );
         }
       } catch (e) {
-        // Mark as no checklist to avoid perpetual loading or retrying
         state = state.copyWith(
           enclosuresWithNoChecklist: {
             ...state.enclosuresWithNoChecklist,
@@ -144,8 +132,6 @@ class RfiDetailsNotifier extends _$RfiDetailsNotifier {
   }
 
 
-  // Deeply sanitize the JSON to fix QA vs LIVE disparities
-  // Specifically: Converts empty strings to null. And fixes common boolean/int mismatches.
   dynamic _sanitizeDeep(dynamic value) {
     if (value == null) return null;
     
@@ -157,10 +143,8 @@ class RfiDetailsNotifier extends _$RfiDetailsNotifier {
     } else if (value is Map<String, dynamic>) {
       final sanitized = <String, dynamic>{};
       value.forEach((key, val) {
-        // Default assignment for recursion
         dynamic sanitizedVal = _sanitizeDeep(val);
 
-        // Special manual overrides for booleans stored as ints strings
         if (key == 'isDeleted' || key == 'contractorEsignDone' || key == 'engineerEsignDone') {
            if (val is int) {
              sanitized[key] = val == 1;
@@ -171,7 +155,6 @@ class RfiDetailsNotifier extends _$RfiDetailsNotifier {
            }
         }
         
-        // Special manual override for id fields that should be integer but come as strings
         if (key == 'id' || key == 'inspectionId' || key == 'rfiId' || key == 'noOfItems' || key == 'no') {
            if (val is String && int.tryParse(val) != null) {
              sanitized[key] = int.parse(val);
@@ -179,7 +162,6 @@ class RfiDetailsNotifier extends _$RfiDetailsNotifier {
            }
         }
 
-        // If a field expects a String but the backend sends a Map/List, stringify it
         final strictStringFields = <String>[
           'rfiValidation', 'action', 'typeOfRFI', 'enclosures', 'location', 'description',
           'timeOfInspection', 'dateOfSubmission', 'dateOfInspection', 'createdAt', 'updatedAt',

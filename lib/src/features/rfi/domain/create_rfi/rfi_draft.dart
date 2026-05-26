@@ -7,7 +7,6 @@ part 'rfi_draft.g.dart';
 @freezed
 class RfiDraft with _$RfiDraft {
   const factory RfiDraft({
-    // Selections
     DropdownItem? project,
     DropdownItem? work,
     DropdownItem? contract,
@@ -18,7 +17,6 @@ class RfiDraft with _$RfiDraft {
     DropdownItem? activity,
     DropdownItem? rfiDescription,
 
-    // Step 2 Fields
     @Default(0) int currentStep,
     String? action,
     String? typeOfRfi,
@@ -27,11 +25,9 @@ class RfiDraft with _$RfiDraft {
     String? timeOfInspection,
     String? dateOfInspection,
 
-    // Step 3 Fields
     @Default([]) List<String> selectedEnclosures,
     String? rfiDescriptionText,
 
-    // Cached Lists
     @Default([]) List<DropdownItem> projects,
     @Default([]) List<DropdownItem> works,
     @Default([]) List<DropdownItem> contracts,

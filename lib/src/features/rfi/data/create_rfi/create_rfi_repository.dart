@@ -20,18 +20,15 @@ class CreateRfiRepository {
   List<DropdownItem> _mapToDropdownItems(List<dynamic> data) {
     if (data.isEmpty) return [];
 
-    // If the API returns a list of strings instead of JSON objects:
     if (data.first is String) {
       return _dedupeDropdownItems(
         data.map((str) => DropdownItem(id: str, name: str)).toList(),
       );
     }
 
-    // If it's a list of JSON objects:
     return _dedupeDropdownItems(data.map((dynamic item) {
       final json = item as Map<String, dynamic>;
 
-      // We look for ID keys:
       final idValue = json['id'] ??
           json['userId'] ??
           json['projectId'] ??
@@ -42,12 +39,9 @@ class CreateRfiRepository {
           json['componentId'] ??
           json['elementId'] ??
           json['activityId'] ??
-          // If an API returns just a string list, id will default to '' but handled above.
-          // If it returns an object with ONLY a name (like RFI description), we can fallback to the name as ID.
           json['rfiDescription'] ??
           '';
 
-      // We look for Name keys:
       final nameValue = json['name'] ??
           json['userName'] ??
           json['projectName'] ??
@@ -61,7 +55,6 @@ class CreateRfiRepository {
           json['rfiDescription'] ??
           '';
 
-      // Extract enclosures if available (e.g., from rfiDescriptions)
       List<String>? enclosures;
       if (json['enclosures'] != null && json['enclosures'] is List) {
         enclosures =

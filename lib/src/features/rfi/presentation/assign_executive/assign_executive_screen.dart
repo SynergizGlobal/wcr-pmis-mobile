@@ -19,7 +19,6 @@ class AssignExecutiveScreen extends ConsumerStatefulWidget {
 }
 
 class _AssignExecutiveScreenState extends ConsumerState<AssignExecutiveScreen> {
-  // Log table pagination & search
   int _rowsPerPage = 5;
   int _currentPage = 0;
   String _searchQuery = '';
@@ -44,7 +43,6 @@ class _AssignExecutiveScreenState extends ConsumerState<AssignExecutiveScreen> {
           physics: const AlwaysScrollableScrollPhysics(),
           child: Column(
           children: [
-            // ─── ASSIGN EXECUTIVE PAGE (Form) ──────────────────────
             _buildSectionHeader('ASSIGN EXECUTIVE PAGE'),
             Container(
               margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -61,7 +59,6 @@ class _AssignExecutiveScreenState extends ConsumerState<AssignExecutiveScreen> {
               ),
               child: Column(
                 children: [
-                  // Row 1: Project + Contract (WCR: no Work level)
                   _buildDropdownRow(
                     left: AppDropdown<DropdownItem>(
                       label: 'Project',
@@ -81,7 +78,6 @@ class _AssignExecutiveScreenState extends ConsumerState<AssignExecutiveScreen> {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  // Row 2: Structure Type + Structure
                   _buildDropdownRow(
                     left: AppDropdown<DropdownItem>(
                       label: 'Structure Type',
@@ -101,7 +97,6 @@ class _AssignExecutiveScreenState extends ConsumerState<AssignExecutiveScreen> {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  // Row 3: Assign Executive
                   _buildDropdownRow(
                     left: AppDropdown<Executive>(
                       label: 'Assign Executive',
@@ -114,7 +109,6 @@ class _AssignExecutiveScreenState extends ConsumerState<AssignExecutiveScreen> {
                     right: const SizedBox.shrink(),
                   ),
                   const SizedBox(height: 20),
-                  // Submit
                   Center(
                     child: SizedBox(
                       width: 140,
@@ -165,7 +159,6 @@ class _AssignExecutiveScreenState extends ConsumerState<AssignExecutiveScreen> {
 
             const SizedBox(height: 16),
 
-            // ─── ASSIGN EXECUTIVE LOG (Table) ──────────────────────
             _buildSectionHeader('ASSIGN EXECUTIVE LOG'),
             Container(
               margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -192,7 +185,6 @@ class _AssignExecutiveScreenState extends ConsumerState<AssignExecutiveScreen> {
 );
 }
 
-  // ── Section Header ──────────────────────────────────────────────────
   Widget _buildSectionHeader(String title) {
     final ColorScheme scheme = Theme.of(context).colorScheme;
     return Container(
@@ -216,7 +208,6 @@ class _AssignExecutiveScreenState extends ConsumerState<AssignExecutiveScreen> {
     );
   }
 
-  // ── Dropdown Row (2-column) ─────────────────────────────────────────
   Widget _buildDropdownRow({required Widget left, required Widget right}) {
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -237,13 +228,11 @@ class _AssignExecutiveScreenState extends ConsumerState<AssignExecutiveScreen> {
     );
   }
 
-  // ── Log Table ───────────────────────────────────────────────────────
   Widget _buildLogTable(
     List<AssignExecutiveLog> allLogs,
     bool isLoading,
     dynamic notifier,
   ) {
-    // Filter by search
     final filteredLogs = _searchQuery.isEmpty
         ? allLogs
         : allLogs.where((log) {
@@ -268,7 +257,6 @@ class _AssignExecutiveScreenState extends ConsumerState<AssignExecutiveScreen> {
 
     return Column(
       children: [
-        // Controls: Show entries + Search
         Row(
           children: [
             const Text('Show ', style: TextStyle(fontSize: 13)),
@@ -331,7 +319,6 @@ class _AssignExecutiveScreenState extends ConsumerState<AssignExecutiveScreen> {
         ),
         const SizedBox(height: 8),
 
-        // Table
         if (isLoading)
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 32),

@@ -27,7 +27,6 @@ class _AssignExecutiveDialogState extends ConsumerState<AssignExecutiveDialog> {
 
   @override
   Widget build(BuildContext context) {
-    // contract maps to contractId from API
     final contractId = widget.item.contract ?? '';
     final namesAsync = ref.watch(assignExecutiveNamesProvider(contractId));
     final assignState = ref.watch(assignClientPersonControllerProvider);
@@ -92,10 +91,8 @@ class _AssignExecutiveDialogState extends ConsumerState<AssignExecutiveDialog> {
                       .read(assignClientPersonControllerProvider.notifier)
                       .assign(widget.item.rfiNo, selectedExecutive!);
 
-                  // Check if successful
                   final state = ref.read(assignClientPersonControllerProvider);
                   if (!state.hasError && context.mounted) {
-                    // Refresh the list
                     ref.read(rfiListNotifierProvider.notifier).fetchRfiList();
                     Navigator.pop(context);
                     GlobalAlertDialog.show(

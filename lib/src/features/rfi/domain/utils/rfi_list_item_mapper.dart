@@ -3,7 +3,6 @@ import 'package:wcr_pmis_mobile/src/features/rfi/domain/entities/rfi_list_item.d
 import 'package:wcr_pmis_mobile/src/features/rfi/domain/rfi_list/rfi_list_item.dart'
     as ported;
 
-/// Maps WCR list rows to the standalone RFI list model used by ported screens.
 ported.RfiListItem toPortedRfiListItem(wcr.RfiListItem item) {
   return ported.RfiListItem(
     rfiId: item.rfiId,

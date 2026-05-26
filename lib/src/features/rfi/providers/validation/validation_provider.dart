@@ -102,7 +102,6 @@ class ValidationNotifier extends _$ValidationNotifier {
         "comment": comment,
       });
 
-      // Reset pending values for this ID
       final newRemarks = Map<int, String>.from(state.pendingRemarks);
       newRemarks.remove(longRfiId);
       final newComments = Map<int, String>.from(state.pendingComments);
@@ -115,7 +114,6 @@ class ValidationNotifier extends _$ValidationNotifier {
         pendingComments: newComments,
       );
 
-      // Refresh list
       await fetchValidations();
       return true;
     } catch (e) {

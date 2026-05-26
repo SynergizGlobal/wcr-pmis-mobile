@@ -78,7 +78,6 @@ class InspectionNotifier extends StateNotifier<InspectionState> {
     try {
       state = state.copyWith(isLoading: true, error: null);
       await _repository.sendForValidation(rfiId);
-      // Refresh the list after successful send
       await fetchInspections();
     } catch (e) {
       state = state.copyWith(isLoading: false);

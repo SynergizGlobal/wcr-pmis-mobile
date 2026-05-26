@@ -7,7 +7,7 @@ part of 'assign_client_person_provider.dart';
 // **************************************************************************
 
 String _$assignExecutiveNamesHash() =>
-    r'af6a3f1f4f2bcfb7c8a40faa1e23b090a10eeb84';
+    r'a01a38c893804234f86c182cf78c4799b5062e7c';
 
 /// Copied from Dart SDK
 class _SystemHash {

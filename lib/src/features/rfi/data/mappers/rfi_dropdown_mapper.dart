@@ -28,7 +28,6 @@ abstract final class RfiDropdownMapper {
     return dedupeById(mapped);
   }
 
-  /// Ensures each dropdown value is unique (Flutter requires exactly one matching item).
   static List<RfiDropdownItem> dedupeById(List<RfiDropdownItem> items) {
     final Map<String, RfiDropdownItem> unique = <String, RfiDropdownItem>{};
     for (final RfiDropdownItem item in items) {

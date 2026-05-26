@@ -21,9 +21,7 @@ class RfiListRepository {
     final rawData = await api.getRfiDetails();
     return rawData.map((json) {
       if (json['approvalStatus']?.toString() == 'Rejected') {
-        // Log rejected RFI if needed, but not using print
       }
-      // Create a safely-mapped object, handling potential nulls
       return RfiListItem(
         rfiId: json['id'] is int
             ? json['id'] as int
@@ -66,7 +64,6 @@ class RfiListRepository {
   List<String> _parseImagePaths(String? imagePathsRaw) {
     if (imagePathsRaw == null || imagePathsRaw.isEmpty) return [];
 
-    // Split by comma in case there are multiple paths concatenated
     return imagePathsRaw
         .split(',')
         .map((path) => path.trim())

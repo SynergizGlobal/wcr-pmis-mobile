@@ -1,6 +1,60 @@
 import 'dart:convert';
 
-/// Extracts file path strings from API values (comma-separated, JSON array, etc.).
+class SupportingDocumentEntry {
+  const SupportingDocumentEntry({
+    required this.filePath,
+    this.documentsDescription = '',
+  });
+
+  final String filePath;
+  final String documentsDescription;
+
+  String get sectionTitle {
+    final desc = documentsDescription.trim();
+    if (desc.isEmpty) {
+      return 'Supporting document - doc';
+    }
+    return 'Supporting document - $desc - doc';
+  }
+}
+
+List<SupportingDocumentEntry> extractSupportingDocuments(dynamic data) {
+  if (data == null) return [];
+
+  if (data is List) {
+    return data.expand((item) => extractSupportingDocuments(item)).toList();
+  }
+
+  if (data is Map) {
+    final path = (data['filePath'] ?? data['file'] ?? '').toString().trim();
+    if (path.isEmpty) return [];
+    return [
+      SupportingDocumentEntry(
+        filePath: path,
+        documentsDescription: (data['documentsDescription'] ?? '').toString(),
+      ),
+    ];
+  }
+
+  final trimmed = data.toString().trim();
+  if (trimmed.isEmpty) return [];
+
+  if (trimmed.startsWith('[') || trimmed.startsWith('{')) {
+    try {
+      return extractSupportingDocuments(jsonDecode(trimmed));
+    } catch (_) {
+      return [];
+    }
+  }
+
+  return trimmed
+      .split(',')
+      .map((e) => e.trim())
+      .where((e) => e.isNotEmpty)
+      .map((path) => SupportingDocumentEntry(filePath: path))
+      .toList();
+}
+
 List<String> extractFilePaths(dynamic data) {
   if (data == null) return [];
 
@@ -25,7 +79,7 @@ List<String> extractFilePaths(dynamic data) {
   }
 
   final trimmed = data.toString().trim();
-  if (trimmed.isEmpty || trimmed.contains('":')) return [];
+  if (trimmed.isEmpty) return [];
 
   if (trimmed.startsWith('[') || trimmed.startsWith('{')) {
     try {

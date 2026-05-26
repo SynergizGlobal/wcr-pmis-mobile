@@ -12,14 +12,14 @@ String _$rfiListRepositoryHash() => r'8fbdfcb0732ee6b44ff8545fed04cd42ef59f424';
 @ProviderFor(rfiListRepository)
 final rfiListRepositoryProvider =
     AutoDisposeProvider<RfiListRepository>.internal(
-  rfiListRepository,
-  name: r'rfiListRepositoryProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$rfiListRepositoryHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
+      rfiListRepository,
+      name: r'rfiListRepositoryProvider',
+      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+          ? null
+          : _$rfiListRepositoryHash,
+      dependencies: null,
+      allTransitiveDependencies: null,
+    );
 
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element

@@ -4,6 +4,16 @@ import '../../domain/inspection/enclosure_checklist.dart';
 
 part 'inspection_form_state.freezed.dart';
 
+class SupportingDocument {
+  const SupportingDocument({
+    required this.path,
+    this.description = '',
+  });
+
+  final String path;
+  final String description;
+}
+
 @freezed
 class MeasurementRow with _$MeasurementRow {
   const factory MeasurementRow({
@@ -26,18 +36,16 @@ class InspectionFormState with _$InspectionFormState {
     @Default(false) bool isLoading,
     String? error,
 
-    // Step 1
     String? selfiePath,
     @Default('') String chainage,
 
-    // Step 2
     @Default('') String location,
     String? dateOfInspection,
     String? timeOfInspection,
     @Default('') String contractorRepresentative,
     @Default([]) List<String> siteImagePaths,
     @Default([]) List<String> enclosurePaths, // PDFs
-    @Default([]) List<String> supportingDocPaths,
+    @Default([]) List<SupportingDocument> supportingDocuments,
     @Default('') String contractorDescription,
     @Default('') String clientDescription,
     @Default('') String engineerRemarks,

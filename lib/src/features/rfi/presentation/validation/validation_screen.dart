@@ -25,7 +25,6 @@ class ValidationScreen extends ConsumerWidget {
     final notifier = ref.read(validationNotifierProvider.notifier);
     final canEdit = appRole.canEditValidation;
 
-    // Listen for validation action errors and show a clean dialog
     ref.listen(validationNotifierProvider.select((s) => s.actionErrorMessage),
         (previous, next) {
       if (next != null && context.mounted) {
@@ -79,7 +78,6 @@ class ValidationScreen extends ConsumerWidget {
           onRefresh: () => notifier.fetchValidations(),
           child: Column(
           children: [
-            // Sticky Filter Section
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
               child: Container(
@@ -96,12 +94,10 @@ class ValidationScreen extends ConsumerWidget {
               ),
             ),
 
-            // Scrollable Content
             Expanded(
               child: CustomScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 slivers: [
-                  // Loading, Error, or List Content
                   if (state.isLoading)
                     const SliverFillRemaining(
                       child: Center(child: CircularProgressIndicator()),
@@ -255,7 +251,6 @@ class ValidationScreen extends ConsumerWidget {
                                         },
                                       ),
                                     ),
-                                    // Remarks Column
                                     DataCell(
                                       isOpen
                                           ? canEdit
@@ -302,7 +297,6 @@ class ValidationScreen extends ConsumerWidget {
                                                   fontSize: 11,
                                                   fontWeight: FontWeight.bold)),
                                     ),
-                                    // Comments Column (dyHOD only)
                                     if (canEdit)
                                       DataCell(
                                         isOpen
@@ -356,7 +350,6 @@ class ValidationScreen extends ConsumerWidget {
                                                 overflow: TextOverflow.ellipsis,
                                               ),
                                       ),
-                                    // Action (dyHOD) or Status (Engineer) Column
                                     DataCell(
                                       isOpen
                                           ? canEdit
@@ -453,7 +446,6 @@ class ValidationScreen extends ConsumerWidget {
               ),
             ),
 
-            // Sticky Pagination
             if (state.filteredItems.isNotEmpty)
               TablePaginationFooter(
                 startIndex: startIndex,

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-/// Themed dropdown used across ported RFI screens (light + dark).
 class AppDropdown<T> extends StatelessWidget {
   const AppDropdown({
     super.key,

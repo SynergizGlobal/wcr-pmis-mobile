@@ -717,7 +717,6 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
   Future<void> _onUpdateFormTap(UpdateFormItem form) async {
     final List<UpdateFormSubItem> subMenus = form.orderedSubMenus;
 
-    // Projects has a single submenu (Add Project) — open it directly.
     if (_isProjectsUpdateForm(form)) {
       if (subMenus.isEmpty) {
         await _handleUpdateFormNavigation(
@@ -789,8 +788,6 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     );
   }
 
-  /// Mobile Update Forms rollout — show only implemented / in-progress forms.
-  /// Other API forms (Works, Contracts, etc.) are added here as they are built.
   bool _isEnabledUpdateForm(UpdateFormItem item) {
     if (_isProjectsUpdateForm(item)) {
       return true;

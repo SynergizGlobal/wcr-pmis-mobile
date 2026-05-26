@@ -1,6 +1,5 @@
 import 'package:dio/dio.dart';
 
-/// User-facing message for RFI API failures.
 String rfiDioErrorMessage(DioException error) {
   switch (error.type) {
     case DioExceptionType.connectionTimeout:

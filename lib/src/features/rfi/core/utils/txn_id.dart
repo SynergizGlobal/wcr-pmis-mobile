@@ -1,6 +1,5 @@
 import 'dart:math';
 
-/// Matches web `generateUniqueTxnId`: epoch ms + 3-digit random suffix.
 String generateUniqueTxnId() {
   final timestamp = DateTime.now().millisecondsSinceEpoch;
   final randomSuffix =

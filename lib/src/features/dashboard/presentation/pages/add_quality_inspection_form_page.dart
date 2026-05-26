@@ -23,7 +23,6 @@ class AddQualityInspectionFormPage extends StatefulWidget {
 
   final DashboardRemoteDataSource dataSource;
 
-  /// When set, loads inspection-view API and prefills the form.
   final String? inspectionId;
 
   @override

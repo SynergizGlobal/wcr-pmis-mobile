@@ -3,10 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dio/dio.dart';
 
 import 'package:path_provider/path_provider.dart';
-import 'package:pdfx/pdfx.dart';
 import 'package:open_file/open_file.dart';
 import 'dart:io';
-import 'dart:typed_data';
 
 
 import '../../providers/rfi_details/rfi_details_provider.dart';
@@ -15,6 +13,7 @@ import '../../domain/rfi_details/enclosure_checklist_item.dart';
 import '../../core/widgets/error_state_widget.dart';
 import '../../core/network/environment.dart';
 import '../../core/utils/rfi_preview_fetch.dart';
+import '../../core/widgets/rfi_remote_media_preview.dart';
 import '../../core/providers/dio_provider.dart';
 import '../../core/widgets/global_alert_dialog.dart';
 import 'package:wcr_pmis_mobile/src/features/rfi/presentation/rfi_theme.dart';
@@ -123,7 +122,6 @@ class _ViewRfiDetailsScreenState extends ConsumerState<ViewRfiDetailsScreen> {
     final TextTheme textTheme = Theme.of(context).textTheme;
     final detail = state.detailModel!;
     
-    // 1. Group uploaded files by enclosure name from the 'enclosure' list
     final Map<String, List<Map<String, dynamic>>> fileGroups = {};
     if (detail.enclosure != null) {
       for (var e in detail.enclosure!) {
@@ -134,7 +132,6 @@ class _ViewRfiDetailsScreenState extends ConsumerState<ViewRfiDetailsScreen> {
       }
     }
 
-    // 2. Determine all unique enclosure names from all sources
     final Set<String> allNames = {};
     if (detail.enclosuresList != null) allNames.addAll(detail.enclosuresList!);
     allNames.addAll(fileGroups.keys);
@@ -211,7 +208,6 @@ class _ViewRfiDetailsScreenState extends ConsumerState<ViewRfiDetailsScreen> {
                       final uploadPath =
                           f['enclosureUploadFile'] as String? ?? '';
 
-                      // Preview: relative API path (fetchBytes). Download: full URL (dio.download).
                       final String previewSource = enclosureId != null
                           ? 'api/rfi/view-enclosure?id=$enclosureId'
                           : uploadPath;
@@ -429,9 +425,11 @@ class _ViewRfiDetailsScreenState extends ConsumerState<ViewRfiDetailsScreen> {
   }
 
   void _viewEnclosure(String url, [String? title]) async {
-    showDialog(
-      context: context,
-      builder: (context) => _DocumentViewerDialog(url: url, title: title ?? url.split('/').last),
+    await RfiMediaViewerDialog.show(
+      context,
+      source: url,
+      dio: ref.read(dioProvider),
+      title: title ?? url.split('/').last,
     );
   }
 
@@ -448,7 +446,6 @@ class _ViewRfiDetailsScreenState extends ConsumerState<ViewRfiDetailsScreen> {
 
       final dir = await getApplicationDocumentsDirectory();
       
-      // Determine fileName
       String fileName = preferredFileName ?? url.split('/').last;
       if (url.contains('view-enclosure?id=')) {
         final id = url.split('=').last;
@@ -457,7 +454,6 @@ class _ViewRfiDetailsScreenState extends ConsumerState<ViewRfiDetailsScreen> {
         }
       }
       
-      // Clean filename for safety
       fileName = fileName.replaceAll(RegExp(r'[\\/:*?"<>|]'), '_');
       final savePath = '${dir.path}/$fileName';
 
@@ -467,7 +463,6 @@ class _ViewRfiDetailsScreenState extends ConsumerState<ViewRfiDetailsScreen> {
         options: Options(extra: {'silentError': true}),
       );
       
-      // Verify file and check if it's actually an error page
       final file = File(savePath);
       if (!await file.exists() || await file.length() == 0) {
         throw Exception('Downloaded file is empty or missing');
@@ -615,15 +610,6 @@ class _ViewRfiDetailsScreenState extends ConsumerState<ViewRfiDetailsScreen> {
                 ],
               ),
             ),
-            // Container(
-            //   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            //   decoration: BoxDecoration(
-            //     color: roleColor.withValues(alpha: 0.1),
-            //     borderRadius: BorderRadius.circular(20),
-            //     border: Border.all(color: roleColor.withValues(alpha: 0.5)),
-            //   ),
-            //   child: Text(isContractor ? 'CON' : 'ENGG', style: TextStyle(color: roleColor, fontSize: 10, fontWeight: FontWeight.bold)),
-            // ),
           ],
         ),
         const SizedBox(height: 16),
@@ -654,7 +640,6 @@ class _ViewRfiDetailsScreenState extends ConsumerState<ViewRfiDetailsScreen> {
         ),
         const SizedBox(height: 12),
         
-        // Media Row
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: Row(
@@ -742,143 +727,6 @@ class _ViewRfiDetailsScreenState extends ConsumerState<ViewRfiDetailsScreen> {
     );
   }
   String _getPublicUrl(String path) => RfiPreviewFetch.resolvePublicUrl(path);
-}
-
-class _DocumentViewerDialog extends StatelessWidget {
-  final String url;
-  final String title;
-
-  const _DocumentViewerDialog({required this.url, required this.title});
-
-  @override
-  Widget build(BuildContext context) {
-    final ColorScheme scheme = Theme.of(context).colorScheme;
-
-    return Dialog.fullscreen(
-      backgroundColor: scheme.surface,
-      child: Column(
-        children: [
-          AppBar(
-            leading: IconButton(
-              icon: const Icon(Icons.close),
-              onPressed: () => Navigator.pop(context),
-            ),
-            title: Text(title, style: const TextStyle(fontSize: 16)),
-          ),
-          Expanded(
-            child: Consumer(
-              builder: (context, ref, child) {
-                return _SmartDocumentLoader(url: url, dio: ref.read(dioProvider));
-              },
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _SmartDocumentLoader extends StatefulWidget {
-  final String url;
-  final Dio dio;
-
-  const _SmartDocumentLoader({required this.url, required this.dio});
-
-  @override
-  State<_SmartDocumentLoader> createState() => _SmartDocumentLoaderState();
-}
-
-class _SmartDocumentLoaderState extends State<_SmartDocumentLoader> {
-  PdfControllerPinch? _pdfController;
-  Uint8List? _imageBytes;
-  bool _isLoading = true;
-  String? _error;
-  bool _isPdf = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadDocument();
-  }
-
-  Future<void> _loadDocument() async {
-    try {
-      final Uint8List bytes =
-          await RfiPreviewFetch.fetchBytes(widget.dio, widget.url);
-
-      if (bytes.length > 4 &&
-          bytes[0] == 37 &&
-          bytes[1] == 80 &&
-          bytes[2] == 68 &&
-          bytes[3] == 70) {
-        _isPdf = true;
-        _pdfController =
-            PdfControllerPinch(document: PdfDocument.openData(bytes));
-      } else {
-        _isPdf = false;
-        _imageBytes = bytes;
-      }
-
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _error = e.toString();
-          _isLoading = false;
-        });
-      }
-    }
-  }
-
-  @override
-  void dispose() {
-    _pdfController?.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (_isLoading) return const Center(child: CircularProgressIndicator());
-    
-    if (_error != null) {
-      final ColorScheme scheme = Theme.of(context).colorScheme;
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.error_outline, color: scheme.error, size: 48),
-              const SizedBox(height: 16),
-              Text(
-                'Failed to load document\n$_error',
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: scheme.onSurfaceVariant,
-                    ),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
-    if (_isPdf && _pdfController != null) {
-      return PdfViewPinch(controller: _pdfController!);
-    } else if (_imageBytes != null) {
-      return InteractiveViewer(
-        maxScale: 5.0,
-        minScale: 0.5,
-        child: Center(child: Image.memory(_imageBytes!))
-      );
-    }
-    
-    return const Center(child: Text('Unsupported document format'));
-  }
 }
 
 class _InfoRow {

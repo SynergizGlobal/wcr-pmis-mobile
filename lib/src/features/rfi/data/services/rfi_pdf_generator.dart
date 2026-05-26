@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
@@ -10,6 +9,8 @@ import 'package:printing/printing.dart';
 import 'package:pdfx/pdfx.dart' as pdfr;
 import '../../domain/rfi_log/rfi_report_details.dart';
 import '../../core/network/environment.dart';
+import '../../core/utils/rfi_file_paths.dart';
+import '../../core/utils/rfi_media_utils.dart';
 import '../../core/utils/rfi_preview_fetch.dart';
 
 class RfiPdfGenerator {
@@ -23,15 +24,12 @@ class RfiPdfGenerator {
     final isIos = !kIsWeb && Platform.isIOS;
     final pdf = pw.Document();
 
-    // iOS print preview can hang when runtime font fetching is slow/unavailable.
-    // Use built-in fonts on iOS for deterministic PDF generation.
     final pw.Font font;
     final pw.Font fontBold;
     if (isIos) {
       font = pw.Font.helvetica();
       fontBold = pw.Font.helveticaBold();
     } else {
-      // Use Noto Sans for broader Unicode support on other platforms.
       font = await PdfGoogleFonts.notoSansRegular();
       fontBold = await PdfGoogleFonts.notoSansBold();
     }
@@ -39,7 +37,6 @@ class RfiPdfGenerator {
     final dio = _createDio();
     final info = data.reportDetails;
 
-    // 1. Parallel loading of initial assets (Logo from project assets, selfies from network)
     final List<pw.MemoryImage?> initialAssets = await Future.wait([
       _loadAssetImage('assets/images/mrvc_logo.png'),
       _loadImage(info.selfieContractor, dio),
@@ -50,20 +47,17 @@ class RfiPdfGenerator {
     final contractorSelfie = initialAssets[1];
     final inspectorSelfie = initialAssets[2];
 
-    // 2. Extract paths from all possible attachment fields (Exhaustive collection)
-    final contractorPaths = _extractPaths(info.imagesUploadedByContractor?.isNotEmpty == true
-        ? info.imagesUploadedByContractor
-        : info.conSupportFilePaths);
-    final clientPaths = _extractPaths(info.imagesUploadedByClient?.isNotEmpty == true
-        ? info.imagesUploadedByClient
-        : info.enggSupportFilePaths);
+    final contractorPaths = extractFilePaths(info.imagesUploadedByContractor);
+    final clientPaths = extractFilePaths(info.imagesUploadedByClient);
+    final conSupportingDocs = extractSupportingDocuments(info.conSupportFilePaths);
+    final enggSupportingDocs =
+        extractSupportingDocuments(info.enggSupportFilePaths);
     
-    final testSitePaths = _extractPaths(info.testSiteDocumentsContractor);
-    final testResultConPaths = _extractPaths(info.testResultContractor);
-    final testResultEngPaths = _extractPaths(info.testResultEngineer);
+    final testSitePaths = extractFilePaths(info.testSiteDocumentsContractor);
+    final testResultConPaths = extractFilePaths(info.testResultContractor);
+    final testResultEngPaths = extractFilePaths(info.testResultEngineer);
 
-    // Other attachment fields (attachmentData string, attachments list)
-    final otherAttachmentPaths = _extractPaths(info.attachmentData);
+    final otherAttachmentPaths = extractFilePaths(info.attachmentData);
     final listAttachmentPaths = <String>[];
     for (final att in info.attachments) {
       if (att is Map && att.containsKey('filePath')) {
@@ -73,29 +67,29 @@ class RfiPdfGenerator {
       }
     }
 
-    // Enclosures
     final enclosurePaths = <String>[];
     for (final enclosure in data.enclosures) {
       if (enclosure.file != null) {
-        enclosurePaths.addAll(_extractPaths(enclosure.file));
+        enclosurePaths.addAll(extractFilePaths(enclosure.file));
       }
     }
 
-    // Categorization Helpers
-    bool isPdf(String path) => path.toLowerCase().endsWith('.pdf');
+    bool isPdfPath(String path) => RfiPreviewFetch.looksLikePdfPath(path);
 
     Future<List<pw.MemoryImage>> loadOnlyImages(List<String> paths) async {
-       return await _loadImages(paths.where((p) => !isPdf(p)).toList(), dio);
+      return _loadImages(
+        paths.where((p) => !isPdfPath(p)).toList(),
+        dio,
+      );
     }
 
     Future<List<pw.MemoryImage>> loadPdfClips(List<String> paths) async {
-       final pdfs = paths.where((p) => isPdf(p)).toList();
+       final pdfs = paths.where(isPdfPath).toList();
        if (pdfs.isEmpty) return [];
        final List<List<pw.MemoryImage>> pagesList = await Future.wait(pdfs.map((p) => _loadPdfPages(p, dio)));
        return pagesList.expand((x) => x).toList();
     }
 
-    // 3. Parallel loading of all categories back into report sections
     final results = await Future.wait([
       loadOnlyImages(contractorPaths),
       loadOnlyImages(clientPaths),
@@ -105,7 +99,6 @@ class RfiPdfGenerator {
       loadOnlyImages(otherAttachmentPaths),
       loadOnlyImages(listAttachmentPaths),
       loadOnlyImages(enclosurePaths),
-      // All PDF clips globally
       loadPdfClips([
         ...contractorPaths,
         ...clientPaths,
@@ -118,7 +111,6 @@ class RfiPdfGenerator {
       ]),
     ]);
 
-    // Guardrails for mobile preview stability (especially iOS).
     List<pw.MemoryImage> cap(List<pw.MemoryImage> images, int max) =>
         images.length <= max ? images : images.sublist(0, max);
 
@@ -130,8 +122,20 @@ class RfiPdfGenerator {
     final otherImages = cap(results[5], isIos ? 4 : 8);
     final listImages = cap(results[6], isIos ? 4 : 8);
     final enclosureImages = cap(results[7], isIos ? 4 : 8);
-    final pdfAttachmentsPages = isIos ? <pw.MemoryImage>[] : cap(results[8], 12);
+    final pdfAttachmentsPages = cap(results[8], isIos ? 6 : 12);
 
+    Future<({String title, List<pw.MemoryImage> images, List<pw.MemoryImage> pdfs})>
+        renderSupportingDoc(SupportingDocumentEntry doc) async {
+      final path = doc.filePath;
+      final images = cap(await loadOnlyImages([path]), isIos ? 4 : 8);
+      final pdfs = cap(await loadPdfClips([path]), isIos ? 4 : 12);
+      return (title: doc.sectionTitle, images: images, pdfs: pdfs);
+    }
+
+    final supportingRendered = await Future.wait([
+      ...conSupportingDocs.map(renderSupportingDoc),
+      ...enggSupportingDocs.map(renderSupportingDoc),
+    ]);
 
     pdf.addPage(
       pw.MultiPage(
@@ -147,7 +151,6 @@ class RfiPdfGenerator {
           ),
         ),
         build: (context) {
-          // Merge other site images (excluding categorised ones)
           final otherGeneralImages = [
             ...otherImages,
             ...listImages,
@@ -281,6 +284,36 @@ class RfiPdfGenerator {
                     ),
                   )),
             ],
+
+            ...supportingRendered.expand((doc) {
+              if (doc.images.isEmpty && doc.pdfs.isEmpty) {
+                return <pw.Widget>[];
+              }
+              return <pw.Widget>[
+                pw.SizedBox(height: 16),
+                pw.Center(
+                  child: pw.Text(
+                    doc.title,
+                    style: pw.TextStyle(font: fontBold, fontSize: 11),
+                    textAlign: pw.TextAlign.center,
+                  ),
+                ),
+                pw.SizedBox(height: 8),
+                if (doc.images.isNotEmpty) ..._buildImageGrid(doc.images),
+                ...doc.pdfs.map(
+                  (pageImg) => pw.Container(
+                    margin: const pw.EdgeInsets.only(bottom: 16),
+                    child: pw.Center(
+                      child: pw.Image(
+                        pageImg,
+                        width: 480,
+                        fit: pw.BoxFit.contain,
+                      ),
+                    ),
+                  ),
+                ),
+              ];
+            }),
           ];
         },
       ),
@@ -288,8 +321,6 @@ class RfiPdfGenerator {
 
     final bytes = await pdf.save();
     if (isIos) {
-      // iOS fallback: skip native preview (which can spin indefinitely on heavy docs).
-      // Share/open the generated PDF directly so user can print from system sheet.
       await Printing.sharePdf(
         bytes: bytes,
         filename: 'RFI_Report_$rfiId.pdf',
@@ -318,7 +349,6 @@ class RfiPdfGenerator {
     return dio;
   }
 
-  // Load image from project assets
   static Future<pw.MemoryImage?> _loadAssetImage(String assetPath) async {
     try {
       final data = await rootBundle.load(assetPath);
@@ -330,77 +360,16 @@ class RfiPdfGenerator {
   }
 
   static Future<pw.MemoryImage?> _loadImage(String? url, Dio dio) async {
-    if (url == null || url.isEmpty || url.toLowerCase().endsWith('.pdf')) {
-      return null;
-    }
-
-    // Skip WebP as it is unsupported by the pdf library
-    if (url.toLowerCase().endsWith('.webp')) {
-      debugPrint('Skipping WebP image: $url');
-      return null;
-    }
+    if (url == null || url.trim().isEmpty) return null;
+    if (RfiPreviewFetch.looksLikePdfPath(url)) return null;
 
     try {
-      final Uint8List bytes = await RfiPreviewFetch.fetchBytes(dio, url);
-
-      bool isValid = false;
-      if (bytes.length > 4 && bytes[0] == 0xFF && bytes[1] == 0xD8) {
-        isValid = true; // JPEG
-      } else if (bytes.length > 8 && bytes[0] == 0x89 && bytes[1] == 0x50) {
-        isValid = true; // PNG
-      }
-
-      if (!isValid) {
-        debugPrint('Invalid image format for $url');
-        return null;
-      }
-
-      try {
-        return pw.MemoryImage(bytes);
-      } catch (e) {
-        debugPrint('Failed to decode image $url: $e');
-        return null;
-      }
+      final bytes = await RfiPreviewFetch.fetchBytes(dio, url);
+      return RfiMediaUtils.toPdfMemoryImage(url, bytes);
     } catch (e) {
       debugPrint('Error loading image $url: $e');
     }
     return null;
-  }
-
-  static List<String> _extractPaths(String? data) {
-    if (data == null || data.isEmpty) return [];
-
-    final trimmed = data.trim();
-    if (trimmed.startsWith('[') || trimmed.startsWith('{')) {
-      try {
-        final decoded = json.decode(trimmed);
-        if (decoded is List) {
-          return decoded
-              .map((item) {
-                if (item is Map && item.containsKey('filePath')) {
-                  return item['filePath']?.toString();
-                } else if (item is String) {
-                  return item;
-                }
-                return null;
-              })
-              .whereType<String>()
-              .toList();
-        } else if (decoded is Map) {
-          if (decoded.containsKey('filePath')) {
-            return [decoded['filePath']?.toString() ?? ''];
-          }
-        }
-      } catch (e) {
-        debugPrint('Error parsing JSON paths segments: $e');
-      }
-    }
-
-    return data
-        .split(',')
-        .map((e) => e.trim())
-        .where((e) => e.isNotEmpty && !e.contains('":'))
-        .toList();
   }
 
   static Future<List<pw.MemoryImage>> _loadImages(List<String> paths, Dio dio) async {
@@ -423,11 +392,9 @@ class RfiPdfGenerator {
 
       final doc = await pdfr.PdfDocument.openData(bytes);
         final pages = <pw.MemoryImage>[];
-        // Guardrail: rendering too many PDF pages can block print preview on mobile.
         final maxPagesToRender = doc.pagesCount > 5 ? 5 : doc.pagesCount;
         for (int i = 1; i <= maxPagesToRender; i++) {
           final page = await doc.getPage(i);
-          // Scale down for better performance and memory
           final pageImage = await page.render(
             width: page.width * 1.2,
             height: page.height * 1.2,

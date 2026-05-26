@@ -16,10 +16,8 @@ class UpdateRfiForm extends _$UpdateRfiForm {
   }
 
   void initialize(RfiListItem item) {
-    // Only initialize once
     if (state.initialItem?.rfiId == item.rfiId) return;
 
-    // Use default values for time if missing or parsed format
     final now = DateTime.now();
     final defaultSubmissionDate =
         "${now.day.toString().padLeft(2, '0')}-${now.month.toString().padLeft(2, '0')}-${now.year}";
@@ -27,7 +25,6 @@ class UpdateRfiForm extends _$UpdateRfiForm {
     state = state.copyWith(
       initialItem: item,
 
-      // Step 1: Pre-fill what we know from list item as DropdownItems to satisfy UI
       selectedProject: DropdownItem(id: item.project, name: item.project),
       selectedWork: DropdownItem(id: item.work, name: item.work),
       selectedContract:
@@ -42,7 +39,6 @@ class UpdateRfiForm extends _$UpdateRfiForm {
       selectedRfiDescription: DropdownItem(
           id: item.rfiDescription ?? '', name: item.rfiDescription ?? ''),
 
-      // Step 2 & 3: Default overrides
       typeOfRfi: item.typeOfRFI ?? 'SPOT RFI',
       action:
           null, // User strictly selects one of: Reschedule, Update, Reassign
@@ -59,7 +55,6 @@ class UpdateRfiForm extends _$UpdateRfiForm {
       ], // Optional fallback from payload based on user
     );
 
-    // Fetch master data needed for Step 2 and 3
     _fetchRegularUsers();
     _fetchRfiDescriptions(item.activity);
   }
@@ -86,7 +81,6 @@ class UpdateRfiForm extends _$UpdateRfiForm {
     }
   }
 
-  // --- Step navigation --- //
 
   void nextStep() {
     if (state.currentStep < 2) {
@@ -100,7 +94,6 @@ class UpdateRfiForm extends _$UpdateRfiForm {
     }
   }
 
-  // --- Input Handlers --- //
 
   void setAction(String? val) {
     state = state.copyWith(action: val);
@@ -168,7 +161,6 @@ class UpdateRfiForm extends _$UpdateRfiForm {
         "project": state.selectedProject?.name ?? "",
         "work": state.selectedWork?.name ?? "",
         "contract": state.selectedContract?.name ?? "",
-        // Structure and element missing from some APIs, fallback to strings
         "structureType": state.selectedStructureType?.name ?? "",
         "structure": state.selectedStructure?.name ?? "",
         "component": state.selectedComponent?.name ?? "",

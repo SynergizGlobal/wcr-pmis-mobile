@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:wcr_pmis_mobile/src/features/rfi/presentation/rfi_theme.dart';
 
-/// Dialog shell with themed surface and primary header (light + dark).
 class RfiThemedDialog extends StatelessWidget {
   const RfiThemedDialog({
     super.key,

@@ -1,12 +1,10 @@
 import 'dart:async';
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:pdfx/pdfx.dart';
-import 'package:dio/dio.dart';
 import '../../../core/providers/dio_provider.dart';
 import '../../../core/utils/rfi_file_paths.dart';
 import '../../../core/utils/rfi_preview_fetch.dart';
+import '../../../core/widgets/rfi_remote_media_preview.dart';
 import '../../../providers/rfi_log/rfi_report_details_provider.dart';
 import '../../../domain/rfi_log/rfi_report_details.dart';
 import '../../../data/services/rfi_pdf_generator.dart';
@@ -33,7 +31,6 @@ class RfiPreviewDialog extends ConsumerWidget {
             data: (data) => FloatingActionButton.extended(
               onPressed: () async {
                 var loaderOpen = false;
-                // Show loading indicator while generating print document.
                 showDialog(
                   context: context,
                   barrierDismissible: false,
@@ -92,7 +89,6 @@ class RfiPreviewDialog extends ConsumerWidget {
           ),
           body: Column(
             children: [
-              // Header
               Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Stack(
@@ -126,7 +122,6 @@ class RfiPreviewDialog extends ConsumerWidget {
               ),
               const Divider(height: 1),
 
-              // Body
               Expanded(
                 child: reportAsync.when(
                   data: (data) => _buildContent(context, ref, data),
@@ -156,7 +151,6 @@ class RfiPreviewDialog extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Client and RFI Status
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -189,7 +183,6 @@ class RfiPreviewDialog extends ConsumerWidget {
           ),
           const SizedBox(height: 24),
 
-          // Top Info Grid
           LayoutBuilder(
             builder: (context, constraints) {
               final isSmall = constraints.maxWidth < 600;
@@ -199,8 +192,6 @@ class RfiPreviewDialog extends ConsumerWidget {
                 crossAxisCount: crossAxisCount,
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
-                // Keep tiles taller to prevent text overflow on smaller screens
-                // and with larger accessibility font sizes.
                 childAspectRatio: isSmall ? 3.4 : 2.6,
                 crossAxisSpacing: 16,
                 mainAxisSpacing: 16,
@@ -233,7 +224,6 @@ class RfiPreviewDialog extends ConsumerWidget {
 
           const Divider(height: 48),
 
-          // Bottom Info Grid
           LayoutBuilder(
             builder: (context, constraints) {
               final isSmall = constraints.maxWidth < 600;
@@ -243,8 +233,6 @@ class RfiPreviewDialog extends ConsumerWidget {
                 crossAxisCount: crossAxisCount,
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
-                // Keep tiles taller to prevent text overflow on smaller screens
-                // and with larger accessibility font sizes.
                 childAspectRatio: isSmall ? 3.4 : 2.6,
                 crossAxisSpacing: 16,
                 mainAxisSpacing: 16,
@@ -273,21 +261,18 @@ class RfiPreviewDialog extends ConsumerWidget {
 
           const SizedBox(height: 32),
 
-          // Measurement Details
           if (data.measurementDetails != null) ...[
             _buildSectionHeader('Measurement Details'),
             _buildMeasurementTable(data.measurementDetails!),
             const SizedBox(height: 24),
           ],
 
-          // Checklists
           if (data.checklistItems.isNotEmpty) ...[
             ..._buildChecklists(data.checklistItems),
           ],
 
           const SizedBox(height: 24),
 
-          // Validation Status & Remarks
           _buildSectionHeader('Validation Status & Remarks'),
           Container(
             width: double.infinity,
@@ -354,7 +339,6 @@ class RfiPreviewDialog extends ConsumerWidget {
 
           const SizedBox(height: 24),
 
-          // Selfies & Site Images Section
           if (info.selfieContractor != null ||
               info.selfieClient != null ||
               info.imagesUploadedByContractor?.isNotEmpty == true ||
@@ -382,36 +366,78 @@ class RfiPreviewDialog extends ConsumerWidget {
                       child: Text('Site Images By Contractor',
                           style: TextStyle(fontSize: 16))),
                   const SizedBox(height: 12),
-                  ...info.imagesUploadedByContractor!
-                      .split(',')
-                      .map((e) => e.trim())
-                      .where((e) => e.isNotEmpty)
-                      .map((path) => Padding(
-                            padding: const EdgeInsets.only(bottom: 24),
-                            child: Center(child: _buildFilePreview(context, ref, path)),
-                          )),
+                  ...extractFilePaths(info.imagesUploadedByContractor).map(
+                        (path) => Padding(
+                          padding: const EdgeInsets.only(bottom: 24),
+                          child: Center(
+                            child: _buildFilePreview(context, ref, path),
+                          ),
+                        ),
+                      ),
                 ],
                 if (info.imagesUploadedByClient?.isNotEmpty == true) ...[
                   const Center(
                       child: Text('Site Images By Inspector',
                           style: TextStyle(fontSize: 16))),
                   const SizedBox(height: 12),
-                  ...info.imagesUploadedByClient!
-                      .split(',')
-                      .map((e) => e.trim())
-                      .where((e) => e.isNotEmpty)
-                      .map((path) => Padding(
-                            padding: const EdgeInsets.only(bottom: 24),
-                            child: Center(child: _buildFilePreview(context, ref, path)),
-                          )),
+                  ...extractFilePaths(info.imagesUploadedByClient).map(
+                        (path) => Padding(
+                          padding: const EdgeInsets.only(bottom: 24),
+                          child: Center(
+                            child: _buildFilePreview(context, ref, path),
+                          ),
+                        ),
+                      ),
                 ],
               ],
             ),
 
           ..._buildEnclosuresSection(context, ref, data, info),
+          ..._buildSupportingDocumentsSection(
+            context,
+            ref,
+            extractSupportingDocuments(info.conSupportFilePaths),
+          ),
+          ..._buildSupportingDocumentsSection(
+            context,
+            ref,
+            extractSupportingDocuments(info.enggSupportFilePaths),
+          ),
         ],
       ),
     );
+  }
+
+  List<Widget> _buildSupportingDocumentsSection(
+    BuildContext context,
+    WidgetRef ref,
+    List<SupportingDocumentEntry> documents,
+  ) {
+    if (documents.isEmpty) return [];
+
+    final ColorScheme scheme = Theme.of(context).colorScheme;
+
+    return [
+      const SizedBox(height: 24),
+      ...documents.expand((doc) {
+        return [
+          Center(
+            child: Text(
+              doc.sectionTitle,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 15,
+                color: scheme.primary,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+          const SizedBox(height: 8),
+          _buildFilePreview(context, ref, doc.filePath),
+          const SizedBox(height: 16),
+        ];
+      }),
+    ];
   }
 
   List<Widget> _buildEnclosuresSection(
@@ -437,14 +463,6 @@ class RfiPreviewDialog extends ConsumerWidget {
     addGroup(
       'Test Site Documents (Contractor)',
       extractFilePaths(info.testSiteDocumentsContractor),
-    );
-    addGroup(
-      'Supporting Documents (Contractor)',
-      extractFilePaths(info.conSupportFilePaths),
-    );
-    addGroup(
-      'Supporting Documents (Engineer)',
-      extractFilePaths(info.enggSupportFilePaths),
     );
 
     final entries =
@@ -505,28 +523,24 @@ class RfiPreviewDialog extends ConsumerWidget {
     }
 
     final dio = ref.read(dioProvider);
-    final treatAsPdf = RfiPreviewFetch.looksLikePdfPath(source);
+    final isPdf = RfiPreviewFetch.looksLikePdfPath(source);
 
-    if (treatAsPdf) {
-      return Container(
-        height: 500,
-        width: double.infinity,
-        clipBehavior: Clip.antiAlias,
-        decoration: BoxDecoration(
-          border: Border.all(
-            color: Theme.of(context).colorScheme.outlineVariant,
-          ),
-          borderRadius: BorderRadius.circular(8),
+    return Container(
+      height: isPdf ? 500 : 320,
+      width: double.infinity,
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        border: Border.all(
+          color: Theme.of(context).colorScheme.outlineVariant,
         ),
-        child: _PdfRemoteViewer(source: source, dio: dio),
-      );
-    }
-
-    final resolvedUrl = RfiPreviewFetch.resolvePublicUrl(source);
-    return _RemoteImageLoader(
-      url: resolvedUrl,
-      dio: dio,
-      fallbackSource: source,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: RfiRemoteMediaPreview(
+        source: source,
+        dio: dio,
+        height: isPdf ? 500 : 320,
+        compact: true,
+      ),
     );
   }
 
@@ -736,231 +750,5 @@ class RfiPreviewDialog extends ConsumerWidget {
     });
 
     return widgets;
-  }
-}
-
-class _RemoteImageLoader extends StatefulWidget {
-  final String url;
-  final Dio dio;
-  final String? fallbackSource;
-
-  const _RemoteImageLoader({
-    required this.url,
-    required this.dio,
-    this.fallbackSource,
-  });
-
-  @override
-  State<_RemoteImageLoader> createState() => _RemoteImageLoaderState();
-}
-
-class _RemoteImageLoaderState extends State<_RemoteImageLoader> {
-  Uint8List? _imageBytes;
-  bool _isLoading = true;
-  String? _error;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadImage();
-  }
-
-  Future<void> _loadImage() async {
-    try {
-      // Add a small staggered delay to avoid concurrent connection limits
-      await Future.delayed(
-          Duration(milliseconds: 100 + (widget.url.hashCode % 500)));
-
-      Uint8List bytes;
-      try {
-        bytes = await RfiPreviewFetch.fetchBytes(
-          widget.dio,
-          widget.fallbackSource ?? widget.url,
-        );
-      } catch (_) {
-        final response = await widget.dio.get<List<int>>(
-          widget.url,
-          options: Options(
-            responseType: ResponseType.bytes,
-            extra: const <String, dynamic>{'silentError': true},
-          ),
-        );
-        if (response.data == null || response.data!.isEmpty) {
-          throw Exception('Empty image data');
-        }
-        bytes = Uint8List.fromList(response.data!);
-      }
-
-      if (RfiPreviewFetch.looksLikePdfBytes(bytes)) {
-        throw Exception('File is a PDF, not an image');
-      }
-
-      if (mounted) {
-        setState(() {
-          _imageBytes = bytes;
-          _isLoading = false;
-        });
-      }
-    } catch (e) {
-      debugPrint('Image load error for ${widget.url}: $e');
-      if (mounted) {
-        setState(() {
-          _error = e.toString();
-          _isLoading = false;
-        });
-      }
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (_isLoading) {
-      return Container(
-        height: 200,
-        color: Colors.grey[100],
-        child: const Center(child: CircularProgressIndicator()),
-      );
-    }
-
-    if (_error != null || _imageBytes == null) {
-      return Container(
-        height: 200,
-        color: Colors.grey[200],
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.broken_image, color: Colors.grey, size: 48),
-            const SizedBox(height: 8),
-            Text('Failed to load image',
-                style: TextStyle(color: Colors.grey[600])),
-          ],
-        ),
-      );
-    }
-
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(8),
-      child: Image.memory(
-        _imageBytes!,
-        fit: BoxFit.cover,
-      ),
-    );
-  }
-}
-
-class _PdfRemoteViewer extends StatefulWidget {
-  final String source;
-  final Dio dio;
-
-  const _PdfRemoteViewer({required this.source, required this.dio});
-
-  @override
-  State<_PdfRemoteViewer> createState() => _PdfRemoteViewerState();
-}
-
-class _PdfRemoteViewerState extends State<_PdfRemoteViewer> {
-  PdfControllerPinch? _pdfController;
-  bool _isLoading = true;
-  String? _error;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadPdf();
-  }
-
-  Future<void> _loadPdf() async {
-    try {
-      // Add a small staggered delay to avoid concurrent connection limits
-      await Future.delayed(
-          Duration(milliseconds: 200 + (widget.source.hashCode % 500)));
-
-      final bytes =
-          await RfiPreviewFetch.fetchBytes(widget.dio, widget.source);
-
-      if (!RfiPreviewFetch.looksLikePdfBytes(bytes)) {
-        throw Exception('Downloaded file is not a valid PDF');
-      }
-
-      _pdfController = PdfControllerPinch(
-        document: PdfDocument.openData(bytes),
-      );
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    } catch (e) {
-      debugPrint('PDF load error for ${widget.source}: $e');
-      if (mounted) {
-        setState(() {
-          _error = e.toString();
-          _isLoading = false;
-        });
-      }
-    }
-  }
-
-  @override
-  void dispose() {
-    _pdfController?.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
-    }
-    if (_error != null || _pdfController == null) {
-      final ColorScheme scheme = Theme.of(context).colorScheme;
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: <Widget>[
-              Icon(Icons.picture_as_pdf,
-                  color: scheme.onSurfaceVariant, size: 48),
-              const SizedBox(height: 8),
-              Text(
-                'PDF unavailable',
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      color: scheme.onSurface,
-                      fontWeight: FontWeight.bold,
-                    ),
-              ),
-              if (_error != null) ...<Widget>[
-                const SizedBox(height: 4),
-                Text(
-                  _error!.length > 120
-                      ? '${_error!.substring(0, 120)}...'
-                      : _error!,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: scheme.onSurfaceVariant,
-                      ),
-                  textAlign: TextAlign.center,
-                ),
-              ],
-              const SizedBox(height: 12),
-              TextButton.icon(
-                onPressed: () {
-                  setState(() {
-                    _isLoading = true;
-                    _error = null;
-                    _pdfController?.dispose();
-                    _pdfController = null;
-                  });
-                  _loadPdf();
-                },
-                icon: const Icon(Icons.refresh),
-                label: const Text('Retry'),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-    return PdfViewPinch(controller: _pdfController!);
   }
 }

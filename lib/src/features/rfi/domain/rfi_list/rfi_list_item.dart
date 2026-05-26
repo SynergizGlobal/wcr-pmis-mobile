@@ -22,7 +22,6 @@ class RfiListItem with _$RfiListItem {
     required String totalQty,
     @Default([]) List<String> contractorImages,
     @Default([]) List<String> clientImages,
-    // Add other fields from API if needed, handling nulls with defaults or nullable types
     String? contract,
     String? typeOfRFI,
     String? rfiDescription,

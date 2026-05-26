@@ -36,7 +36,6 @@ class RfiLogScreen extends ConsumerWidget {
                 child: CustomScrollView(
                   physics: const AlwaysScrollableScrollPhysics(),
                   slivers: [
-                    // Filters Section
                     SliverToBoxAdapter(
                       child: Container(
                         margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
@@ -45,7 +44,6 @@ class RfiLogScreen extends ConsumerWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            // ── Search Bar (prominent, full width) ──
                             TextField(
                               onChanged: notifier.setSearchQuery,
                               style: Theme.of(context).textTheme.bodySmall,
@@ -86,10 +84,8 @@ class RfiLogScreen extends ConsumerWidget {
                             Divider(height: 1, color: scheme.outlineVariant),
                             const SizedBox(height: 16),
 
-                            // ── Filter Dropdowns Row ──
                             Row(
                               children: [
-                                // Project
                                 Expanded(
                                   child: AppDropdown<String>(
                                     label: 'Project',
@@ -105,7 +101,6 @@ class RfiLogScreen extends ConsumerWidget {
                                   ),
                                 ),
                                 const SizedBox(width: 10),
-                                // Work
                                 Expanded(
                                   child: AppDropdown<String>(
                                     label: 'Work',
@@ -125,7 +120,6 @@ class RfiLogScreen extends ConsumerWidget {
                                   ),
                                 ),
                                 const SizedBox(width: 10),
-                                // Contract
                                 Expanded(
                                   child: AppDropdown<String>(
                                     label: 'Contract',
@@ -151,10 +145,8 @@ class RfiLogScreen extends ConsumerWidget {
                             Divider(height: 1, color: Colors.grey.shade200),
                             const SizedBox(height: 12),
 
-                            // ── Bottom Row: Entries + Clear Filters ──
                             Row(
                               children: [
-                                // Show entries
                                 Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
@@ -186,7 +178,6 @@ class RfiLogScreen extends ConsumerWidget {
                                   ],
                                 ),
                                 const Spacer(),
-                                // Clear Filters
                                 TextButton.icon(
                                   onPressed: notifier.clearFilters,
                                   icon:
@@ -211,7 +202,6 @@ class RfiLogScreen extends ConsumerWidget {
                       ),
                     ),
 
-                    // Loading, Error, or List Content
                     if (state.isLoading)
                       const SliverFillRemaining(
                         child: Center(child: CircularProgressIndicator()),
@@ -284,7 +274,6 @@ class RfiLogScreen extends ConsumerWidget {
                                                 ))
                                         : state.paginatedItems)
                                     .map((item) {
-                                  // Status display & color logic
                                   String displayStatus;
                                   Color statusColor;
                                   final rawStatus = item.status.toUpperCase();
@@ -427,7 +416,6 @@ class RfiLogScreen extends ConsumerWidget {
                   ],
                 ),
               ),
-              // Sticky Pagination Footer
               if (state.paginatedItems.isNotEmpty)
                 TablePaginationFooter(
                   startIndex: (state.currentPage - 1) * state.entriesPerPage,

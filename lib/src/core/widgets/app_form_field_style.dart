@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-/// Shared look for text fields, dropdowns, and date pickers across the app.
 class AppFormFieldStyle {
   const AppFormFieldStyle._();
 

@@ -46,8 +46,6 @@ class _UploadAttachmentDialogState extends ConsumerState<UploadAttachmentDialog>
 
   Future<void> _pickFile() async {
     try {
-      // We attempt to pick. If it fails due to permissions, we'll catch it.
-      // Most modern Android versions will work directly.
       final result = await FilePicker.platform.pickFiles();
       if (result != null) {
         setState(() {

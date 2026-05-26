@@ -1,10 +1,5 @@
-// import 'dart:io';
-//
-// import 'package:excel/excel.dart' hide Border;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-// import 'package:flutter/services.dart';
-// import 'package:path_provider/path_provider.dart';
 import 'package:wcr_pmis_mobile/src/core/widgets/app_dialog.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/data/datasources/dashboard_remote_data_source.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/add_quality_inspection_form_page.dart';
@@ -22,9 +17,6 @@ class QualityInspectionsPage extends StatefulWidget {
 }
 
 class _QualityInspectionsPageState extends State<QualityInspectionsPage> {
-  // static const MethodChannel _fileExportChannel = MethodChannel(
-  //   'wcr_pmis_mobile/file_export',
-  // );
   static const List<int> _pageSizeOptions = <int>[5, 10, 25, 50, 100];
   static const List<String> _headers = <String>[
     'Inspection ID',
@@ -401,7 +393,6 @@ class _QualityInspectionsPageState extends State<QualityInspectionsPage> {
   }
 
   Widget _toolbar(BuildContext context, List<Map<String, dynamic>> rows) {
-    // final bool canExport = rows.isNotEmpty;
     final int activeFilterCount = _activeFilterCount;
     final bool narrow = MediaQuery.sizeOf(context).width < 720;
 
@@ -522,28 +513,6 @@ class _QualityInspectionsPageState extends State<QualityInspectionsPage> {
                     ],
                   ),
                   const SizedBox(height: 8),
-                  // Export disabled for now — re-enable when export API/flow is ready.
-                  // Row(
-                  //   children: <Widget>[
-                  //     Expanded(
-                  //       child: OutlinedButton.icon(
-                  //         onPressed: canExport
-                  //             ? () => _confirmExportExcel(rows)
-                  //             : null,
-                  //         icon: const Icon(Icons.table_view_rounded),
-                  //         label: const Text('Export'),
-                  //       ),
-                  //     ),
-                  //     const SizedBox(width: 8),
-                  //     Expanded(
-                  //       child: FilledButton.icon(
-                  //         onPressed: _onAddTap,
-                  //         icon: const Icon(Icons.add_rounded),
-                  //         label: const Text('Add'),
-                  //       ),
-                  //     ),
-                  //   ],
-                  // ),
                   SizedBox(
                     width: double.infinity,
                     child: FilledButton.icon(
@@ -1102,98 +1071,6 @@ class _QualityInspectionsPageState extends State<QualityInspectionsPage> {
     }
   }
 
-  // Future<void> _confirmExportExcel(List<Map<String, dynamic>> rows) async {
-  //   await AppDialog.show(
-  //     context: context,
-  //     title: 'Export to Excel',
-  //     message: 'Download the current list as an Excel file?',
-  //     type: AppDialogType.confirmation,
-  //     leadingIcon: Icons.table_view_rounded,
-  //     actions: <AppDialogAction>[
-  //       const AppDialogAction(label: 'Cancel'),
-  //       AppDialogAction(
-  //         label: 'Export',
-  //         isPrimary: true,
-  //         onPressed: () => _exportExcel(rows),
-  //       ),
-  //     ],
-  //   );
-  // }
-  //
-  // Future<void> _exportExcel(List<Map<String, dynamic>> rows) async {
-  //   final Excel workbook = Excel.createExcel();
-  //   final String sheetName = workbook.getDefaultSheet() ?? 'Sheet1';
-  //   final Sheet sheet = workbook[sheetName];
-  //   sheet.appendRow(_headers.map(TextCellValue.new).toList());
-  //   for (final Map<String, dynamic> row in rows) {
-  //     sheet.appendRow(<CellValue>[
-  //       TextCellValue(_displayInspectionId(row)),
-  //       TextCellValue(_string(row['project_name'])),
-  //       TextCellValue(_string(row['section_name'])),
-  //       TextCellValue(_string(row['contract_short_name'])),
-  //       TextCellValue(_string(row['structure_type_fk'])),
-  //       TextCellValue(_string(row['structure'])),
-  //       TextCellValue(_string(row['item_name'])),
-  //       TextCellValue(_string(row['location'])),
-  //       TextCellValue(_string(row['sub_category'])),
-  //       TextCellValue(_string(row['ncr_compliance'])),
-  //       TextCellValue(_formatDate(row['ncr_date'])),
-  //       TextCellValue(_formatDate(row['closed_on'])),
-  //       TextCellValue(_string(row['inspection_status'])),
-  //       TextCellValue(''),
-  //     ]);
-  //   }
-  //   final List<int>? bytes = workbook.encode();
-  //   if (bytes == null || bytes.isEmpty) {
-  //     if (!mounted) return;
-  //     await AppDialog.show(
-  //       context: context,
-  //       title: 'Export failed',
-  //       message: 'Unable to generate Excel file.',
-  //       type: AppDialogType.error,
-  //     );
-  //     return;
-  //   }
-  //   final String fileName =
-  //       'quality_inspections_${DateTime.now().millisecondsSinceEpoch}.xlsx';
-  //   final String savedPath = await _saveExportFile(
-  //     fileName: fileName,
-  //     bytes: bytes,
-  //   );
-  //   if (!mounted) return;
-  //   await AppDialog.show(
-  //     context: context,
-  //     title: 'Export complete',
-  //     message: 'Saved to:\n$savedPath',
-  //     type: AppDialogType.success,
-  //     actions: <AppDialogAction>[
-  //       AppDialogAction(
-  //         label: 'Open',
-  //         isPrimary: true,
-  //         onPressed: () async {
-  //           try {
-  //             await _fileExportChannel.invokeMethod<void>(
-  //               'openFile',
-  //               <String, String>{'path': savedPath},
-  //             );
-  //           } catch (_) {}
-  //         },
-  //       ),
-  //       const AppDialogAction(label: 'OK', isPrimary: true),
-  //     ],
-  //   );
-  // }
-  //
-  // Future<String> _saveExportFile({
-  //   required String fileName,
-  //   required List<int> bytes,
-  // }) async {
-  //   final Directory dir = await getApplicationDocumentsDirectory();
-  //   final String path = '${dir.path}/$fileName';
-  //   final File file = File(path);
-  //   await file.writeAsBytes(bytes, flush: true);
-  //   return path;
-  // }
 
   double _columnWidth(String header) {
     switch (header) {

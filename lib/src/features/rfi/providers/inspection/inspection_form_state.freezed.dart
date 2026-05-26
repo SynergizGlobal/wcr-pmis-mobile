@@ -326,7 +326,8 @@ mixin _$InspectionFormState {
   String get contractorRepresentative => throw _privateConstructorUsedError;
   List<String> get siteImagePaths => throw _privateConstructorUsedError;
   List<String> get enclosurePaths => throw _privateConstructorUsedError; // PDFs
-  List<String> get supportingDocPaths => throw _privateConstructorUsedError;
+  List<SupportingDocument> get supportingDocuments =>
+      throw _privateConstructorUsedError;
   String get contractorDescription => throw _privateConstructorUsedError;
   String get clientDescription => throw _privateConstructorUsedError;
   String get engineerRemarks => throw _privateConstructorUsedError;
@@ -374,7 +375,7 @@ abstract class $InspectionFormStateCopyWith<$Res> {
     String contractorRepresentative,
     List<String> siteImagePaths,
     List<String> enclosurePaths,
-    List<String> supportingDocPaths,
+    List<SupportingDocument> supportingDocuments,
     String contractorDescription,
     String clientDescription,
     String engineerRemarks,
@@ -424,7 +425,7 @@ class _$InspectionFormStateCopyWithImpl<$Res, $Val extends InspectionFormState>
     Object? contractorRepresentative = null,
     Object? siteImagePaths = null,
     Object? enclosurePaths = null,
-    Object? supportingDocPaths = null,
+    Object? supportingDocuments = null,
     Object? contractorDescription = null,
     Object? clientDescription = null,
     Object? engineerRemarks = null,
@@ -493,10 +494,10 @@ class _$InspectionFormStateCopyWithImpl<$Res, $Val extends InspectionFormState>
                 ? _value.enclosurePaths
                 : enclosurePaths // ignore: cast_nullable_to_non_nullable
                       as List<String>,
-            supportingDocPaths: null == supportingDocPaths
-                ? _value.supportingDocPaths
-                : supportingDocPaths // ignore: cast_nullable_to_non_nullable
-                      as List<String>,
+            supportingDocuments: null == supportingDocuments
+                ? _value.supportingDocuments
+                : supportingDocuments // ignore: cast_nullable_to_non_nullable
+                      as List<SupportingDocument>,
             contractorDescription: null == contractorDescription
                 ? _value.contractorDescription
                 : contractorDescription // ignore: cast_nullable_to_non_nullable
@@ -607,7 +608,7 @@ abstract class _$$InspectionFormStateImplCopyWith<$Res>
     String contractorRepresentative,
     List<String> siteImagePaths,
     List<String> enclosurePaths,
-    List<String> supportingDocPaths,
+    List<SupportingDocument> supportingDocuments,
     String contractorDescription,
     String clientDescription,
     String engineerRemarks,
@@ -657,7 +658,7 @@ class __$$InspectionFormStateImplCopyWithImpl<$Res>
     Object? contractorRepresentative = null,
     Object? siteImagePaths = null,
     Object? enclosurePaths = null,
-    Object? supportingDocPaths = null,
+    Object? supportingDocuments = null,
     Object? contractorDescription = null,
     Object? clientDescription = null,
     Object? engineerRemarks = null,
@@ -726,10 +727,10 @@ class __$$InspectionFormStateImplCopyWithImpl<$Res>
             ? _value._enclosurePaths
             : enclosurePaths // ignore: cast_nullable_to_non_nullable
                   as List<String>,
-        supportingDocPaths: null == supportingDocPaths
-            ? _value._supportingDocPaths
-            : supportingDocPaths // ignore: cast_nullable_to_non_nullable
-                  as List<String>,
+        supportingDocuments: null == supportingDocuments
+            ? _value._supportingDocuments
+            : supportingDocuments // ignore: cast_nullable_to_non_nullable
+                  as List<SupportingDocument>,
         contractorDescription: null == contractorDescription
             ? _value.contractorDescription
             : contractorDescription // ignore: cast_nullable_to_non_nullable
@@ -819,7 +820,7 @@ class _$InspectionFormStateImpl implements _InspectionFormState {
     this.contractorRepresentative = '',
     final List<String> siteImagePaths = const [],
     final List<String> enclosurePaths = const [],
-    final List<String> supportingDocPaths = const [],
+    final List<SupportingDocument> supportingDocuments = const [],
     this.contractorDescription = '',
     this.clientDescription = '',
     this.engineerRemarks = '',
@@ -839,7 +840,7 @@ class _$InspectionFormStateImpl implements _InspectionFormState {
     this.draftSavedAt,
   }) : _siteImagePaths = siteImagePaths,
        _enclosurePaths = enclosurePaths,
-       _supportingDocPaths = supportingDocPaths,
+       _supportingDocuments = supportingDocuments,
        _measurements = measurements,
        _enclosureHasChecklist = enclosureHasChecklist,
        _enclosureChecklists = enclosureChecklists,
@@ -891,15 +892,15 @@ class _$InspectionFormStateImpl implements _InspectionFormState {
   }
 
   // PDFs
-  final List<String> _supportingDocPaths;
+  final List<SupportingDocument> _supportingDocuments;
   // PDFs
   @override
   @JsonKey()
-  List<String> get supportingDocPaths {
-    if (_supportingDocPaths is EqualUnmodifiableListView)
-      return _supportingDocPaths;
+  List<SupportingDocument> get supportingDocuments {
+    if (_supportingDocuments is EqualUnmodifiableListView)
+      return _supportingDocuments;
     // ignore: implicit_dynamic_type
-    return EqualUnmodifiableListView(_supportingDocPaths);
+    return EqualUnmodifiableListView(_supportingDocuments);
   }
 
   @override
@@ -981,7 +982,7 @@ class _$InspectionFormStateImpl implements _InspectionFormState {
 
   @override
   String toString() {
-    return 'InspectionFormState(rfiDetails: $rfiDetails, currentStep: $currentStep, isLoading: $isLoading, error: $error, selfiePath: $selfiePath, chainage: $chainage, location: $location, dateOfInspection: $dateOfInspection, timeOfInspection: $timeOfInspection, contractorRepresentative: $contractorRepresentative, siteImagePaths: $siteImagePaths, enclosurePaths: $enclosurePaths, supportingDocPaths: $supportingDocPaths, contractorDescription: $contractorDescription, clientDescription: $clientDescription, engineerRemarks: $engineerRemarks, inspectionStatus: $inspectionStatus, measurements: $measurements, testInSiteLab: $testInSiteLab, hasSigned: $hasSigned, isSubmitting: $isSubmitting, isUploadingFile: $isUploadingFile, isDraftSaving: $isDraftSaving, isLocationLoading: $isLocationLoading, locationPermissionDenied: $locationPermissionDenied, enclosureHasChecklist: $enclosureHasChecklist, enclosureChecklists: $enclosureChecklists, enclosureGrades: $enclosureGrades, isSavingChecklist: $isSavingChecklist, draftSavedAt: $draftSavedAt)';
+    return 'InspectionFormState(rfiDetails: $rfiDetails, currentStep: $currentStep, isLoading: $isLoading, error: $error, selfiePath: $selfiePath, chainage: $chainage, location: $location, dateOfInspection: $dateOfInspection, timeOfInspection: $timeOfInspection, contractorRepresentative: $contractorRepresentative, siteImagePaths: $siteImagePaths, enclosurePaths: $enclosurePaths, supportingDocuments: $supportingDocuments, contractorDescription: $contractorDescription, clientDescription: $clientDescription, engineerRemarks: $engineerRemarks, inspectionStatus: $inspectionStatus, measurements: $measurements, testInSiteLab: $testInSiteLab, hasSigned: $hasSigned, isSubmitting: $isSubmitting, isUploadingFile: $isUploadingFile, isDraftSaving: $isDraftSaving, isLocationLoading: $isLocationLoading, locationPermissionDenied: $locationPermissionDenied, enclosureHasChecklist: $enclosureHasChecklist, enclosureChecklists: $enclosureChecklists, enclosureGrades: $enclosureGrades, isSavingChecklist: $isSavingChecklist, draftSavedAt: $draftSavedAt)';
   }
 
   @override
@@ -1020,8 +1021,8 @@ class _$InspectionFormStateImpl implements _InspectionFormState {
               _enclosurePaths,
             ) &&
             const DeepCollectionEquality().equals(
-              other._supportingDocPaths,
-              _supportingDocPaths,
+              other._supportingDocuments,
+              _supportingDocuments,
             ) &&
             (identical(other.contractorDescription, contractorDescription) ||
                 other.contractorDescription == contractorDescription) &&
@@ -1085,7 +1086,7 @@ class _$InspectionFormStateImpl implements _InspectionFormState {
     contractorRepresentative,
     const DeepCollectionEquality().hash(_siteImagePaths),
     const DeepCollectionEquality().hash(_enclosurePaths),
-    const DeepCollectionEquality().hash(_supportingDocPaths),
+    const DeepCollectionEquality().hash(_supportingDocuments),
     contractorDescription,
     clientDescription,
     engineerRemarks,
@@ -1131,7 +1132,7 @@ abstract class _InspectionFormState implements InspectionFormState {
     final String contractorRepresentative,
     final List<String> siteImagePaths,
     final List<String> enclosurePaths,
-    final List<String> supportingDocPaths,
+    final List<SupportingDocument> supportingDocuments,
     final String contractorDescription,
     final String clientDescription,
     final String engineerRemarks,
@@ -1176,7 +1177,7 @@ abstract class _InspectionFormState implements InspectionFormState {
   @override
   List<String> get enclosurePaths; // PDFs
   @override
-  List<String> get supportingDocPaths;
+  List<SupportingDocument> get supportingDocuments;
   @override
   String get contractorDescription;
   @override

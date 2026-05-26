@@ -761,7 +761,6 @@ class CreateRfiNotifier extends StateNotifier<CreateRfiState> {
   }
 
   bool hasPersistedDraft() {
-    // sync check not available; use async in UI via flag - skip for now
     return false;
   }
 

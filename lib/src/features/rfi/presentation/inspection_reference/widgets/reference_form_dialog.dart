@@ -28,7 +28,6 @@ class ReferenceFormDialog {
             final allEnclosures =
                 ref.watch(inspectionReferenceNotifierProvider).enclosureList;
 
-            // Initialize selected items once the enclosure list is available
             if (selectedEnclosures == null && allEnclosures.isNotEmpty) {
               if (isEdit && item.enclosures.isNotEmpty) {
                 final names = item.enclosures

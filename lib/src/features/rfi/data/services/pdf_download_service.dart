@@ -7,8 +7,6 @@ import 'package:path_provider/path_provider.dart';
 import '../../core/widgets/global_alert_dialog.dart';
 
 class PdfDownloadService {
-  /// Downloads a PDF from the RFI API and opens it.
-  /// Uses global dialog for progress, success, and errors.
   static Future<void> downloadAndOpenPdf({
     required BuildContext context,
     required Dio dio,
@@ -83,14 +81,12 @@ class PdfDownloadService {
     return 'Unable to download report right now. Please try again.';
   }
 
-  /// Get the save path for the PDF (app documents directory)
   static Future<String> _getSavePath(String rfiId) async {
     final fileName = '${rfiId}_report.pdf';
     final appDir = await getApplicationDocumentsDirectory();
     return '${appDir.path}/$fileName';
   }
 
-  /// Open the downloaded file
   static Future<void> _openFile(String filePath) async {
     try {
       await OpenFile.open(filePath);

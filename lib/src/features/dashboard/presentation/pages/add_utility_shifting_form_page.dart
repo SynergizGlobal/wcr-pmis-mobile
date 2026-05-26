@@ -292,7 +292,6 @@ class AddUtilityShiftingFormPage extends StatefulWidget {
 
   final DashboardRemoteDataSource dataSource;
 
-  /// When set, form loads this record for edit (same steps as add).
   final String? utilityShiftingId;
 
   @override
@@ -308,7 +307,6 @@ class _AddUtilityShiftingFormPageState
   bool _saving = false;
   int _currentStep = 0;
 
-  /// Server row id when editing (from get response `id`).
   String? _editNumericId;
 
   List<_OptionItem> _projects = <_OptionItem>[];
@@ -1295,7 +1293,6 @@ class _AddUtilityShiftingFormPageState
     return false;
   }
 
-  /// Match edit-record value to a dropdown option; inject if missing (web may use fk text as value).
   ({List<_OptionItem> items, _OptionItem? selected}) _resolveEditDropdown({
     required List<_OptionItem> items,
     required List<String> matchCandidates,
@@ -1323,7 +1320,6 @@ class _AddUtilityShiftingFormPageState
     return (items: merged, selected: synthetic);
   }
 
-  /// Tries each non-empty [candidates] string until one matches an option.
   _OptionItem? _firstMatchOption(
     List<_OptionItem> items,
     List<String> candidates,

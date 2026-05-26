@@ -59,7 +59,6 @@ class CreateRfiApi {
     return response.data;
   }
 
-  // user typo in prompt: "component_id={id}" - I will assume they meant componentId
   Future<List<dynamic>> getActivities(String structureType,
       String structureName, String componentName, String componentId) async {
     final response = await dio.get("rfi/activityNames", queryParameters: {
@@ -83,8 +82,6 @@ class CreateRfiApi {
     return response.data;
   }
 
-  /// Uses [silentError] so the global Dio interceptor does not show a second
-  /// dialog — the create-RFI flow handles errors once in the UI.
   Future<dynamic> submitRfi(Map<String, dynamic> data) async {
     final response = await dio.post(
       "rfi/create",

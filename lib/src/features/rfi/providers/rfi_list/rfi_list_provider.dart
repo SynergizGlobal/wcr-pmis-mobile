@@ -9,7 +9,6 @@ part 'rfi_list_provider.g.dart';
 class RfiListNotifier extends _$RfiListNotifier {
   @override
   RfiListState build() {
-    // Initial fetch on build
     Future.microtask(() => fetchRfiList());
     return const RfiListState();
   }

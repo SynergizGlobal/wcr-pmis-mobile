@@ -1,20 +1,19 @@
+import 'dart:io';
+
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:dio/dio.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:file_picker/file_picker.dart';
-import 'package:permission_handler/permission_handler.dart';
-import 'dart:io';
-import 'dart:typed_data';
 import 'package:intl/intl.dart';
 import 'package:open_file/open_file.dart';
-import 'package:cached_network_image/cached_network_image.dart';
-import 'package:url_launcher/url_launcher.dart';
-import 'package:dio/dio.dart';
-import 'package:pdfx/pdfx.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
 import '../../core/network/environment.dart';
 import '../../core/utils/rfi_preview_fetch.dart';
+import '../../core/widgets/rfi_remote_media_preview.dart';
 import '../../core/providers/dio_provider.dart';
 import '../../domain/inspection/inspection_item.dart';
 import '../../core/utils/user_role.dart';
@@ -67,9 +66,6 @@ class _StartInspectionOnlineScreenState
     );
   }
 
-  /// Keeps [PageView] aligned with [InspectionFormState.currentStep]. Draft
-  /// restore can set step 2 while the controller still defaults to page 0, which
-  /// made the stepper say "step 2" while chainage/selfie (step 1 UI) stayed visible.
   void _scheduleSyncPageToStep(int step) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted || !_pageController.hasClients) return;
@@ -968,9 +964,6 @@ class _StartInspectionOnlineScreenState
     final userData = ref.watch(authNotifierProvider).value;
     final role = UserRole.fromLoginResponse(userData ?? {});
 
-    // Permission Logic:
-    // Engineer can delete both CON and ENGG images.
-    // Contractor can only delete CON images.
     bool canDelete = false;
     if (role == UserRole.engineer || role == UserRole.dyHodEngineer || role == UserRole.hod || role == UserRole.dyHod) {
       canDelete = true;
@@ -1122,49 +1115,24 @@ class _StartInspectionOnlineScreenState
                   ),
                 ],
               ),
-              if (state.supportingDocPaths.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(top: 16),
-                  child: Column(
-                    children:
-                        state.supportingDocPaths.asMap().entries.map((entry) {
-                      final i = entry.key;
-                      final path = entry.value;
-                      return Container(
-                        margin: const EdgeInsets.only(bottom: 8),
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade50,
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: Colors.grey.shade200),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.insert_drive_file,
-                                size: 24, color: const Color(0xFF50589C)),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Text(path.split('/').last,
-                                  style: const TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w500)),
-                            ),
-                            _buildMiniIconBtn(Icons.visibility_outlined,
-                                Colors.blue, () => _viewFile(path)),
-                            _buildMiniIconBtn(
-                                Icons.download_for_offline_outlined,
-                                Colors.green,
-                                () => _downloadFile(path)),
-                            _buildMiniIconBtn(
-                                Icons.delete_outline_rounded,
-                                Colors.red,
-                                () => notifier.removeSupportingDoc(i)),
-                          ],
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                ),
+              if (state.supportingDocuments.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                ...state.supportingDocuments.asMap().entries.map((entry) {
+                  final i = entry.key;
+                  final doc = entry.value;
+                  final path = doc.path;
+                  return _SupportingDocumentFileRow(
+                    key: ValueKey(path),
+                    index: i,
+                    doc: doc,
+                    accentColor: const Color(0xFF50589C),
+                    notifier: notifier,
+                    onView: () => _viewFile(path),
+                    onDownload: () => _downloadFile(path),
+                    onDelete: () => notifier.removeSupportingDoc(i),
+                  );
+                }),
+              ],
             ],
           ),
         ),
@@ -1589,7 +1557,6 @@ class _StartInspectionOnlineScreenState
         s == 'INSPECTED_BY_AE' ||
         s == 'UNDER_ENGG_RECTIFICATION';
 
-    // Extract test result from inspection details if available
     String testResult = 'Not uploaded';
     if (isInspected && (rfi.inspectionDetails?.isNotEmpty ?? false)) {
       final detail = rfi.inspectionDetails!.first;
@@ -1622,7 +1589,6 @@ class _StartInspectionOnlineScreenState
                 child: Divider(height: 1),
               ),
             ],
-            // Section 1: Tests in Site/Lab
             Text(
               isCreated
                   ? 'Tests in Site/Lab - not uploaded'
@@ -1659,7 +1625,6 @@ class _StartInspectionOnlineScreenState
               child: Divider(height: 1),
             ),
 
-            // Section 2: Inspection Status
             const Text('Inspection Status *',
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
             const SizedBox(height: 12),
@@ -2188,8 +2153,6 @@ class _StartInspectionOnlineScreenState
   }
 
   Future<bool> _handleGalleryPermission() async {
-    // Gallery/file pickers use system UI and do not require explicit
-    // storage/media permissions for our flow.
     return true;
   }
 
@@ -2218,14 +2181,12 @@ class _StartInspectionOnlineScreenState
   }
 
   Future<void> _pickImage(InspectionFormNotifier notifier) async {
-    // Gallery picker requested by user - check permission first
     if (!await _handleGalleryPermission()) return;
 
     try {
       final picker = ImagePicker();
       final img = await picker.pickImage(source: ImageSource.gallery);
       if (img != null) {
-        // Real-time upload
         await notifier.uploadSiteImageRealtime(img.path);
       }
     } catch (e) {
@@ -2504,9 +2465,10 @@ class _StartInspectionOnlineScreenState
   Future<void> _pickFiles(InspectionFormNotifier notifier) async {
     try {
       final result = await FilePicker.platform.pickFiles();
-      if (result != null && result.files.single.path != null) {
-        notifier.addSupportingDoc(result.files.single.path!);
-      }
+      if (result == null || result.files.single.path == null) return;
+
+      final path = result.files.single.path!;
+      notifier.addSupportingDoc(path);
     } catch (e) {
       if (mounted) {
         GlobalAlertDialog.show(
@@ -2520,42 +2482,31 @@ class _StartInspectionOnlineScreenState
   }
 
   Future<void> _viewFile(String path, {bool isPDF = false}) async {
-    if (path.startsWith('http')) {
-      final lowerPath = path.toLowerCase();
-      if (isPDF ||
-          lowerPath.endsWith('.pdf') ||
-          lowerPath.contains('view-enclosure')) {
-        // Show in-app preview
-        _showPdfPreview(path);
-        return;
-      }
+    final trimmed = path.trim();
+    if (trimmed.isEmpty) return;
 
-      final uri = Uri.parse(path);
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
-      } else {
-        if (mounted) {
-          GlobalAlertDialog.show(
-            context,
-            title: 'Unable to open',
-            message: 'Could not launch URL',
-            type: DialogType.error,
-          );
-        }
+    final localFile = File(trimmed);
+    if (await localFile.exists()) {
+      final result = await OpenFile.open(trimmed);
+      if (!mounted) return;
+      if (result.type != ResultType.done) {
+        GlobalAlertDialog.show(
+          context,
+          title: 'Unable to open file',
+          message: 'Could not open file: ${result.message}',
+          type: DialogType.error,
+        );
       }
       return;
     }
 
-    final result = await OpenFile.open(path);
     if (!mounted) return;
-    if (result.type != ResultType.done) {
-      GlobalAlertDialog.show(
-        context,
-        title: 'Unable to open file',
-        message: 'Could not open file: ${result.message}',
-        type: DialogType.error,
-      );
-    }
+    await RfiMediaViewerDialog.show(
+      context,
+      source: trimmed,
+      dio: ref.read(dioProvider),
+      title: trimmed.split('/').last.split('?').first,
+    );
   }
 
   Future<void> _downloadFile(String path) async {
@@ -2632,7 +2583,6 @@ class _StartInspectionOnlineScreenState
         return;
       }
       if (!mounted) return;
-      // Simulate download success or use a real downloader if available
       await Future.delayed(const Duration(seconds: 1));
       if (mounted) {
         GlobalAlertDialog.show(
@@ -2655,16 +2605,6 @@ class _StartInspectionOnlineScreenState
   }
 
   String _getPublicUrl(String path) => RfiPreviewFetch.resolvePublicUrl(path);
-
-  void _showPdfPreview(String pathOrUrl) {
-    showDialog(
-      context: context,
-      builder: (ctx) => _PdfPreviewDialog(
-        source: pathOrUrl,
-        dio: ref.read(dioProvider),
-      ),
-    );
-  }
 
   Widget _buildChecklistOpenButton(
       BuildContext context, InspectionFormNotifier notifier, String name) {
@@ -2719,156 +2659,6 @@ class _StartInspectionOnlineScreenState
     );
   }
 }
-
-class _PdfPreviewDialog extends StatelessWidget {
-  final String source;
-  final Dio dio;
-  const _PdfPreviewDialog({required this.source, required this.dio});
-
-  @override
-  Widget build(BuildContext context) {
-    return Dialog(
-      insetPadding: const EdgeInsets.all(16),
-      clipBehavior: Clip.antiAlias,
-      child: Stack(
-        children: [
-          Column(
-            children: [
-              const SizedBox(height: 56), // Space for the floating header
-              Expanded(
-                child: Container(
-                  color: Colors.grey.shade100,
-                  child: _PdfRemoteViewer(source: source, dio: dio),
-                ),
-              ),
-            ],
-          ),
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            child: Material(
-              color: const Color(0xFF50589C),
-              child: Container(
-                height: 56,
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-                child: Row(
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.close, color: Colors.white),
-                      onPressed: () => Navigator.pop(context),
-                    ),
-                    const Expanded(
-                      child: Text(
-                        'PDF Preview',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _PdfRemoteViewer extends StatefulWidget {
-  final String source;
-  final Dio dio;
-  const _PdfRemoteViewer({required this.source, required this.dio});
-
-  @override
-  State<_PdfRemoteViewer> createState() => _PdfRemoteViewerState();
-}
-
-class _PdfRemoteViewerState extends State<_PdfRemoteViewer> {
-  PdfControllerPinch? _pdfController;
-  bool _isLoading = true;
-  String? _error;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadPdf();
-  }
-
-  Future<void> _loadPdf() async {
-    try {
-      final Uint8List bytes =
-          await RfiPreviewFetch.fetchBytes(widget.dio, widget.source);
-
-      _pdfController = PdfControllerPinch(
-        document: PdfDocument.openData(bytes),
-      );
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    } catch (e) {
-      debugPrint('PDF load error for ${widget.source}: $e');
-      if (mounted) {
-        setState(() {
-          _error = e.toString();
-          _isLoading = false;
-        });
-      }
-    }
-  }
-
-  @override
-  void dispose() {
-    _pdfController?.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
-    }
-    if (_error != null || _pdfController == null) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.picture_as_pdf, color: Colors.grey.shade400, size: 48),
-              const SizedBox(height: 8),
-              Text(
-                'PDF unavailable',
-                style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey.shade600,
-                    fontWeight: FontWeight.bold),
-              ),
-              if (_error != null) ...[
-                const SizedBox(height: 4),
-                Text(
-                  _error!.length > 100
-                      ? '${_error!.substring(0, 100)}...'
-                      : _error!,
-                  style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
-                  textAlign: TextAlign.center,
-                ),
-              ],
-            ],
-          ),
-        ),
-      );
-    }
-    return PdfViewPinch(controller: _pdfController!);
-  }
-}
-
 class _ChecklistDialog extends ConsumerStatefulWidget {
   final String enclosureName;
   final int rfiId;
@@ -2951,18 +2741,14 @@ class _ChecklistDialogState extends ConsumerState<_ChecklistDialog> {
       ),
       body: Column(
         children: [
-          // Header Info Section
           _buildInfoSection(state),
 
-          // Select All Section
           _buildSelectAllSection(isContractor, isEngineer),
 
           const Divider(height: 1),
 
-          // Labels Header
           _buildTableLabels(),
 
-          // Checklist Items
           Expanded(
             child: ListView.separated(
               padding: const EdgeInsets.only(bottom: 32),
@@ -3170,7 +2956,6 @@ class _ChecklistDialogState extends ConsumerState<_ChecklistDialog> {
                     style: const TextStyle(fontSize: 12)),
               ),
               const SizedBox(width: 8),
-              // Status Buttons
               Expanded(
                 flex: 2,
                 child: Column(
@@ -3202,7 +2987,6 @@ class _ChecklistDialogState extends ConsumerState<_ChecklistDialog> {
                 ),
               ),
               const SizedBox(width: 8),
-              // Remark Field
               Expanded(
                 flex: 2,
                 child: Column(
@@ -3267,7 +3051,6 @@ class _ChecklistDialogState extends ConsumerState<_ChecklistDialog> {
   Widget _buildStatusChip(String label, String? currentStatus,
       bool isContractor, bool isEngineer, VoidCallback onTap) {
     if (!isContractor && !isEngineer) {
-      // Just a display chip if no editing role
       final isSelected = currentStatus == label;
       if (!isSelected) return const SizedBox.shrink();
     }
@@ -3297,6 +3080,135 @@ class _ChecklistDialogState extends ConsumerState<_ChecklistDialog> {
                   fontWeight:
                       isSelected ? FontWeight.bold : FontWeight.normal)),
         ),
+      ),
+    );
+  }
+}
+
+class _SupportingDocumentFileRow extends StatefulWidget {
+  const _SupportingDocumentFileRow({
+    super.key,
+    required this.index,
+    required this.doc,
+    required this.accentColor,
+    required this.notifier,
+    required this.onView,
+    required this.onDownload,
+    required this.onDelete,
+  });
+
+  final int index;
+  final SupportingDocument doc;
+  final Color accentColor;
+  final InspectionFormNotifier notifier;
+  final VoidCallback onView;
+  final VoidCallback onDownload;
+  final VoidCallback onDelete;
+
+  @override
+  State<_SupportingDocumentFileRow> createState() =>
+      _SupportingDocumentFileRowState();
+}
+
+class _SupportingDocumentFileRowState extends State<_SupportingDocumentFileRow> {
+  late final TextEditingController _descriptionController;
+
+  @override
+  void initState() {
+    super.initState();
+    _descriptionController =
+        TextEditingController(text: widget.doc.description);
+  }
+
+  @override
+  void dispose() {
+    _descriptionController.dispose();
+    super.dispose();
+  }
+
+  Widget _miniIcon(IconData icon, Color color, VoidCallback onTap) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: Padding(
+          padding: const EdgeInsets.all(6),
+          child: Icon(icon, color: color, size: 20),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final path = widget.doc.path;
+    final fileName = path.split('/').last;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.insert_drive_file, size: 24, color: widget.accentColor),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  fileName,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+              _miniIcon(Icons.visibility_outlined, Colors.blue, widget.onView),
+              _miniIcon(
+                Icons.download_for_offline_outlined,
+                Colors.green,
+                widget.onDownload,
+              ),
+              _miniIcon(
+                Icons.delete_outline_rounded,
+                Colors.red,
+                widget.onDelete,
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          TextField(
+            controller: _descriptionController,
+            maxLines: 2,
+            style: const TextStyle(fontSize: 12),
+            decoration: InputDecoration(
+              labelText: 'Description (optional)',
+              hintText: 'e.g. test report, drawing',
+              isDense: true,
+              filled: true,
+              fillColor: Colors.white,
+              labelStyle: TextStyle(
+                fontSize: 12,
+                color: widget.accentColor,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(6),
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 10,
+                vertical: 8,
+              ),
+            ),
+            onChanged: (value) => widget.notifier
+                .updateSupportingDocDescription(widget.index, value),
+          ),
+        ],
       ),
     );
   }

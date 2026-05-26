@@ -4,7 +4,6 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:wcr_pmis_mobile/src/features/rfi/core/network/environment.dart';
 
-/// Loads RFI enclosure / preview media through the authenticated RFI [Dio] client.
 abstract final class RfiPreviewFetch {
   static Options get _byteOptions => Options(
         responseType: ResponseType.bytes,
@@ -19,57 +18,138 @@ abstract final class RfiPreviewFetch {
 
   static final RegExp _windowsOrDrivePathPattern = RegExp(r'^[A-Za-z]:[/\\]');
 
-  /// Resolves a server path or URL to a public URL (for display / sharing).
-  static String resolvePublicUrl(String urlOrPath) {
-    final String trimmed = urlOrPath.trim();
-    if (trimmed.isEmpty) {
-      return '';
-    }
+  static List<String> resolveFetchCandidates(String urlOrPath) {
+    final trimmed = urlOrPath.trim();
+    if (trimmed.isEmpty) return [];
+
     if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
-      return trimmed;
+      return [trimmed];
     }
 
-    final String? enclosureId = _extractViewEnclosureId(trimmed);
+    if (trimmed.contains('previewFiles')) {
+      return [trimmed];
+    }
+
+    if (_extractViewEnclosureId(trimmed) != null) {
+      return [trimmed];
+    }
+
+    if (_isAbsoluteServerPath(trimmed)) {
+      return [trimmed];
+    }
+
+    if (trimmed.startsWith('api/')) {
+      return [trimmed];
+    }
+
+    if (trimmed.contains('/')) {
+      return [
+        trimmed,
+        '/home/ec2-user/uploads/$trimmed',
+      ];
+    }
+
+    return _bareFileNameCandidates(trimmed);
+  }
+
+  static List<String> _bareFileNameCandidates(String fileName) {
+    final lower = fileName.toLowerCase();
+    final dirs = <String>[];
+
+    if (lower.contains('supporting')) {
+      dirs.addAll([
+        '/home/ec2-user/uploads/rfi-inspections/',
+        '/home/ec2-user/uploads/supporting-documents/',
+        '/home/ec2-user/uploads/inspection-supporting/',
+      ]);
+    }
+    if (lower.contains('enclosure')) {
+      dirs.add('/home/ec2-user/uploads/rfi-enclosures/');
+    }
+    if (lower.contains('visual') ||
+        lower.contains('site-doc') ||
+        (lower.contains('report') && lower.contains('rfi_'))) {
+      dirs.add('/home/ec2-user/uploads/inspection-site-documents/');
+    }
+
+    dirs.addAll([
+      '/home/ec2-user/uploads/rfi-inspections/',
+      '/home/ec2-user/uploads/rfi-enclosures/',
+      '/home/ec2-user/uploads/inspection-site-documents/',
+      '/home/ec2-user/uploads/',
+    ]);
+
+    return dirs.map((dir) => '$dir$fileName').toSet().toList();
+  }
+
+  static String resolvePublicUrl(String urlOrPath) {
+    final candidates = resolveFetchCandidates(urlOrPath);
+    if (candidates.isEmpty) return '';
+
+    final primary = candidates.first;
+    if (primary.startsWith('http://') || primary.startsWith('https://')) {
+      return primary;
+    }
+
+    final enclosureId = _extractViewEnclosureId(primary);
     if (enclosureId != null) {
       return '${Environment.baseUrl}api/rfi/view-enclosure?id=$enclosureId';
     }
 
-    final String baseUrl = Environment.baseUrl;
-
-    if (_needsPreviewFilesEndpoint(trimmed)) {
-      return '${baseUrl}api/validation/previewFiles?'
-          'filepath=${Uri.encodeComponent(trimmed)}';
+    if (_needsPreviewFilesEndpoint(primary)) {
+      return '${Environment.baseUrl}api/validation/previewFiles?'
+          'filepath=${Uri.encodeComponent(primary)}';
     }
 
-    var path = trimmed;
+    var path = primary;
     if (path.startsWith('/')) {
       path = path.substring(1);
     }
-    return '$baseUrl$path';
+    return '${Environment.baseUrl}$path';
   }
 
-  /// Downloads file bytes using RFI auth (Bearer + cookies on [dio]).
   static Future<Uint8List> fetchBytes(Dio dio, String urlOrPath) async {
-    final String trimmed = urlOrPath.trim();
-    if (trimmed.isEmpty) {
+    final candidates = resolveFetchCandidates(urlOrPath);
+    if (candidates.isEmpty) {
       throw Exception('Empty file path');
     }
 
-    // Already a previewFiles URL — re-fetch via relative API route.
-    if (trimmed.contains('previewFiles')) {
-      final Uri uri = Uri.parse(
-        trimmed.startsWith('http') ? trimmed : resolvePublicUrl(trimmed),
-      );
-      final String? filepath = uri.queryParameters['filepath'];
-      if (filepath != null && filepath.isNotEmpty) {
-        return fetchBytes(dio, filepath);
+    if (candidates.length == 1) {
+      return _fetchBytesForCandidate(dio, candidates.first);
+    }
+
+    Object? lastError;
+    for (final candidate in candidates) {
+      try {
+        return await _fetchBytesForCandidate(dio, candidate);
+      } catch (e, st) {
+        lastError = e;
+        if (kDebugMode) {
+          debugPrint('RfiPreviewFetch miss for $candidate: $e\n$st');
+        }
       }
     }
 
-    // Enclosure by DB id — same endpoint as download (must use relative path on [dio]).
-    final String? enclosureId = _extractViewEnclosureId(trimmed);
+    throw lastError ?? Exception('Failed to load file');
+  }
+
+  static Future<Uint8List> _fetchBytesForCandidate(
+    Dio dio,
+    String trimmed,
+  ) async {
+    if (trimmed.contains('previewFiles')) {
+      final uri = Uri.parse(
+        trimmed.startsWith('http') ? trimmed : resolvePublicUrl(trimmed),
+      );
+      final filepath = uri.queryParameters['filepath'];
+      if (filepath != null && filepath.isNotEmpty) {
+        return _fetchBytesForCandidate(dio, filepath);
+      }
+    }
+
+    final enclosureId = _extractViewEnclosureId(trimmed);
     if (enclosureId != null) {
-      final Response<List<int>> response = await dio.get<List<int>>(
+      final response = await dio.get<List<int>>(
         'api/rfi/view-enclosure',
         queryParameters: <String, String>{'id': enclosureId},
         options: _byteOptions,
@@ -81,7 +161,7 @@ abstract final class RfiPreviewFetch {
     }
 
     if (_needsPreviewFilesEndpoint(trimmed)) {
-      final Response<List<int>> response = await dio.get<List<int>>(
+      final response = await dio.get<List<int>>(
         'api/validation/previewFiles',
         queryParameters: <String, String>{'filepath': trimmed},
         options: _byteOptions,
@@ -90,7 +170,7 @@ abstract final class RfiPreviewFetch {
     }
 
     if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
-      final Response<List<int>> response = await dio.get<List<int>>(
+      final response = await dio.get<List<int>>(
         trimmed,
         options: _byteOptions,
       );
@@ -102,7 +182,7 @@ abstract final class RfiPreviewFetch {
       relativePath = relativePath.substring(1);
     }
 
-    final Response<List<int>> response = await dio.get<List<int>>(
+    final response = await dio.get<List<int>>(
       relativePath,
       options: _byteOptions,
     );
@@ -114,18 +194,19 @@ abstract final class RfiPreviewFetch {
   }
 
   static bool _needsPreviewFilesEndpoint(String path) {
-    if (_isServerFilesystemPath(path)) {
-      return true;
-    }
+    if (_isServerFilesystemPath(path)) return true;
     return path.startsWith('/home/ec2-user/') ||
         (path.startsWith('/') && !path.startsWith('/api/'));
   }
 
-  /// Absolute server paths (Linux or Windows) that must go through previewFiles.
+  static bool _isAbsoluteServerPath(String path) {
+    return path.startsWith('/home/ec2-user/') ||
+        path.startsWith('/home/') ||
+        _isServerFilesystemPath(path);
+  }
+
   static bool _isServerFilesystemPath(String path) {
-    if (path.contains(r'\')) {
-      return true;
-    }
+    if (path.contains(r'\')) return true;
     return _windowsOrDrivePathPattern.hasMatch(path);
   }
 
@@ -134,10 +215,10 @@ abstract final class RfiPreviewFetch {
       throw Exception('Empty response from server');
     }
 
-    final Uint8List bytes = Uint8List.fromList(data);
+    final bytes = Uint8List.fromList(data);
 
     if (bytes.length > 15) {
-      final String header =
+      final header =
           String.fromCharCodes(bytes.sublist(0, 15)).toLowerCase();
       if (header.contains('<!doctype') || header.contains('<html')) {
         throw Exception(
@@ -146,14 +227,13 @@ abstract final class RfiPreviewFetch {
       }
     }
 
-    final bool looksLikePdf = bytes.length > 4 &&
+    final looksLikePdf = bytes.length > 4 &&
         bytes[0] == 0x25 &&
         bytes[1] == 0x50 &&
         bytes[2] == 0x44 &&
         bytes[3] == 0x46;
 
     if (source.toLowerCase().endsWith('.pdf') && !looksLikePdf) {
-      debugPrint('RfiPreviewFetch: expected PDF for $source');
       throw Exception('Downloaded file is not a valid PDF');
     }
 
@@ -162,15 +242,23 @@ abstract final class RfiPreviewFetch {
 
   static bool looksLikePdfPath(String path) {
     final lower = path.toLowerCase();
+    if (lower.endsWith('.svg') || lower.contains('.svg?')) return false;
     if (lower.contains('view-enclosure')) return true;
     if (lower.endsWith('.pdf')) return true;
     if (_needsPreviewFilesEndpoint(path)) {
       return !lower.endsWith('.jpg') &&
           !lower.endsWith('.jpeg') &&
           !lower.endsWith('.png') &&
-          !lower.endsWith('.webp');
+          !lower.endsWith('.webp') &&
+          !lower.endsWith('.gif') &&
+          !lower.endsWith('.svg');
     }
     return false;
+  }
+
+  static bool looksLikeSvgPath(String path) {
+    final lower = path.toLowerCase();
+    return lower.endsWith('.svg') || lower.contains('.svg?');
   }
 
   static bool looksLikePdfBytes(Uint8List bytes) {

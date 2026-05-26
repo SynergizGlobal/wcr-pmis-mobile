@@ -44,7 +44,6 @@ class AssignExecutiveForm extends _$AssignExecutiveForm {
     ]);
   }
 
-  // ── Fetch Logs ──────────────────────────────────────────────────────
   Future<void> _fetchLogs() async {
     try {
       state = state.copyWith(isLoadingLogs: true);
@@ -56,7 +55,6 @@ class AssignExecutiveForm extends _$AssignExecutiveForm {
     }
   }
 
-  // ── Cascading Dropdown Fetchers ─────────────────────────────────────
   Future<void> _fetchProjects() async {
     try {
       state = state.copyWith(isLoadingItems: true);
@@ -166,7 +164,6 @@ class AssignExecutiveForm extends _$AssignExecutiveForm {
     state = state.copyWith(selectedExecutive: executive);
   }
 
-  // ── Submit ──────────────────────────────────────────────────────────
   Future<bool> submit() async {
     final s = state;
     if (s.selectedContract == null ||
@@ -189,7 +186,6 @@ class AssignExecutiveForm extends _$AssignExecutiveForm {
         "userId": s.selectedExecutive!.userId,
       });
 
-      // Reset form selections but keep dropdown data
       state = state.copyWith(
         isSubmitting: false,
         selectedProject: null,
@@ -205,7 +201,6 @@ class AssignExecutiveForm extends _$AssignExecutiveForm {
         selectedExecutive: null,
       );
 
-      // Refresh logs
       await _fetchLogs();
       return true;
     } catch (_) {
@@ -214,7 +209,6 @@ class AssignExecutiveForm extends _$AssignExecutiveForm {
     }
   }
 
-  // ── Delete ──────────────────────────────────────────────────────────
   Future<bool> deleteAssignment(int id) async {
     try {
       final repo = ref.read(assignExecutiveRepositoryProvider);

@@ -13,11 +13,10 @@ import 'package:pdfx/pdfx.dart' as pdfr;
 import '../../domain/inspection/enclosure_checklist.dart';
 import '../../domain/inspection/inspection_item.dart';
 import '../../providers/inspection/inspection_form_state.dart';
+import '../utils/rfi_media_utils.dart';
 import '../utils/rfi_preview_fetch.dart';
 import '../utils/user_role.dart';
 
-/// Builds the inspection submit PDF (MRVC-style Part I–III) and appends
-/// enclosure/supporting PDFs, then checklist tables (online only).
 class InspectionSubmitPdfBuilder {
   static const _margin = 30.0;
   static const _yellow = PdfColor.fromInt(0xFFFFFF00);
@@ -499,7 +498,6 @@ class InspectionSubmitPdfBuilder {
       ];
   }
 
-  /// Drawn checkbox with vector tick (Helvetica-safe; no Unicode glyphs).
   static pw.Widget _pdfCheckbox({
     required bool checked,
     double size = 10,
@@ -646,8 +644,6 @@ class InspectionSubmitPdfBuilder {
     }
   }
 
-  /// Web [pdfUtils]: merge enclosure → supporting → test report PDFs only.
-  /// Do not append prior inspection master PDFs from [inspectionDetails].
   static Future<List<_LabeledPdf>> _loadAttachmentPdfPages(
     InspectionFormState state,
     InspectionItem rfi,
@@ -674,8 +670,8 @@ class InspectionSubmitPdfBuilder {
       addSourcePdf(enc.enclosureUploadFile, 'Enclosure');
     }
 
-    for (final path in state.supportingDocPaths) {
-      addSourcePdf(path, 'Supporting Document');
+    for (final doc in state.supportingDocuments) {
+      addSourcePdf(doc.path, 'Supporting Document');
     }
 
     final testReportPath = isEngineer
@@ -738,7 +734,10 @@ class InspectionSubmitPdfBuilder {
       final bytes = await _loadFileBytes(path, dio);
       if (bytes == null || bytes.isEmpty) continue;
       try {
-        images.add(pw.MemoryImage(bytes));
+        final memory = await RfiMediaUtils.toPdfMemoryImage(path, bytes);
+        if (memory != null) {
+          images.add(memory);
+        }
       } catch (e) {
         debugPrint('Skip site image $path: $e');
       }

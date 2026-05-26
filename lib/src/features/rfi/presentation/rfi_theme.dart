@@ -106,7 +106,6 @@ abstract final class RfiTheme {
     return scheme.onPrimary;
   }
 
-  /// Wraps a [DataTable] so header, cells, and dividers follow [ColorScheme].
   static Widget dataTable(
     BuildContext context, {
     required List<DataColumn> columns,

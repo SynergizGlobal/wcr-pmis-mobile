@@ -69,7 +69,6 @@ class _InspectionReferenceScreenState
 );
 }
 
-  // ── Card decoration ─────────────────────────────────────────────────
   BoxDecoration _cardDecoration() {
     return BoxDecoration(
       color: Colors.white,
@@ -84,7 +83,6 @@ class _InspectionReferenceScreenState
     );
   }
 
-  // ── Form Selection Row ──────────────────────────────────────────────
   Widget _buildFormSelectionRow(
     InspectionReferenceState formState,
     InspectionReferenceNotifier notifier,
@@ -94,7 +92,6 @@ class _InspectionReferenceScreenState
       runSpacing: 12,
       crossAxisAlignment: WrapCrossAlignment.end,
       children: [
-        // Select Form dropdown
         AppDropdown<FormType>(
           label: 'Select Form:',
           hint: '-- Select --',
@@ -111,7 +108,6 @@ class _InspectionReferenceScreenState
           },
         ),
 
-        // Additional Sub-Option dropdown for Checklist Description
         if (formState.selectedFormType == FormType.checklistDescription)
           Row(
             children: [
@@ -162,12 +158,10 @@ class _InspectionReferenceScreenState
     );
   }
 
-  // ── Data Section (dispatches to correct table) ──────────────────────
   Widget _buildDataSection(
     InspectionReferenceState formState,
     InspectionReferenceNotifier notifier,
   ) {
-    // Show loading for initial or category data
     if (formState.isLoadingInitial || formState.isLoadingList) {
       return const Padding(
         padding: EdgeInsets.symmetric(vertical: 32),
@@ -175,7 +169,6 @@ class _InspectionReferenceScreenState
       );
     }
 
-    // No form type selected → show the default OPEN enclosure names list
     if (formState.selectedFormType == null) {
       return _buildInitialOpenTable(formState.initialEnclosureNames);
     }
@@ -190,7 +183,6 @@ class _InspectionReferenceScreenState
     }
   }
 
-  //  Default OPEN Enclosure Names Table (shown when no form type selected)
   Widget _buildInitialOpenTable(List<EnclosureName> allItems) {
     final filtered = _applySearch(
       allItems,
@@ -252,7 +244,6 @@ class _InspectionReferenceScreenState
     );
   }
 
-  //  RFI Enclosure List Table (Edit + Delete actions)
   Widget _buildEnclosureListTable(List<EnclosureName> allItems) {
     final filtered = _applySearch(
       allItems,
@@ -336,7 +327,6 @@ class _InspectionReferenceScreenState
     );
   }
 
-  //  Checklist Description Table (Edit + Delete actions)
   Widget _buildChecklistDescriptionTable(InspectionReferenceState formState) {
     if (formState.selectedSubOption == null) {
       return const Padding(
@@ -362,7 +352,6 @@ class _InspectionReferenceScreenState
 
     return Column(
       children: [
-        // Sub-header
         Container(
           width: double.infinity,
           padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
@@ -428,9 +417,6 @@ class _InspectionReferenceScreenState
     );
   }
 
-  // ══════════════════════════════════════════════════════════════════════
-  //  Reference Form Table (Edit only)
-  // ══════════════════════════════════════════════════════════════════════
   Widget _buildReferenceFormTable(List<ReferenceFormItem> allItems) {
     final filtered = _applySearch(
       allItems,
@@ -525,11 +511,7 @@ class _InspectionReferenceScreenState
     );
   }
 
-  // ══════════════════════════════════════════════════════════════════════
-  //  Action Button Widgets
-  // ══════════════════════════════════════════════════════════════════════
 
-  /// Edit + Delete action buttons (for RFI Enclosure List & Checklist Description)
   Widget _buildEditDeleteActions(int id, String name,
       {VoidCallback? onEdit,
       Future<void> Function()? onDelete,
@@ -626,9 +608,6 @@ class _InspectionReferenceScreenState
     );
   }
 
-  // ══════════════════════════════════════════════════════════════════════
-  //  Shared Paginated Table Builder
-  // ══════════════════════════════════════════════════════════════════════
   Widget _buildPaginatedTable<T>({
     required int filteredLength,
     required List<DataColumn> columns,
@@ -645,7 +624,6 @@ class _InspectionReferenceScreenState
 
     return Column(
       children: [
-        // Controls: Show entries + Search
         SizedBox(
           width: double.infinity,
           child: Wrap(
@@ -708,7 +686,6 @@ class _InspectionReferenceScreenState
         ),
         const SizedBox(height: 8),
 
-        // Table
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: DataTable(
@@ -753,7 +730,6 @@ class _InspectionReferenceScreenState
     );
   }
 
-  // ── Helpers ──────────────────────────────────────────────────────────
   String _formTypeLabel(FormType type) {
     switch (type) {
       case FormType.rfiEnclosureList:

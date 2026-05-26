@@ -2,7 +2,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:wcr_pmis_mobile/src/features/auth/domain/entities/auth_session.dart';
 import 'package:wcr_pmis_mobile/src/features/auth/presentation/controllers/auth_controller.dart';
 
-/// Standalone RFI screens expect a map-shaped auth payload from [authNotifierProvider].
 final authNotifierProvider =
     Provider<AsyncValue<Map<String, dynamic>?>>((Ref ref) {
   return ref.watch(authControllerProvider).when(

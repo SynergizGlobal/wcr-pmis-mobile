@@ -47,9 +47,6 @@ class InspectionReferenceRepository {
     await api.deleteEnclosure(id);
   }
 
-  // ══════════════════════════════════════════════════════════════════════
-  // Checklist Description Repository
-  // ══════════════════════════════════════════════════════════════════════
 
   Future<void> submitChecklistDescription(
       int enclosureId, String description) async {
@@ -65,9 +62,6 @@ class InspectionReferenceRepository {
     await api.deleteChecklistDescription(checklistId);
   }
 
-  // ══════════════════════════════════════════════════════════════════════
-  // Reference Form Repository
-  // ══════════════════════════════════════════════════════════════════════
 
   Future<void> submitReferenceForm(
       String activity, String rfiDescription, String enclosures) async {

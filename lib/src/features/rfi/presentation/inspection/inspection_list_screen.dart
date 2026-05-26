@@ -27,7 +27,6 @@ class InspectionListScreen extends ConsumerWidget {
     final authState = ref.watch(authNotifierProvider);
     final appRole = UserRole.fromLoginResponse(authState.value ?? {});
 
-    // Calculate pagination for display
     final totalItems = state.filteredItems.length;
     final totalPages = (totalItems / state.rowsPerPage).ceil();
     final startIndex = (state.currentPage - 1) * state.rowsPerPage;
@@ -50,7 +49,6 @@ class InspectionListScreen extends ConsumerWidget {
               ? const Center(child: CircularProgressIndicator())
               : Column(
                 children: [
-                  // Top Controls: Search and Entries per page (Non-scrolling)
                   Padding(
                     padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
                     child: Container(
@@ -66,7 +64,6 @@ class InspectionListScreen extends ConsumerWidget {
                     ),
                   ),
 
-                  // Main Content Area (Scrollable Table)
                   Expanded(
                     child: state.error != null
                         ? Center(
@@ -79,7 +76,6 @@ class InspectionListScreen extends ConsumerWidget {
                           ),
                   ),
 
-                  // Sticky Pagination Footer
                   if (state.error == null && state.filteredItems.isNotEmpty)
                     TablePaginationFooter(
                       startIndex: totalItems == 0 ? 0 : startIndex,
@@ -106,7 +102,6 @@ class InspectionListScreen extends ConsumerWidget {
       );
     }
 
-    // Calculate pagination for sublisting data
     final startIndex = (state.currentPage - 1) * state.rowsPerPage;
     final endIndex = min(startIndex + state.rowsPerPage, state.filteredItems.length);
     final currentPageItems = state.filteredItems.sublist(startIndex, endIndex);
@@ -468,7 +463,6 @@ class InspectionListScreen extends ConsumerWidget {
   }
 
   bool _canStartInspection(InspectionItem item, UserRole appRole) {
-    // 1. Check Inspection Date/Time availability (Mandatory)
     if (item.dateOfInspection == null ||
         item.dateOfInspection!.isEmpty ||
         item.timeOfInspection == null ||
@@ -480,16 +474,13 @@ class InspectionListScreen extends ConsumerWidget {
       final now = DateTime.now();
       final today = DateTime(now.year, now.month, now.day);
 
-      // Helper to parse dates in various formats
       DateTime? parseDate(String? dateStr) {
         if (dateStr == null || dateStr.isEmpty) return null;
         
-        // Handle yyyy-MM-dd (API format)
         if (dateStr.contains('-') && dateStr.indexOf('-') == 4) {
           return DateTime.tryParse(dateStr);
         }
 
-        // Handle dd-MM-yy or dd-MM-yyyy
         final parts = dateStr.split('-');
         if (parts.length != 3) return null;
 
@@ -509,7 +500,6 @@ class InspectionListScreen extends ConsumerWidget {
 
       final status = item.status?.toUpperCase() ?? '';
 
-      // 2. Date checks: Block starting if scheduled date is in the future
       final inspectionDate = parseDate(item.dateOfInspection);
       final submissionDate = parseDate(item.dateOfSubmission);
 
@@ -517,17 +507,14 @@ class InspectionListScreen extends ConsumerWidget {
         return false;
       }
 
-      // 3. Submission Date check (no future submissions allowed to start)
       if (submissionDate != null && submissionDate.isAfter(today)) {
         return false;
       }
 
-      // 4. Role-specific status logic
       if (!appRole.canStartInspection(status)) {
         return false;
       }
 
-      // Check measurement presence for Engineers/Data Admins specifically
       if (appRole == UserRole.engineer || appRole == UserRole.dyHod || appRole == UserRole.dyHodEngineer) {
         final hasMeasurement = item.measurementType != null &&
             item.measurementType!.isNotEmpty &&

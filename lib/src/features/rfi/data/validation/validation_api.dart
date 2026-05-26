@@ -19,8 +19,6 @@ class ValidationApi {
     await dio.post(
       "api/validation/validate",
       data: formData,
-      // Validation screen shows its own single dialog.
-      // Keep interceptor silent to avoid duplicate error dialogs.
       options: Options(extra: {'silentError': true}),
     );
   }

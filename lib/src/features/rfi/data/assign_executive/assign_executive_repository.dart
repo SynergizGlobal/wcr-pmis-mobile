@@ -20,7 +20,6 @@ class AssignExecutiveRepository {
   Future<List<DropdownItem>> getStructures(
       String contractId, String structureType) async {
     final data = await api.getStructures(contractId, structureType);
-    // API returns list of strings
     return data
         .map((item) => DropdownItem(id: item.toString(), name: item.toString()))
         .toList();

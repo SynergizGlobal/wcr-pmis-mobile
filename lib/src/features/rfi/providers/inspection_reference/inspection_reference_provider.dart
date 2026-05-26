@@ -26,14 +26,12 @@ class InspectionReferenceNotifier extends _$InspectionReferenceNotifier {
   Future<void> refresh() async {
     await _loadInitialNames();
     if (state.selectedFormType != null) {
-      // Re-trigger the selection logic to refresh the specific form data
       final currentType = state.selectedFormType;
       state = state.copyWith(selectedFormType: null); // Reset to allow re-selection
       await selectFormType(currentType);
     }
   }
 
-  /// Load the initial enclosure names list on screen open
   Future<void> _loadInitialNames() async {
     state = state.copyWith(isLoadingInitial: true);
     try {
@@ -47,11 +45,9 @@ class InspectionReferenceNotifier extends _$InspectionReferenceNotifier {
     }
   }
 
-  /// Called when user selects a form type from the dropdown
   Future<void> selectFormType(FormType? formType) async {
     if (formType == state.selectedFormType) return;
 
-    // Reset category data but preserve initial list
     state = InspectionReferenceState(
       selectedFormType: formType,
       initialEnclosureNames: state.initialEnclosureNames,
@@ -90,7 +86,6 @@ class InspectionReferenceNotifier extends _$InspectionReferenceNotifier {
     }
   }
 
-  /// Called when user selects a sub-option in Checklist Description
   Future<void> selectSubOption(EnclosureName? option) async {
     if (option == null || option.id == state.selectedSubOption?.id) return;
 
@@ -109,7 +104,6 @@ class InspectionReferenceNotifier extends _$InspectionReferenceNotifier {
     }
   }
 
-  /// Reloads the enclosure list after a CRUD operation
   Future<void> reloadEnclosureList() async {
     state = state.copyWith(isLoadingList: true);
     try {
@@ -121,7 +115,6 @@ class InspectionReferenceNotifier extends _$InspectionReferenceNotifier {
     }
   }
 
-  /// Create a new enclosure
   Future<bool> addEnclosure(String name, String action) async {
     state = state.copyWith(isEnclosureSubmitting: true);
     try {
@@ -136,7 +129,6 @@ class InspectionReferenceNotifier extends _$InspectionReferenceNotifier {
     }
   }
 
-  /// Update an existing enclosure
   Future<bool> updateEnclosure(int id, String name, String action) async {
     state = state.copyWith(isEnclosureSubmitting: true);
     try {
@@ -151,7 +143,6 @@ class InspectionReferenceNotifier extends _$InspectionReferenceNotifier {
     }
   }
 
-  /// Delete an enclosure
   Future<bool> deleteEnclosure(int id) async {
     state = state.copyWith(isEnclosureSubmitting: true);
     try {
@@ -166,9 +157,6 @@ class InspectionReferenceNotifier extends _$InspectionReferenceNotifier {
     }
   }
 
-  // ══════════════════════════════════════════════════════════════════════
-  // Checklist Description Methods
-  // ══════════════════════════════════════════════════════════════════════
 
   Future<void> reloadChecklistDetails() async {
     final subOption = state.selectedSubOption;
@@ -229,9 +217,6 @@ class InspectionReferenceNotifier extends _$InspectionReferenceNotifier {
     }
   }
 
-  // ══════════════════════════════════════════════════════════════════════
-  // Reference Form Methods
-  // ══════════════════════════════════════════════════════════════════════
 
   Future<void> reloadReferenceFormItems() async {
     state = state.copyWith(isLoadingList: true);

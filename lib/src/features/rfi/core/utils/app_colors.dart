@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// WCR-aligned brand colors for ported RFI widgets (use [primary] with [BuildContext]).
 abstract final class AppColors {
-  /// WCR PMIS primary — matches [ColorScheme.primary] in app theme.
   static const Color wcrPrimary = Color(0xFF50589C);
 
   static Color primary(BuildContext context) =>

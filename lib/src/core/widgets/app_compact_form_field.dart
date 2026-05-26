@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:wcr_pmis_mobile/src/core/widgets/app_form_field_style.dart';
 
-/// Compact field for tables (test parameters, grids, etc.).
 class AppCompactTextFormField extends StatefulWidget {
   const AppCompactTextFormField({
     super.key,

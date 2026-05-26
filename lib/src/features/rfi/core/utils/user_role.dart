@@ -17,9 +17,6 @@ enum UserRole {
     final userType = response['userTypeFk']?.toString();
     final roleName = response['userRoleNameFk']?.toString();
 
-    // 🔥 Rule 4 & 6: Data Admin (DyHOD) 
-    // Checks for Data Admin role directly, capturing both dedicated DyHODs (Rule 4)
-    // AND Client Side Enggs carrying the Data Admin role (Rule 6).
     if (roleName == 'Data Admin') {
       if (userType == 'Officer (Jr./Sr. Scale)') {
         return UserRole.dyHodEngineer;
@@ -27,32 +24,26 @@ enum UserRole {
       return UserRole.dyHod;
     }
 
-    // 🔥 IT Admin
     if (roleName == 'IT Admin') {
       return UserRole.itAdmin;
     }
 
-    // 🔥 Rule 5: Super User
     if (roleName == 'Super User') {
       return UserRole.superUser;
     }
 
-    // 🔥 Rule 1: Contractor
     if (userType == 'Contractor') {
       return UserRole.contractor;
     }
 
-    // 🔥 Rule 2: Contractor Rep
     if (userType == 'Contractor Rep') {
       return UserRole.contractorRep;
     }
 
-    // 🔥 Rule 3: Engineer (Client side)
     if (userType == 'Officer (Jr./Sr. Scale)') {
       return UserRole.engineer;
     }
 
-    // 🔥 (Legacy fallback) HOD
     if (userType == 'HOD') {
       return UserRole.hod;
     }
@@ -62,7 +53,6 @@ enum UserRole {
 }
 
 extension UserRolePermissions on UserRole {
-  // --- Core Action Permissions ---
   
   bool get canCreateRfi => this == UserRole.contractor || this == UserRole.itAdmin;
 
@@ -76,7 +66,6 @@ extension UserRolePermissions on UserRole {
         s == 'REASSIGNED';
   }
 
-  /// Contractor: only early lifecycle statuses. IT Admin: any stage.
   bool canDeleteRfi(String status) {
     if (this == UserRole.itAdmin) return true;
     if (this != UserRole.contractor) return false;
@@ -106,7 +95,6 @@ extension UserRolePermissions on UserRole {
         return true;
       }
     }
-    // Pure HOD/DyHOD (Data Admin) are explicitly restricted from starting inspections.
     return false;
   }
 
@@ -187,7 +175,6 @@ extension UserRolePermissions on UserRole {
 
   bool canApprove(String status) {
     final s = status.toUpperCase();
-    // Valid for status -> VALIDATION_PENDING (also sometimes written as 'VALIDATION PENDING')
     if ((this == UserRole.dyHod || this == UserRole.dyHodEngineer) &&
         (s == 'VALIDATION_PENDING' || s == 'VALIDATION PENDING')) {
       return true;
@@ -210,7 +197,6 @@ extension UserRolePermissions on UserRole {
     return false;
   }
 
-  // --- Drawer Menu & View Permissions ---
 
   bool canViewRfi(String status) {
     return true;

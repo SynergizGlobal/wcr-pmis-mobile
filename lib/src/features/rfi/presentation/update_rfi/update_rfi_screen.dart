@@ -21,7 +21,6 @@ class _UpdateRfiScreenState extends ConsumerState<UpdateRfiScreen> {
   @override
   void initState() {
     super.initState();
-    // Schedule initialization after the first frame
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(updateRfiFormProvider.notifier).initialize(widget.item);
     });
@@ -32,7 +31,6 @@ class _UpdateRfiScreenState extends ConsumerState<UpdateRfiScreen> {
     final state = ref.watch(updateRfiFormProvider);
     final notifier = ref.read(updateRfiFormProvider.notifier);
 
-    // Show loading indicator until item is initialized in state to prevent null errors
     if (state.initialItem == null ||
         state.initialItem!.rfiId != widget.item.rfiId) {
       return const Scaffold(
@@ -187,7 +185,6 @@ class _UpdateRfiScreenState extends ConsumerState<UpdateRfiScreen> {
   }
 
   Widget _buildStep1Form(UpdateRfiState state) {
-    // In Update mode, all Step 1 fields are disabled and pre-filled.
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -270,11 +267,9 @@ class _UpdateRfiScreenState extends ConsumerState<UpdateRfiScreen> {
 
   Widget _buildStep2Form(BuildContext context, UpdateRfiState state,
       UpdateRfiForm notifier, RfiListItem original) {
-    // Dynamic logic flags
     final isReassign = state.action == 'Reassign';
     final isReschedule = state.action == 'Reschedule';
 
-    // According to specs, Action is enabled.
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -284,7 +279,6 @@ class _UpdateRfiScreenState extends ConsumerState<UpdateRfiScreen> {
           items: const ['Reschedule', 'Update', 'Reassign'],
           onChanged: (val) {
             notifier.setAction(val);
-            // Optionally reset values here if needed, but keeping them as defaults is fine
           },
           hint: '- Select Action -',
           enabled: true,
@@ -300,7 +294,6 @@ class _UpdateRfiScreenState extends ConsumerState<UpdateRfiScreen> {
         ),
         const SizedBox(height: 16),
 
-        // Allowed to edit ONLY if Reassign is selected
         _buildStringDropdown(
           label: 'Name of Contractor\'s Representative *',
           value: state.contractorRepresentative,
@@ -311,7 +304,6 @@ class _UpdateRfiScreenState extends ConsumerState<UpdateRfiScreen> {
         ),
         const SizedBox(height: 16),
 
-        // Usually locked to original submission date, but following create logic
         _buildDateField(
           context: context,
           label: 'Date of Submission of RFI *',
@@ -322,7 +314,6 @@ class _UpdateRfiScreenState extends ConsumerState<UpdateRfiScreen> {
         ),
         const SizedBox(height: 16),
 
-        // Allowed to edit ONLY if Reschedule is selected
         _buildTimeField(
           context: context,
           label: 'Time Of Inspection *',
@@ -333,7 +324,6 @@ class _UpdateRfiScreenState extends ConsumerState<UpdateRfiScreen> {
         ),
         const SizedBox(height: 16),
 
-        // Allowed to edit ONLY if Reschedule is selected
         _buildDateField(
           context: context,
           label: 'Date of Inspection *',
@@ -350,7 +340,6 @@ class _UpdateRfiScreenState extends ConsumerState<UpdateRfiScreen> {
 
   Widget _buildStep3Form(
       BuildContext context, UpdateRfiState state, UpdateRfiForm notifier) {
-    // Same as Create, optionally allow description changes on 'Update'
     final List<String> enclosures = state.rfiDescriptions.isNotEmpty
         ? (state.rfiDescriptions.first.enclosures ??
             ['Level Sheet', 'Drawing', 'Material specs'])
@@ -358,7 +347,6 @@ class _UpdateRfiScreenState extends ConsumerState<UpdateRfiScreen> {
 
     final isUpdate = state.action == 'Update';
 
-    // Assuming user wants to change desc & enclosures regardless of action, but spec emphasizes Update.
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -439,7 +427,6 @@ class _UpdateRfiScreenState extends ConsumerState<UpdateRfiScreen> {
     );
   }
 
-  // --- Common UI Helpers --- //
 
   Widget _buildStepper(BuildContext context, int currentStep) {
     final ColorScheme scheme = Theme.of(context).colorScheme;

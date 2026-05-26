@@ -221,7 +221,6 @@ class _ChangeExecutiveDialogState extends ConsumerState<ChangeExecutiveDialog>
                                 type: DialogType.success,
                               );
                               
-                              // Trigger callback if provided, otherwise default to inspection refresh
                               if (widget.onSuccess != null) {
                                 widget.onSuccess!();
                               } else {

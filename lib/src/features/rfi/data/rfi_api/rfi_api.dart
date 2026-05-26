@@ -36,7 +36,6 @@ class RfiApi {
     );
   }
 
-  /// POST with empty body (matches web client).
   Future<void> closeRfi(int id) async {
     await dio.post<dynamic>(
       'rfi/close/rfi/$id',
