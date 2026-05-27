@@ -731,6 +731,13 @@ class InspectionFormNotifier extends StateNotifier<InspectionFormState> {
         dio: dio,
       );
 
+      final isEngineerRole = role == UserRole.engineer ||
+          role == UserRole.dyHodEngineer ||
+          role == UserRole.hod ||
+          role == UserRole.dyHod;
+      final isEngineerRectification =
+          isEngineerRole && state.inspectionStatus == 'Rectification';
+
       if (role == UserRole.contractor || role == UserRole.contractorRep) {
         final uploadData = FormData.fromMap({
           "rfiId": _rfiId,
@@ -746,10 +753,7 @@ class InspectionFormNotifier extends StateNotifier<InspectionFormState> {
           "rfiId": _rfiId,
           "txnId": txnId,
         }));
-      } else if (role == UserRole.engineer ||
-          role == UserRole.dyHodEngineer ||
-          role == UserRole.hod ||
-          role == UserRole.dyHod) {
+      } else if (isEngineerRole && !isEngineerRectification) {
         final uploadData = FormData.fromMap({
           "inspectionStatus": _mapTestType(state.inspectionStatus) ?? '',
           "engineerRemarks": state.engineerRemarks,
@@ -766,15 +770,9 @@ class InspectionFormNotifier extends StateNotifier<InspectionFormState> {
         }));
       }
 
-      final isEngineerRole = role == UserRole.engineer ||
-          role == UserRole.dyHodEngineer ||
-          role == UserRole.hod ||
-          role == UserRole.dyHod;
-
       final dataMap = FinalSubmitPayload.buildDataJson(
         rfiId: _rfiId,
         state: state,
-        isEngineerRole: isEngineerRole,
         userId: userId,
         mapInspectionStatus: _mapInspectionStatus,
         mapTestType: _mapTestType,

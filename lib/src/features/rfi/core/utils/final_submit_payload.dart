@@ -10,7 +10,6 @@ class FinalSubmitPayload {
   static Map<String, dynamic> buildDataJson({
     required int rfiId,
     required InspectionFormState state,
-    required bool isEngineerRole,
     required String? userId,
     required String? Function(String?) mapInspectionStatus,
     required String? Function(String?) mapTestType,
@@ -41,12 +40,8 @@ class FinalSubmitPayload {
       'units': firstM.units == 'Select U' ? null : firstM.units,
       'noOfItems': int.tryParse(firstM.no),
       'totalQty': firstM.totalQty,
-      'inspectionStatus': isEngineerRole
-          ? mapTestType(state.inspectionStatus)
-          : mapInspectionStatus(state.testInSiteLab),
-      'testInsiteLab': isEngineerRole
-          ? mapInspectionStatus(state.testInSiteLab)
-          : mapTestType(state.inspectionStatus),
+      'inspectionStatus': mapInspectionStatus(state.testInSiteLab),
+      'testInsiteLab': mapTestType(state.inspectionStatus),
       'engineerRemarks':
           state.engineerRemarks.isEmpty ? null : state.engineerRemarks,
       'descriptionEnclosure': _resolveDescriptionEnclosure(state),
