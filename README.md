@@ -1,5 +1,9 @@
 
 
+## Firebase Crashlytics
+
+Integrated for Android and iOS. Run **`flutterfire configure`** once before release builds — see [docs/FIREBASE_CRASHLYTICS_SETUP.md](docs/FIREBASE_CRASHLYTICS_SETUP.md).
+
 ## Environment
 
 Default (in `lib/src/core/constants/api_constants.dart`):
