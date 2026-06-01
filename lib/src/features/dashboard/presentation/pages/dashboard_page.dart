@@ -203,7 +203,13 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         ),
         leading: Padding(
           padding: const EdgeInsets.only(left: 10, top: 8, bottom: 8, right: 4),
-          child: Image.asset('assets/app_icon.png', fit: BoxFit.contain),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(10),
+            child: Image.asset(
+              'assets/app_icon.png',
+              fit: BoxFit.contain,
+            ),
+          ),
         ),
         actions: <Widget>[
           Padding(
