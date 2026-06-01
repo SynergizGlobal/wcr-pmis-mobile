@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "736698706404",
+    "project_id": "syntrack-pmis-wcr",
+    "storage_bucket": "syntrack-pmis-wcr.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:736698706404:android:d3790f2581385a92597ff1",
+        "android_client_info": {
+          "package_name": "com.synergiz.wcr.pmis"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBx_3V9RyZTVMMgkP_DEa_bwd11-WdsvE4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

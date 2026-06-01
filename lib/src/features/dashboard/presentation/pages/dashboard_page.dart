@@ -1123,7 +1123,7 @@ class HomeSectionScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListView(
       children: <Widget>[
-        _sectionCard(context, title: 'WCR PMIS', subtitle: message),
+        _sectionCard(context, title: 'IMPACT PMIS', subtitle: message),
         const SizedBox(height: 12),
         if (session != null)
           _sectionCard(

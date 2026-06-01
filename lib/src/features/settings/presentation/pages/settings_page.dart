@@ -4,6 +4,7 @@ import 'package:in_app_review/in_app_review.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:wcr_pmis_mobile/src/app/theme/theme_mode_provider.dart';
+import 'package:wcr_pmis_mobile/src/core/constants/legal_constants.dart';
 import 'package:wcr_pmis_mobile/src/core/widgets/app_action_card.dart';
 import 'package:wcr_pmis_mobile/src/core/widgets/app_dialog.dart';
 import 'package:wcr_pmis_mobile/src/features/settings/presentation/providers/dashboard_view_mode_provider.dart';
@@ -36,6 +37,11 @@ class SettingsPage extends ConsumerWidget {
             title: 'Rate this app',
             icon: Icons.star_rate_rounded,
             onTap: () => _rateApp(context),
+          ),
+          AppActionCard(
+            title: 'Privacy Policy',
+            icon: Icons.privacy_tip_outlined,
+            onTap: () => _openPrivacyPolicy(context),
           ),
           AppActionCard(
             title: 'Contact us',
@@ -206,9 +212,30 @@ class SettingsPage extends ConsumerWidget {
     );
   }
 
+  Future<void> _openPrivacyPolicy(BuildContext context) async {
+    final Uri url = Uri.parse(LegalConstants.privacyPolicyUrl);
+    final bool launched = await launchUrl(
+      url,
+      mode: LaunchMode.externalApplication,
+    );
+    if (launched) {
+      return;
+    }
+    if (!context.mounted) {
+      return;
+    }
+    await AppDialog.show(
+      context: context,
+      title: 'Info',
+      message:
+          'Could not open the privacy policy. Visit:\n${LegalConstants.privacyPolicyUrl}',
+      type: AppDialogType.info,
+    );
+  }
+
   Future<void> _contactUs(BuildContext context) async {
     final Uri mail = Uri.parse(
-      'mailto:pmis.support@wcr.gov.in?subject=WCR PMIS Support',
+      'mailto:pmis.support@wcr.gov.in?subject=IMPACT%20PMIS%20Support',
     );
     final bool launched = await launchUrl(mail);
     if (launched) {
@@ -229,7 +256,7 @@ class SettingsPage extends ConsumerWidget {
     await SharePlus.instance.share(
       ShareParams(
         text:
-            'Try WCR PMIS app for Western Central Railways operations and updates.',
+            'Try IMPACT PMIS by Synergiz — ${LegalConstants.storeTagline}',
       ),
     );
   }

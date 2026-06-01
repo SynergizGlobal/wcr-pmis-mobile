@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:wcr_pmis_mobile/src/app/config/app_config_provider.dart';
 import 'package:wcr_pmis_mobile/src/app/theme/app_theme.dart';
 import 'package:wcr_pmis_mobile/src/core/result/failure.dart';
 import 'package:wcr_pmis_mobile/src/core/widgets/app_dialog.dart';
@@ -161,7 +162,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            'Login to continue to WCR PMIS',
+                            'Login to continue to ${ref.watch(appConfigProvider).appName}',
                             style: Theme.of(context).textTheme.bodyMedium
                                 ?.copyWith(color: palette.loginSecondaryText),
                             textAlign: TextAlign.center,

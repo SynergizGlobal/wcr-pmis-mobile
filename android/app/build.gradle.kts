@@ -3,10 +3,12 @@ plugins {
     id("kotlin-android")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
+    id("com.google.gms.google-services")
+    id("com.google.firebase.crashlytics")
 }
 
 android {
-    namespace = "com.synergizglobal.wcrpmis.wcr_pmis_mobile"
+    namespace = "com.synergiz.wcr.pmis"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -22,7 +24,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.synergizglobal.wcrpmis.wcr_pmis_mobile"
+        applicationId = "com.synergiz.wcr.pmis"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode

@@ -1,4 +1,4 @@
-package com.synergizglobal.wcrpmis.wcr_pmis_mobile
+package com.synergiz.wcr.pmis
 
 import android.content.ContentValues
 import android.os.Build
