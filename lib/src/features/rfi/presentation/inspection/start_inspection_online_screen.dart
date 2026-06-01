@@ -12,6 +12,7 @@ import 'package:open_file/open_file.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../../core/network/environment.dart';
+import '../../core/utils/rfi_file_paths.dart';
 import '../../core/utils/rfi_preview_fetch.dart';
 import '../../core/widgets/rfi_remote_media_preview.dart';
 import '../../core/providers/dio_provider.dart';
@@ -1055,6 +1056,59 @@ class _StartInspectionOnlineScreenState
     );
   }
 
+  Widget _buildContractorSupportingDocsSection(
+    BuildContext context,
+    List<SupportingDocumentEntry> documents,
+  ) {
+    const accent = Color(0xFF50589C);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Supporting Documents (Uploaded by Contractor)',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 15,
+              color: accent,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'View or download files submitted with the contractor inspection.',
+            style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+          ),
+          if (documents.isEmpty) ...[
+            const SizedBox(height: 12),
+            Text(
+              'No supporting documents uploaded by contractor.',
+              style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+            ),
+          ] else ...[
+            const SizedBox(height: 12),
+            ...documents.map(
+              (doc) => _ReadonlySupportingDocumentRow(
+                key: ValueKey(doc.filePath),
+                entry: doc,
+                accentColor: accent,
+                onView: () => _viewFile(doc.filePath),
+                onDownload: () => _downloadFile(doc.filePath),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
   Widget _buildMiniIconBtn(IconData icon, Color color, VoidCallback onTap) {
     return Material(
       color: Colors.transparent,
@@ -1080,9 +1134,21 @@ class _StartInspectionOnlineScreenState
     final isClientSide = role == UserRole.engineer || role == UserRole.dyHodEngineer || role == UserRole.hod || role == UserRole.dyHod;
 
 
+    final contractorSupportingDocs =
+        extractContractorSupportingFromInspectionDetails(
+      state.rfiDetails?.inspectionDetails,
+    );
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        if (isClientSide) ...[
+          _buildContractorSupportingDocsSection(
+            context,
+            contractorSupportingDocs,
+          ),
+          const SizedBox(height: 16),
+        ],
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
@@ -1096,23 +1162,33 @@ class _StartInspectionOnlineScreenState
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('Supporting Documents',
-                      style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 15,
-                          color: const Color(0xFF50589C))),
-                  ElevatedButton.icon(
-                    onPressed: () => _pickFiles(notifier),
-                    icon: const Icon(Icons.attach_file, size: 18),
-                    label: const Text('Attach'),
-                    style: ElevatedButton.styleFrom(
+                  Text(
+                    isClientSide
+                        ? 'Your Supporting Documents'
+                        : 'Supporting Documents',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                      color: Color(0xFF50589C),
+                    ),
+                  ),
+                  if (isContractorRep || isClientSide)
+                    ElevatedButton.icon(
+                      onPressed: () => _pickFiles(notifier),
+                      icon: const Icon(Icons.attach_file, size: 18),
+                      label: const Text('Attach'),
+                      style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF50589C),
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 8),
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
                         shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8))),
-                  ),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                    ),
                 ],
               ),
               if (state.supportingDocuments.isNotEmpty) ...[
@@ -3080,6 +3156,85 @@ class _ChecklistDialogState extends ConsumerState<_ChecklistDialog> {
                   fontWeight:
                       isSelected ? FontWeight.bold : FontWeight.normal)),
         ),
+      ),
+    );
+  }
+}
+
+class _ReadonlySupportingDocumentRow extends StatelessWidget {
+  const _ReadonlySupportingDocumentRow({
+    super.key,
+    required this.entry,
+    required this.accentColor,
+    required this.onView,
+    required this.onDownload,
+  });
+
+  final SupportingDocumentEntry entry;
+  final Color accentColor;
+  final VoidCallback onView;
+  final VoidCallback onDownload;
+
+  Widget _miniIcon(IconData icon, Color color, VoidCallback onTap) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: Padding(
+          padding: const EdgeInsets.all(6),
+          child: Icon(icon, color: color, size: 20),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final path = entry.filePath;
+    final fileName = path.split('/').last.split('?').first;
+    final description = entry.documentsDescription.trim();
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.insert_drive_file, size: 24, color: accentColor),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  fileName.isEmpty ? 'Document' : fileName,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+              _miniIcon(Icons.visibility_outlined, Colors.blue, onView),
+              _miniIcon(
+                Icons.download_for_offline_outlined,
+                Colors.green,
+                onDownload,
+              ),
+            ],
+          ),
+          if (description.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Text(
+              description,
+              style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
+            ),
+          ],
+        ],
       ),
     );
   }

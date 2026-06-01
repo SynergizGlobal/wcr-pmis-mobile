@@ -13,10 +13,11 @@ import 'package:pdfx/pdfx.dart' as pdfr;
 import '../../domain/inspection/enclosure_checklist.dart';
 import '../../domain/inspection/inspection_item.dart';
 import '../../providers/inspection/inspection_form_state.dart';
-import '../utils/rfi_media_utils.dart';
 import '../utils/rfi_preview_fetch.dart';
 import '../utils/user_role.dart';
 
+/// Builds the inspection submit PDF (MRVC-style Part I–III) and appends
+/// enclosure/supporting PDFs, then checklist tables (online only).
 class InspectionSubmitPdfBuilder {
   static const _margin = 30.0;
   static const _yellow = PdfColor.fromInt(0xFFFFFF00);
@@ -42,7 +43,7 @@ class InspectionSubmitPdfBuilder {
 
     final font = pw.Font.helvetica();
     final fontBold = pw.Font.helveticaBold();
-    final logo = await _loadAssetImage('assets/wcr_watermark.png');
+    final logo = await _loadAssetImage('assets/images/mrvc_logo.png');
 
     final pdf = pw.Document();
     final enclosureNames = _enclosureNames(state, rfi);
@@ -59,6 +60,40 @@ class InspectionSubmitPdfBuilder {
           font: font,
           fontBold: fontBold,
           logo: logo,
+        ),
+      ),
+    );
+
+    pdf.addPage(
+      pw.Page(
+        pageFormat: PdfPageFormat.a4,
+        margin: const pw.EdgeInsets.all(_margin),
+        build: (context) => pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          children: _buildPartTwoEngineerRemarksPage(
+            state: state,
+            isEngineer: isEngineer,
+            isOffline: isOffline,
+            font: font,
+            fontBold: fontBold,
+          ),
+        ),
+      ),
+    );
+
+    pdf.addPage(
+      pw.Page(
+        pageFormat: PdfPageFormat.a4,
+        margin: const pw.EdgeInsets.all(_margin),
+        build: (context) => pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          children: _buildPartThreeValidationPage(
+            state: state,
+            rfi: rfi,
+            isOffline: isOffline,
+            font: font,
+            fontBold: fontBold,
+          ),
         ),
       ),
     );
@@ -177,12 +212,6 @@ class InspectionSubmitPdfBuilder {
       rfi.rfiDescription,
     ].whereType<String>().where((e) => e.trim().isNotEmpty).join(' / ');
     final rfiDescription = rfi.description ?? rfi.rfiDescription ?? '';
-    final status = state.inspectionStatus.trim();
-    final isAccepted = status.toUpperCase() == 'ACCEPTED';
-    final isRejected =
-        status.toUpperCase() == 'REJECTED' ||
-        status.toUpperCase() == 'RETURNED_FOR_RECTIFICATION' ||
-        status == 'Rectification';
 
     return [
         pw.Container(
@@ -292,73 +321,142 @@ class InspectionSubmitPdfBuilder {
                 ),
               ),
             ),
-        pw.SizedBox(height: 12),
-        pw.Text('Part - II : Engineer\'s Remarks',
-            style: pw.TextStyle(font: fontBold, fontSize: 12)),
-        pw.SizedBox(height: 8),
-        pw.Row(
-          crossAxisAlignment: pw.CrossAxisAlignment.start,
-          children: [
-            pw.Expanded(
-              child: pw.Column(
-                crossAxisAlignment: pw.CrossAxisAlignment.start,
-                children: [
-                  pw.Text('Submitted By',
-                      style: pw.TextStyle(font: font, fontSize: 9)),
-                  pw.Text('Contractor',
-                      style: pw.TextStyle(font: font, fontSize: 9)),
-                  pw.SizedBox(height: 10),
-                  _labeledCheckbox(
-                    label: 'Approved',
-                    checked: isEngineer && isAccepted,
-                    font: font,
-                  ),
-                ],
-              ),
-            ),
-            pw.Expanded(
-              child: pw.Column(
-                crossAxisAlignment: pw.CrossAxisAlignment.start,
-                children: [
-                  pw.Text('Received By',
-                      style: pw.TextStyle(font: font, fontSize: 9)),
-                  pw.Text('Engineer',
-                      style: pw.TextStyle(font: font, fontSize: 9)),
-                  pw.SizedBox(height: 10),
-                  _labeledCheckbox(
-                    label: 'Not Approved',
-                    checked: isEngineer && isRejected,
-                    font: font,
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-        pw.SizedBox(height: 10),
-        pw.Text('Remarks:', style: pw.TextStyle(font: fontBold, fontSize: 10)),
-        pw.SizedBox(height: 4),
-        pw.Container(
-          width: double.infinity,
-          constraints: const pw.BoxConstraints(minHeight: 36),
-          padding: const pw.EdgeInsets.all(4),
-          decoration: pw.BoxDecoration(border: pw.Border.all(color: PdfColors.grey300)),
-          child: pw.Text(
-            isEngineer && isRejected ? state.engineerRemarks : '',
-            style: pw.TextStyle(font: font, fontSize: 9),
-          ),
-        ),
-        pw.SizedBox(height: 28),
-        pw.Row(
-          mainAxisAlignment: pw.MainAxisAlignment.spaceAround,
-          children: [
-            pw.Text('Contractor Representative',
-                style: pw.TextStyle(font: font, fontSize: 9)),
-            pw.Text('MRVC Representative',
-                style: pw.TextStyle(font: font, fontSize: 9)),
-          ],
-        ),
       ];
+  }
+
+  static List<pw.Widget> _buildPartTwoEngineerRemarksPage({
+    required InspectionFormState state,
+    required bool isEngineer,
+    required bool isOffline,
+    required pw.Font font,
+    required pw.Font fontBold,
+  }) {
+    final status = state.inspectionStatus.trim();
+    final isAccepted = status.toUpperCase() == 'ACCEPTED';
+    final isRejected = status.toUpperCase() == 'REJECTED' ||
+        status.toUpperCase() == 'RETURNED_FOR_RECTIFICATION' ||
+        status == 'Rectification';
+    // Online submit: stampEnggPdfFromXml overlays ticks, remarks, and signatures.
+    final showApprovalMarks = isOffline && isEngineer;
+    final remarks = isOffline && isEngineer && isRejected
+        ? state.engineerRemarks.trim()
+        : '';
+
+    return [
+      pw.Text(
+        'Part - II : Engineer\'s Remarks',
+        style: pw.TextStyle(font: fontBold, fontSize: 12),
+      ),
+      pw.SizedBox(height: 10),
+      _buildEngineerApprovalTable(
+        font: font,
+        fontBold: fontBold,
+        isAccepted: showApprovalMarks && isAccepted,
+        isRejected: showApprovalMarks && isRejected,
+      ),
+      pw.SizedBox(height: 12),
+      _formFieldBox(
+        label: 'Remarks:',
+        value: remarks,
+        font: font,
+        fontBold: fontBold,
+        minHeight: 40,
+      ),
+      pw.SizedBox(height: 16),
+      pw.Row(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          _signaturePlaceholder(
+            title: 'Contractor Representative',
+            font: font,
+            boxHeight: 92,
+          ),
+          pw.SizedBox(width: 28),
+          _signaturePlaceholder(
+            title: 'MRVC Representative',
+            font: font,
+            boxHeight: 92,
+          ),
+        ],
+      ),
+    ];
+  }
+
+  /// Fixed page for server [stampPdfFromXml] / validation overlays (web template).
+  static List<pw.Widget> _buildPartThreeValidationPage({
+    required InspectionFormState state,
+    required InspectionItem rfi,
+    required bool isOffline,
+    required pw.Font font,
+    required pw.Font fontBold,
+  }) {
+    final contractorDesc = _inspectionDescriptionForPdf(
+      state: state,
+      forContractor: true,
+    );
+    final clientDesc = _inspectionDescriptionForPdf(
+      state: state,
+      forContractor: false,
+    );
+
+    return [
+      pw.Text(
+        'Part - III : Validation (OPTIONAL)',
+        style: pw.TextStyle(font: fontBold, fontSize: 12),
+      ),
+      pw.SizedBox(height: 10),
+      pw.Row(
+        crossAxisAlignment: pw.CrossAxisAlignment.center,
+        children: [
+          _labeledCheckbox(
+            label: 'Approved',
+            checked: false,
+            font: font,
+            fontBold: fontBold,
+          ),
+          pw.SizedBox(width: 40),
+          _labeledCheckbox(
+            label: 'Rejected',
+            checked: false,
+            font: font,
+            fontBold: fontBold,
+          ),
+        ],
+      ),
+      pw.SizedBox(height: 10),
+      pw.Text('Remarks:', style: pw.TextStyle(font: fontBold, fontSize: 10)),
+      pw.SizedBox(height: 4),
+      pw.Text('Comment:', style: pw.TextStyle(font: fontBold, fontSize: 10)),
+      pw.SizedBox(height: 4),
+      _stampReserveBox(
+        height: 72,
+        value: isOffline ? (rfi.validationStatus ?? '').trim() : '',
+        font: font,
+      ),
+      pw.SizedBox(height: 12),
+      _validatedByOnStampZone(
+        validatedBy: isOffline ? (rfi.assignedPersonClient ?? '').trim() : '',
+        validatedOn: isOffline
+            ? DateFormat('yyyy-MM-dd').format(DateTime.now())
+            : '',
+        font: font,
+        fontBold: fontBold,
+      ),
+      pw.SizedBox(height: 14),
+      pw.Text(
+        'Inspection Description (Contractor):',
+        style: pw.TextStyle(font: fontBold, fontSize: 10),
+      ),
+      pw.SizedBox(height: 2),
+      pw.Text(contractorDesc, style: pw.TextStyle(font: font, fontSize: 9)),
+      pw.SizedBox(height: 8),
+      pw.Text(
+        'Inspection Description (Client):',
+        style: pw.TextStyle(font: fontBold, fontSize: 10),
+      ),
+      pw.SizedBox(height: 2),
+      pw.Text(clientDesc, style: pw.TextStyle(font: font, fontSize: 9)),
+    ];
   }
 
   static List<pw.Widget> _buildPageTwo({
@@ -372,12 +470,6 @@ class InspectionSubmitPdfBuilder {
     required List<pw.MemoryImage> siteImages,
   }) {
     final measurements = state.measurements;
-    final contractorDesc = state.contractorDescription.trim().isEmpty
-        ? '-'
-        : state.contractorDescription.trim();
-    final clientDesc = state.clientDescription.trim().isEmpty
-        ? '-'
-        : state.clientDescription.trim();
 
     final footerText = isEngineer
         ? 'RFI No. ${rfi.rfiId ?? rfiId} is submitted by Contractor on '
@@ -388,46 +480,6 @@ class InspectionSubmitPdfBuilder {
         : null;
 
     return [
-        pw.Text('Part - III : Validation (OPTIONAL)',
-            style: pw.TextStyle(font: fontBold, fontSize: 12)),
-        pw.SizedBox(height: 8),
-        pw.Row(
-          children: [
-            _labeledCheckbox(label: 'Approved', checked: false, font: font),
-            pw.SizedBox(width: 48),
-            _labeledCheckbox(label: 'Rejected', checked: false, font: font),
-          ],
-        ),
-        pw.SizedBox(height: 8),
-        pw.Text('Remarks:', style: pw.TextStyle(font: fontBold, fontSize: 10)),
-        pw.SizedBox(height: 4),
-        pw.Text('Comment:', style: pw.TextStyle(font: fontBold, fontSize: 10)),
-        pw.Container(
-          height: 60,
-          width: double.infinity,
-          decoration: pw.BoxDecoration(border: pw.Border.all(color: PdfColors.grey)),
-        ),
-        pw.SizedBox(height: 8),
-        pw.Row(
-          mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-          children: [
-            pw.Text('Validated By:', style: pw.TextStyle(font: font, fontSize: 9)),
-            pw.Text('Validated On:', style: pw.TextStyle(font: font, fontSize: 9)),
-          ],
-        ),
-        pw.SizedBox(height: 6),
-        pw.Divider(thickness: 0.5),
-        pw.SizedBox(height: 8),
-        pw.Text('Inspection Description (Contractor):',
-            style: pw.TextStyle(font: fontBold, fontSize: 10)),
-        pw.SizedBox(height: 2),
-        pw.Text(contractorDesc, style: pw.TextStyle(font: font, fontSize: 9)),
-        pw.SizedBox(height: 8),
-        pw.Text('Inspection Description (Client):',
-            style: pw.TextStyle(font: fontBold, fontSize: 10)),
-        pw.SizedBox(height: 2),
-        pw.Text(clientDesc, style: pw.TextStyle(font: font, fontSize: 9)),
-        pw.SizedBox(height: 12),
         pw.Text('Measurement Record', style: pw.TextStyle(font: fontBold, fontSize: 11)),
         pw.SizedBox(height: 6),
         pw.TableHelper.fromTextArray(
@@ -500,35 +552,22 @@ class InspectionSubmitPdfBuilder {
 
   static pw.Widget _pdfCheckbox({
     required bool checked,
-    double size = 10,
+    required pw.Font fontBold,
+    double size = 11,
   }) {
-    return pw.SizedBox(
+    return pw.Container(
       width: size,
       height: size,
-      child: pw.Stack(
-        children: [
-          pw.Positioned.fill(
-            child: pw.Container(
-              decoration: pw.BoxDecoration(
-                border: pw.Border.all(color: PdfColors.black, width: 0.75),
-              ),
-            ),
-          ),
-          if (checked)
-            pw.CustomPaint(
-              size: PdfPoint(size, size),
-              painter: (canvas, point) {
-                canvas
-                  ..setStrokeColor(PdfColors.black)
-                  ..setLineWidth(1)
-                  ..moveTo(point.x * 0.2, point.y * 0.52)
-                  ..lineTo(point.x * 0.38, point.y * 0.72)
-                  ..lineTo(point.x * 0.8, point.y * 0.24)
-                  ..strokePath();
-              },
-            ),
-        ],
+      alignment: pw.Alignment.center,
+      decoration: pw.BoxDecoration(
+        border: pw.Border.all(color: PdfColors.black, width: 0.8),
       ),
+      child: checked
+          ? pw.Text(
+              'X',
+              style: pw.TextStyle(font: fontBold, fontSize: 8),
+            )
+          : null,
     );
   }
 
@@ -536,21 +575,231 @@ class InspectionSubmitPdfBuilder {
     required String label,
     required bool checked,
     required pw.Font font,
+    pw.Font? fontBold,
     double fontSize = 10,
   }) {
+    final bold = fontBold ?? font;
     return pw.Row(
       mainAxisSize: pw.MainAxisSize.min,
-      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      crossAxisAlignment: pw.CrossAxisAlignment.center,
       children: [
-        pw.Padding(
-          padding: const pw.EdgeInsets.only(top: 1.5),
-          child: _pdfCheckbox(checked: checked),
-        ),
+        _pdfCheckbox(checked: checked, fontBold: bold),
         pw.SizedBox(width: 6),
         pw.Text(
           label,
           style: pw.TextStyle(font: font, fontSize: fontSize),
         ),
+      ],
+    );
+  }
+
+  static pw.Widget _formFieldBox({
+    required String label,
+    required String value,
+    required pw.Font font,
+    required pw.Font fontBold,
+    double minHeight = 32,
+  }) {
+    return pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        pw.Text(
+          label,
+          style: pw.TextStyle(font: fontBold, fontSize: 10),
+        ),
+        pw.SizedBox(height: 4),
+        pw.Container(
+          width: double.infinity,
+          constraints: pw.BoxConstraints(minHeight: minHeight),
+          padding: const pw.EdgeInsets.symmetric(horizontal: 6, vertical: 5),
+          decoration: pw.BoxDecoration(
+            border: pw.Border.all(color: PdfColors.grey600, width: 0.75),
+          ),
+          alignment: pw.Alignment.topLeft,
+          child: pw.Text(
+            value.isEmpty ? ' ' : value,
+            style: pw.TextStyle(font: font, fontSize: 9),
+          ),
+        ),
+      ],
+    );
+  }
+
+  static pw.Widget _buildEngineerApprovalTable({
+    required pw.Font font,
+    required pw.Font fontBold,
+    required bool isAccepted,
+    required bool isRejected,
+  }) {
+    const cellPad = pw.EdgeInsets.symmetric(horizontal: 8, vertical: 6);
+    return pw.Table(
+      border: pw.TableBorder.all(color: PdfColors.grey500, width: 0.5),
+      columnWidths: const {
+        0: pw.FlexColumnWidth(1),
+        1: pw.FlexColumnWidth(1),
+      },
+      defaultVerticalAlignment: pw.TableCellVerticalAlignment.middle,
+      children: [
+        pw.TableRow(
+          children: [
+            pw.Padding(
+              padding: cellPad,
+              child: pw.Text(
+                'Submitted By',
+                style: pw.TextStyle(font: font, fontSize: 9),
+              ),
+            ),
+            pw.Padding(
+              padding: cellPad,
+              child: pw.Text(
+                'Received By',
+                style: pw.TextStyle(font: font, fontSize: 9),
+              ),
+            ),
+          ],
+        ),
+        pw.TableRow(
+          children: [
+            pw.Padding(
+              padding: cellPad,
+              child: pw.Text(
+                'Contractor',
+                style: pw.TextStyle(font: font, fontSize: 9),
+              ),
+            ),
+            pw.Padding(
+              padding: cellPad,
+              child: pw.Text(
+                'Engineer',
+                style: pw.TextStyle(font: font, fontSize: 9),
+              ),
+            ),
+          ],
+        ),
+        pw.TableRow(
+          children: [
+            pw.Padding(
+              padding: const pw.EdgeInsets.all(10),
+              child: _labeledCheckbox(
+                label: 'Approved',
+                checked: isAccepted,
+                font: font,
+                fontBold: fontBold,
+              ),
+            ),
+            pw.Padding(
+              padding: const pw.EdgeInsets.all(10),
+              child: _labeledCheckbox(
+                label: 'Not Approved',
+                checked: isRejected,
+                font: font,
+                fontBold: fontBold,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  static pw.Widget _signaturePlaceholder({
+    required String title,
+    required pw.Font font,
+    double boxHeight = 92,
+  }) {
+    return pw.Expanded(
+      child: pw.Container(
+        height: boxHeight + 22,
+        padding: const pw.EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+        decoration: pw.BoxDecoration(
+          border: pw.Border.all(color: PdfColors.grey600, width: 0.75),
+        ),
+        child: pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+          children: [
+            pw.Text(
+              title,
+              style: pw.TextStyle(font: font, fontSize: 9),
+              textAlign: pw.TextAlign.center,
+            ),
+            pw.SizedBox(height: 6),
+            pw.Expanded(child: pw.SizedBox()),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Empty bordered area for server-stamped remarks / comment text.
+  static pw.Widget _stampReserveBox({
+    required double height,
+    required String value,
+    required pw.Font font,
+  }) {
+    return pw.Container(
+      width: double.infinity,
+      height: height,
+      padding: const pw.EdgeInsets.symmetric(horizontal: 6, vertical: 5),
+      decoration: pw.BoxDecoration(
+        border: pw.Border.all(color: PdfColors.grey600, width: 0.75),
+      ),
+      alignment: pw.Alignment.topLeft,
+      child: value.isEmpty
+          ? null
+          : pw.Text(value, style: pw.TextStyle(font: font, fontSize: 9)),
+    );
+  }
+
+  /// Label row, reserved value band, then rule line (web stamp targets).
+  static pw.Widget _validatedByOnStampZone({
+    required String validatedBy,
+    required String validatedOn,
+    required pw.Font font,
+    required pw.Font fontBold,
+  }) {
+    const valueBandHeight = 22.0;
+    return pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+      children: [
+        pw.Row(
+          children: [
+            pw.Expanded(
+              child: pw.Text(
+                'Validated By:',
+                style: pw.TextStyle(font: fontBold, fontSize: 9),
+              ),
+            ),
+            pw.Expanded(
+              child: pw.Text(
+                'Validated On:',
+                style: pw.TextStyle(font: fontBold, fontSize: 9),
+                textAlign: pw.TextAlign.right,
+              ),
+            ),
+          ],
+        ),
+        pw.SizedBox(
+          height: valueBandHeight,
+          child: pw.Row(
+            crossAxisAlignment: pw.CrossAxisAlignment.center,
+            children: [
+              pw.Expanded(
+                child: pw.Text(
+                  validatedBy.isEmpty ? ' ' : validatedBy,
+                  style: pw.TextStyle(font: font, fontSize: 9),
+                ),
+              ),
+              pw.Expanded(
+                child: pw.Text(
+                  validatedOn.isEmpty ? ' ' : validatedOn,
+                  style: pw.TextStyle(font: font, fontSize: 9),
+                  textAlign: pw.TextAlign.right,
+                ),
+              ),
+            ],
+          ),
+        ),
+        pw.Divider(thickness: 0.5, color: PdfColors.grey600),
       ],
     );
   }
@@ -634,6 +883,63 @@ class InspectionSubmitPdfBuilder {
     );
   }
 
+  /// Part III: contractor / engineer text from API `descriptionEnclosure`.
+  static String _inspectionDescriptionForPdf({
+    required InspectionFormState state,
+    required bool forContractor,
+  }) {
+    final fromApi = _descriptionEnclosureFromInspectionDetails(
+      state.rfiDetails?.inspectionDetails,
+      forContractor: forContractor,
+    );
+    if (fromApi != null && fromApi.isNotEmpty) return fromApi;
+
+    final fromForm = forContractor
+        ? state.contractorDescription.trim()
+        : state.clientDescription.trim();
+    if (fromForm.isNotEmpty) return fromForm;
+
+    return '-';
+  }
+
+  static String? _descriptionEnclosureFromInspectionDetails(
+    List<InspectionDetail>? details, {
+    required bool forContractor,
+  }) {
+    if (details == null || details.isEmpty) return null;
+
+    for (final detail in details) {
+      if (forContractor) {
+        if (!_isContractorInspectionDetail(detail)) continue;
+      } else if (!_isEngineerInspectionDetail(detail)) {
+        continue;
+      }
+      final text = _descriptionEnclosureFromDetail(detail);
+      if (text != null) return text;
+    }
+    return null;
+  }
+
+  static String? _descriptionEnclosureFromDetail(InspectionDetail detail) {
+    final text = detail.descriptionEnclosure?.trim();
+    if (text == null || text.isEmpty) return null;
+    final location = detail.location?.trim();
+    if (location != null && location.isNotEmpty && text == location) {
+      return null;
+    }
+    return text;
+  }
+
+  static bool _isContractorInspectionDetail(InspectionDetail detail) {
+    return detail.uploadedBy?.trim().toUpperCase() == 'CON';
+  }
+
+  static bool _isEngineerInspectionDetail(InspectionDetail detail) {
+    final u = detail.uploadedBy?.trim().toUpperCase() ?? '';
+    if (u.isEmpty) return false;
+    return u == 'ENG' || u == 'ENGG' || u == 'AE' || u.startsWith('ENG');
+  }
+
   static String _displayDate(String? raw) {
     if (raw == null || raw.trim().isEmpty) return '';
     try {
@@ -644,6 +950,8 @@ class InspectionSubmitPdfBuilder {
     }
   }
 
+  /// Web [pdfUtils]: merge enclosure → supporting → test report PDFs only.
+  /// Do not append prior inspection master PDFs from [inspectionDetails].
   static Future<List<_LabeledPdf>> _loadAttachmentPdfPages(
     InspectionFormState state,
     InspectionItem rfi,
@@ -663,6 +971,7 @@ class InspectionSubmitPdfBuilder {
       }
     }
 
+    // 1. Enclosures (web: enclosurePdfBlobs)
     for (final path in state.enclosurePaths) {
       addSourcePdf(path, 'Enclosure');
     }
@@ -670,10 +979,12 @@ class InspectionSubmitPdfBuilder {
       addSourcePdf(enc.enclosureUploadFile, 'Enclosure');
     }
 
+    // 2. Supporting documents (web: supportingPdfBlobs — form uploads only)
     for (final doc in state.supportingDocuments) {
       addSourcePdf(doc.path, 'Supporting Document');
     }
 
+    // 3. Test report (web: testReportFile — role-specific path on RFI)
     final testReportPath = isEngineer
         ? (rfi.testResEngg?.trim().isNotEmpty == true
             ? rfi.testResEngg
@@ -734,10 +1045,7 @@ class InspectionSubmitPdfBuilder {
       final bytes = await _loadFileBytes(path, dio);
       if (bytes == null || bytes.isEmpty) continue;
       try {
-        final memory = await RfiMediaUtils.toPdfMemoryImage(path, bytes);
-        if (memory != null) {
-          images.add(memory);
-        }
+        images.add(pw.MemoryImage(bytes));
       } catch (e) {
         debugPrint('Skip site image $path: $e');
       }

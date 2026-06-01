@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import '../../domain/inspection/inspection_item.dart';
+
 class SupportingDocumentEntry {
   const SupportingDocumentEntry({
     required this.filePath,
@@ -52,6 +54,68 @@ List<SupportingDocumentEntry> extractSupportingDocuments(dynamic data) {
       .map((e) => e.trim())
       .where((e) => e.isNotEmpty)
       .map((path) => SupportingDocumentEntry(filePath: path))
+      .toList();
+}
+
+/// Supporting files uploaded by contractor on a prior inspection (CON detail).
+List<SupportingDocumentEntry> extractContractorSupportingFromInspectionDetails(
+  List<InspectionDetail>? details,
+) {
+  if (details == null || details.isEmpty) return [];
+
+  final merged = <SupportingDocumentEntry>[];
+  final seenPaths = <String>{};
+
+  for (final detail in details) {
+    if (detail.uploadedBy?.trim().toUpperCase() != 'CON') continue;
+
+    final paths = extractSupportingDocuments(detail.supportingDocuments);
+    if (paths.isEmpty) continue;
+
+    final descriptions =
+        parseSupportingDescriptionList(detail.documentsDescription);
+
+    for (var i = 0; i < paths.length; i++) {
+      final path = paths[i].filePath.trim();
+      if (path.isEmpty || !seenPaths.add(path)) continue;
+      merged.add(
+        SupportingDocumentEntry(
+          filePath: path,
+          documentsDescription: i < descriptions.length
+              ? descriptions[i]
+              : paths[i].documentsDescription,
+        ),
+      );
+    }
+  }
+  return merged;
+}
+
+List<String> parseSupportingDescriptionList(dynamic data) {
+  if (data == null) return [];
+
+  if (data is List) {
+    return data
+        .map((e) => e.toString().trim())
+        .where((e) => e.isNotEmpty)
+        .toList();
+  }
+
+  final trimmed = data.toString().trim();
+  if (trimmed.isEmpty) return [];
+
+  if (trimmed.startsWith('[')) {
+    try {
+      return parseSupportingDescriptionList(jsonDecode(trimmed));
+    } catch (_) {
+      return [];
+    }
+  }
+
+  return trimmed
+      .split(',')
+      .map((e) => e.trim())
+      .where((e) => e.isNotEmpty)
       .toList();
 }
 

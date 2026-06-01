@@ -56,9 +56,9 @@ class InspectionFormNotifier extends StateNotifier<InspectionFormState> {
         }
       }
 
-      if (initialContractorDesc == null || initialContractorDesc.isEmpty) {
-        initialContractorDesc = details.description;
-      }
+      // if (initialContractorDesc == null || initialContractorDesc.isEmpty) {
+      //   initialContractorDesc = details.description;
+      // }
 
       List<MeasurementRow> initialMeasurements = state.measurements;
       if (initialMeasurements.length == 1 && initialMeasurements.first.type == 'Select') {
