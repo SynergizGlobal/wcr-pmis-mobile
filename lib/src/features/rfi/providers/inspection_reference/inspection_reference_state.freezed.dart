@@ -17,20 +17,16 @@ final _privateConstructorUsedError = UnsupportedError(
 
 /// @nodoc
 mixin _$InspectionReferenceState {
-  // Selected form type
-  FormType? get selectedFormType =>
-      throw _privateConstructorUsedError; // Loading flags
+  FormType? get selectedFormType => throw _privateConstructorUsedError;
   bool get isLoadingInitial => throw _privateConstructorUsedError;
-  bool get isLoadingList =>
-      throw _privateConstructorUsedError; // Initial enclosure names list (loaded on screen open)
+  bool get isLoadingList => throw _privateConstructorUsedError;
   List<EnclosureName> get initialEnclosureNames =>
-      throw _privateConstructorUsedError; // RFI Enclosure List data
-  List<EnclosureName> get enclosureList =>
-      throw _privateConstructorUsedError; // Checklist Description data
+      throw _privateConstructorUsedError;
+  List<EnclosureName> get enclosureList => throw _privateConstructorUsedError;
   List<EnclosureName> get subOptions => throw _privateConstructorUsedError;
   EnclosureName? get selectedSubOption => throw _privateConstructorUsedError;
   List<ChecklistDetail> get checklistDetails =>
-      throw _privateConstructorUsedError; // Reference Form data
+      throw _privateConstructorUsedError;
   List<ReferenceFormItem> get referenceFormItems =>
       throw _privateConstructorUsedError;
   bool get isEnclosureSubmitting => throw _privateConstructorUsedError;
@@ -306,19 +302,15 @@ class _$InspectionReferenceStateImpl implements _InspectionReferenceState {
        _checklistDetails = checklistDetails,
        _referenceFormItems = referenceFormItems;
 
-  // Selected form type
   @override
   final FormType? selectedFormType;
-  // Loading flags
   @override
   @JsonKey()
   final bool isLoadingInitial;
   @override
   @JsonKey()
   final bool isLoadingList;
-  // Initial enclosure names list (loaded on screen open)
   final List<EnclosureName> _initialEnclosureNames;
-  // Initial enclosure names list (loaded on screen open)
   @override
   @JsonKey()
   List<EnclosureName> get initialEnclosureNames {
@@ -328,9 +320,7 @@ class _$InspectionReferenceStateImpl implements _InspectionReferenceState {
     return EqualUnmodifiableListView(_initialEnclosureNames);
   }
 
-  // RFI Enclosure List data
   final List<EnclosureName> _enclosureList;
-  // RFI Enclosure List data
   @override
   @JsonKey()
   List<EnclosureName> get enclosureList {
@@ -339,9 +329,7 @@ class _$InspectionReferenceStateImpl implements _InspectionReferenceState {
     return EqualUnmodifiableListView(_enclosureList);
   }
 
-  // Checklist Description data
   final List<EnclosureName> _subOptions;
-  // Checklist Description data
   @override
   @JsonKey()
   List<EnclosureName> get subOptions {
@@ -362,9 +350,7 @@ class _$InspectionReferenceStateImpl implements _InspectionReferenceState {
     return EqualUnmodifiableListView(_checklistDetails);
   }
 
-  // Reference Form data
   final List<ReferenceFormItem> _referenceFormItems;
-  // Reference Form data
   @override
   @JsonKey()
   List<ReferenceFormItem> get referenceFormItems {
@@ -478,23 +464,22 @@ abstract class _InspectionReferenceState implements InspectionReferenceState {
     final bool isReferenceFormSubmitting,
   }) = _$InspectionReferenceStateImpl;
 
-  // Selected form type
   @override
-  FormType? get selectedFormType; // Loading flags
+  FormType? get selectedFormType;
   @override
   bool get isLoadingInitial;
   @override
-  bool get isLoadingList; // Initial enclosure names list (loaded on screen open)
+  bool get isLoadingList;
   @override
-  List<EnclosureName> get initialEnclosureNames; // RFI Enclosure List data
+  List<EnclosureName> get initialEnclosureNames;
   @override
-  List<EnclosureName> get enclosureList; // Checklist Description data
+  List<EnclosureName> get enclosureList;
   @override
   List<EnclosureName> get subOptions;
   @override
   EnclosureName? get selectedSubOption;
   @override
-  List<ChecklistDetail> get checklistDetails; // Reference Form data
+  List<ChecklistDetail> get checklistDetails;
   @override
   List<ReferenceFormItem> get referenceFormItems;
   @override

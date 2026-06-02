@@ -317,9 +317,9 @@ mixin _$InspectionFormState {
   InspectionItem? get rfiDetails => throw _privateConstructorUsedError;
   int get currentStep => throw _privateConstructorUsedError;
   bool get isLoading => throw _privateConstructorUsedError;
-  String? get error => throw _privateConstructorUsedError; // Step 1
+  String? get error => throw _privateConstructorUsedError;
   String? get selfiePath => throw _privateConstructorUsedError;
-  String get chainage => throw _privateConstructorUsedError; // Step 2
+  String get chainage => throw _privateConstructorUsedError;
   String get location => throw _privateConstructorUsedError;
   String? get dateOfInspection => throw _privateConstructorUsedError;
   String? get timeOfInspection => throw _privateConstructorUsedError;
@@ -856,13 +856,11 @@ class _$InspectionFormStateImpl implements _InspectionFormState {
   final bool isLoading;
   @override
   final String? error;
-  // Step 1
   @override
   final String? selfiePath;
   @override
   @JsonKey()
   final String chainage;
-  // Step 2
   @override
   @JsonKey()
   final String location;
@@ -1159,11 +1157,11 @@ abstract class _InspectionFormState implements InspectionFormState {
   @override
   bool get isLoading;
   @override
-  String? get error; // Step 1
+  String? get error;
   @override
   String? get selfiePath;
   @override
-  String get chainage; // Step 2
+  String get chainage;
   @override
   String get location;
   @override

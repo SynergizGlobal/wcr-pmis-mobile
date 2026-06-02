@@ -17,11 +17,8 @@ final _privateConstructorUsedError = UnsupportedError(
 
 /// @nodoc
 mixin _$UpdateRfiState {
-  // Initial Item
-  RfiListItem? get initialItem =>
-      throw _privateConstructorUsedError; // Loading State
-  bool get isLoadingItems =>
-      throw _privateConstructorUsedError; // Step 1 Read-Only Fields (Populated from initialItem)
+  RfiListItem? get initialItem => throw _privateConstructorUsedError;
+  bool get isLoadingItems => throw _privateConstructorUsedError;
   DropdownItem? get selectedProject => throw _privateConstructorUsedError;
   DropdownItem? get selectedWork => throw _privateConstructorUsedError;
   DropdownItem? get selectedContract => throw _privateConstructorUsedError;
@@ -31,22 +28,19 @@ mixin _$UpdateRfiState {
   DropdownItem? get selectedElement => throw _privateConstructorUsedError;
   DropdownItem? get selectedActivity => throw _privateConstructorUsedError;
   DropdownItem? get selectedRfiDescription =>
-      throw _privateConstructorUsedError; // Step 2 Fields
+      throw _privateConstructorUsedError;
   int get currentStep => throw _privateConstructorUsedError;
   String? get action => throw _privateConstructorUsedError;
   String? get typeOfRfi => throw _privateConstructorUsedError;
   String? get contractorRepresentative => throw _privateConstructorUsedError;
   String? get timeOfInspection => throw _privateConstructorUsedError;
   String? get dateOfInspection => throw _privateConstructorUsedError;
-  String? get dateOfSubmission =>
-      throw _privateConstructorUsedError; // Step 3 Fields
+  String? get dateOfSubmission => throw _privateConstructorUsedError;
   List<String> get selectedEnclosures => throw _privateConstructorUsedError;
-  String? get rfiDescriptionText =>
-      throw _privateConstructorUsedError; // Lists of Available Options (For Step 2 & 3 dynamic dropdowns)
+  String? get rfiDescriptionText => throw _privateConstructorUsedError;
   List<DropdownItem> get representatives => throw _privateConstructorUsedError;
   List<DropdownItem> get rfiDescriptions =>
       throw _privateConstructorUsedError; // for step 3 enclosures
-  // Submit State
   bool get isSubmitting => throw _privateConstructorUsedError;
 
   /// Create a copy of UpdateRfiState
@@ -605,14 +599,11 @@ class _$UpdateRfiStateImpl implements _UpdateRfiState {
        _representatives = representatives,
        _rfiDescriptions = rfiDescriptions;
 
-  // Initial Item
   @override
   final RfiListItem? initialItem;
-  // Loading State
   @override
   @JsonKey()
   final bool isLoadingItems;
-  // Step 1 Read-Only Fields (Populated from initialItem)
   @override
   final DropdownItem? selectedProject;
   @override
@@ -631,7 +622,6 @@ class _$UpdateRfiStateImpl implements _UpdateRfiState {
   final DropdownItem? selectedActivity;
   @override
   final DropdownItem? selectedRfiDescription;
-  // Step 2 Fields
   @override
   @JsonKey()
   final int currentStep;
@@ -647,9 +637,7 @@ class _$UpdateRfiStateImpl implements _UpdateRfiState {
   final String? dateOfInspection;
   @override
   final String? dateOfSubmission;
-  // Step 3 Fields
   final List<String> _selectedEnclosures;
-  // Step 3 Fields
   @override
   @JsonKey()
   List<String> get selectedEnclosures {
@@ -661,9 +649,7 @@ class _$UpdateRfiStateImpl implements _UpdateRfiState {
 
   @override
   final String? rfiDescriptionText;
-  // Lists of Available Options (For Step 2 & 3 dynamic dropdowns)
   final List<DropdownItem> _representatives;
-  // Lists of Available Options (For Step 2 & 3 dynamic dropdowns)
   @override
   @JsonKey()
   List<DropdownItem> get representatives {
@@ -682,7 +668,6 @@ class _$UpdateRfiStateImpl implements _UpdateRfiState {
   }
 
   // for step 3 enclosures
-  // Submit State
   @override
   @JsonKey()
   final bool isSubmitting;
@@ -820,11 +805,10 @@ abstract class _UpdateRfiState implements UpdateRfiState {
     final bool isSubmitting,
   }) = _$UpdateRfiStateImpl;
 
-  // Initial Item
   @override
-  RfiListItem? get initialItem; // Loading State
+  RfiListItem? get initialItem;
   @override
-  bool get isLoadingItems; // Step 1 Read-Only Fields (Populated from initialItem)
+  bool get isLoadingItems;
   @override
   DropdownItem? get selectedProject;
   @override
@@ -842,7 +826,7 @@ abstract class _UpdateRfiState implements UpdateRfiState {
   @override
   DropdownItem? get selectedActivity;
   @override
-  DropdownItem? get selectedRfiDescription; // Step 2 Fields
+  DropdownItem? get selectedRfiDescription;
   @override
   int get currentStep;
   @override
@@ -856,16 +840,15 @@ abstract class _UpdateRfiState implements UpdateRfiState {
   @override
   String? get dateOfInspection;
   @override
-  String? get dateOfSubmission; // Step 3 Fields
+  String? get dateOfSubmission;
   @override
   List<String> get selectedEnclosures;
   @override
-  String? get rfiDescriptionText; // Lists of Available Options (For Step 2 & 3 dynamic dropdowns)
+  String? get rfiDescriptionText;
   @override
   List<DropdownItem> get representatives;
   @override
   List<DropdownItem> get rfiDescriptions; // for step 3 enclosures
-  // Submit State
   @override
   bool get isSubmitting;
 

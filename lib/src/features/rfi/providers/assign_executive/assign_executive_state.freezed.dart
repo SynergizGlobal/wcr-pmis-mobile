@@ -17,25 +17,21 @@ final _privateConstructorUsedError = UnsupportedError(
 
 /// @nodoc
 mixin _$AssignExecutiveState {
-  // Loading flags
   bool get isLoadingItems => throw _privateConstructorUsedError;
   bool get isSubmitting => throw _privateConstructorUsedError;
-  bool get isLoadingLogs =>
-      throw _privateConstructorUsedError; // Dropdown lists
+  bool get isLoadingLogs => throw _privateConstructorUsedError;
   List<DropdownItem> get projects => throw _privateConstructorUsedError;
   List<DropdownItem> get works => throw _privateConstructorUsedError;
   List<DropdownItem> get contracts => throw _privateConstructorUsedError;
   List<DropdownItem> get structureTypes => throw _privateConstructorUsedError;
   List<DropdownItem> get structures => throw _privateConstructorUsedError;
-  List<Executive> get executives =>
-      throw _privateConstructorUsedError; // Selected values
+  List<Executive> get executives => throw _privateConstructorUsedError;
   DropdownItem? get selectedProject => throw _privateConstructorUsedError;
   DropdownItem? get selectedWork => throw _privateConstructorUsedError;
   DropdownItem? get selectedContract => throw _privateConstructorUsedError;
   DropdownItem? get selectedStructureType => throw _privateConstructorUsedError;
   DropdownItem? get selectedStructure => throw _privateConstructorUsedError;
-  Executive? get selectedExecutive =>
-      throw _privateConstructorUsedError; // Log table data
+  Executive? get selectedExecutive => throw _privateConstructorUsedError;
   List<AssignExecutiveLog> get logs => throw _privateConstructorUsedError;
 
   /// Create a copy of AssignExecutiveState
@@ -442,7 +438,6 @@ class _$AssignExecutiveStateImpl implements _AssignExecutiveState {
        _executives = executives,
        _logs = logs;
 
-  // Loading flags
   @override
   @JsonKey()
   final bool isLoadingItems;
@@ -452,9 +447,7 @@ class _$AssignExecutiveStateImpl implements _AssignExecutiveState {
   @override
   @JsonKey()
   final bool isLoadingLogs;
-  // Dropdown lists
   final List<DropdownItem> _projects;
-  // Dropdown lists
   @override
   @JsonKey()
   List<DropdownItem> get projects {
@@ -508,7 +501,6 @@ class _$AssignExecutiveStateImpl implements _AssignExecutiveState {
     return EqualUnmodifiableListView(_executives);
   }
 
-  // Selected values
   @override
   final DropdownItem? selectedProject;
   @override
@@ -521,9 +513,7 @@ class _$AssignExecutiveStateImpl implements _AssignExecutiveState {
   final DropdownItem? selectedStructure;
   @override
   final Executive? selectedExecutive;
-  // Log table data
   final List<AssignExecutiveLog> _logs;
-  // Log table data
   @override
   @JsonKey()
   List<AssignExecutiveLog> get logs {
@@ -635,13 +625,12 @@ abstract class _AssignExecutiveState implements AssignExecutiveState {
     final List<AssignExecutiveLog> logs,
   }) = _$AssignExecutiveStateImpl;
 
-  // Loading flags
   @override
   bool get isLoadingItems;
   @override
   bool get isSubmitting;
   @override
-  bool get isLoadingLogs; // Dropdown lists
+  bool get isLoadingLogs;
   @override
   List<DropdownItem> get projects;
   @override
@@ -653,7 +642,7 @@ abstract class _AssignExecutiveState implements AssignExecutiveState {
   @override
   List<DropdownItem> get structures;
   @override
-  List<Executive> get executives; // Selected values
+  List<Executive> get executives;
   @override
   DropdownItem? get selectedProject;
   @override
@@ -665,7 +654,7 @@ abstract class _AssignExecutiveState implements AssignExecutiveState {
   @override
   DropdownItem? get selectedStructure;
   @override
-  Executive? get selectedExecutive; // Log table data
+  Executive? get selectedExecutive;
   @override
   List<AssignExecutiveLog> get logs;
 

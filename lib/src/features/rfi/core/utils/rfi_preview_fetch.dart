@@ -56,11 +56,14 @@ abstract final class RfiPreviewFetch {
     final lower = fileName.toLowerCase();
     final dirs = <String>[];
 
-    if (lower.contains('supporting')) {
+    if (lower.contains('supporting') ||
+        lower.contains('rfi_') ||
+        lower.startsWith('rfi')) {
       dirs.addAll([
         '/home/ec2-user/uploads/rfi-inspections/',
         '/home/ec2-user/uploads/supporting-documents/',
         '/home/ec2-user/uploads/inspection-supporting/',
+        '/home/ec2-user/uploads/rfi-supporting/',
       ]);
     }
     if (lower.contains('enclosure')) {
@@ -74,6 +77,9 @@ abstract final class RfiPreviewFetch {
 
     dirs.addAll([
       '/home/ec2-user/uploads/rfi-inspections/',
+      '/home/ec2-user/uploads/supporting-documents/',
+      '/home/ec2-user/uploads/inspection-supporting/',
+      '/home/ec2-user/uploads/rfi-supporting/',
       '/home/ec2-user/uploads/rfi-enclosures/',
       '/home/ec2-user/uploads/inspection-site-documents/',
       '/home/ec2-user/uploads/',
@@ -282,6 +288,9 @@ abstract final class RfiPreviewFetch {
     }
     if (trimmed.startsWith('api/')) return true;
     if (trimmed.startsWith('/home/') || trimmed.contains('ec2-user')) {
+      return true;
+    }
+    if (!trimmed.contains('/') && !trimmed.contains('\\')) {
       return true;
     }
     return _needsPreviewFilesEndpoint(trimmed) || _isServerFilesystemPath(trimmed);

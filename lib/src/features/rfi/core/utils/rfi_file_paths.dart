@@ -20,6 +20,29 @@ class SupportingDocumentEntry {
   }
 }
 
+/// Normalizes API/local attachment paths for preview and download.
+String normalizeRfiAttachmentPath(String raw) {
+  var path = raw.trim();
+  if (path.isEmpty) return path;
+
+  if (path.startsWith('[') || path.startsWith('{')) {
+    final docs = extractSupportingDocuments(path);
+    if (docs.isNotEmpty) {
+      return normalizeRfiAttachmentPath(docs.first.filePath);
+    }
+  }
+
+  path = path.replaceAll('\\', '/');
+  if (path.startsWith('file://')) {
+    try {
+      path = Uri.parse(path).toFilePath();
+    } catch (_) {
+      // Keep normalized slash form.
+    }
+  }
+  return path;
+}
+
 List<SupportingDocumentEntry> extractSupportingDocuments(dynamic data) {
   if (data == null) return [];
 
@@ -32,7 +55,7 @@ List<SupportingDocumentEntry> extractSupportingDocuments(dynamic data) {
     if (path.isEmpty) return [];
     return [
       SupportingDocumentEntry(
-        filePath: path,
+        filePath: normalizeRfiAttachmentPath(path),
         documentsDescription: (data['documentsDescription'] ?? '').toString(),
       ),
     ];
@@ -53,7 +76,11 @@ List<SupportingDocumentEntry> extractSupportingDocuments(dynamic data) {
       .split(',')
       .map((e) => e.trim())
       .where((e) => e.isNotEmpty)
-      .map((path) => SupportingDocumentEntry(filePath: path))
+      .map(
+        (path) => SupportingDocumentEntry(
+          filePath: normalizeRfiAttachmentPath(path),
+        ),
+      )
       .toList();
 }
 

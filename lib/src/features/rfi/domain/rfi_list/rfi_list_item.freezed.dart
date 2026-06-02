@@ -36,8 +36,7 @@ mixin _$RfiListItem {
   String get approvalStatus => throw _privateConstructorUsedError;
   String get totalQty => throw _privateConstructorUsedError;
   List<String> get contractorImages => throw _privateConstructorUsedError;
-  List<String> get clientImages =>
-      throw _privateConstructorUsedError; // Add other fields from API if needed, handling nulls with defaults or nullable types
+  List<String> get clientImages => throw _privateConstructorUsedError;
   String? get contract => throw _privateConstructorUsedError;
   String? get typeOfRFI => throw _privateConstructorUsedError;
   String? get rfiDescription => throw _privateConstructorUsedError;
@@ -468,7 +467,6 @@ class _$RfiListItemImpl implements _RfiListItem {
     return EqualUnmodifiableListView(_clientImages);
   }
 
-  // Add other fields from API if needed, handling nulls with defaults or nullable types
   @override
   final String? contract;
   @override
@@ -638,7 +636,7 @@ abstract class _RfiListItem implements RfiListItem {
   @override
   List<String> get contractorImages;
   @override
-  List<String> get clientImages; // Add other fields from API if needed, handling nulls with defaults or nullable types
+  List<String> get clientImages;
   @override
   String? get contract;
   @override

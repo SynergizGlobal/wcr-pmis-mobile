@@ -130,6 +130,10 @@ _$InspectionItemImpl _$$InspectionItemImplFromJson(Map<String, dynamic> json) =>
       approvalStatus: json['approvalStatus'] as String?,
       dateOfSubmission: json['dateOfSubmission'] as String?,
       validationStatus: json['validationStatus'] as String?,
+      validationRemarks: json['remarks'] as String?,
+      validationComments: json['validationComments'] as String?,
+      validationAuthor: json['valdationAuth'] as String?,
+      validationDate: json['validationDate'] as String?,
       imgContractor: json['imgContractor'] as String?,
       representativeReportingToContractor:
           json['representativeReportingToContractor'] as String?,
@@ -182,6 +186,10 @@ Map<String, dynamic> _$$InspectionItemImplToJson(
   'approvalStatus': instance.approvalStatus,
   'dateOfSubmission': instance.dateOfSubmission,
   'validationStatus': instance.validationStatus,
+  'remarks': instance.validationRemarks,
+  'validationComments': instance.validationComments,
+  'valdationAuth': instance.validationAuthor,
+  'validationDate': instance.validationDate,
   'imgContractor': instance.imgContractor,
   'representativeReportingToContractor':
       instance.representativeReportingToContractor,

@@ -53,11 +53,13 @@ class InspectionSubmitPdfBuilder {
       state: state,
       rfi: rfi,
       includeEngineerImages: false,
+      includeCurrentSessionPaths: !isEngineer,
     );
     final engineerSiteImagePaths = _collectSiteImagePaths(
       state: state,
       rfi: rfi,
       includeEngineerImages: true,
+      includeCurrentSessionPaths: isEngineer,
     );
     final contractorSiteImages = await _loadSiteImages(
       contractorSiteImagePaths,
@@ -404,17 +406,18 @@ class InspectionSubmitPdfBuilder {
       state: state,
       forContractor: false,
     );
-    final validationRemarks = _validationRemarksForPdf(state, rfi);
-    final validationComment = _validationCommentForPdf(state, rfi);
-    final validatedBy = isEngineer
-        ? _validationAuthorForPdf(
-            rfi: rfi,
-            submitUser: submitUser,
-            isEngineer: isEngineer,
-          )
-        : '';
-    final validatedOn = isEngineer ? _validationDateForPdf(rfi) : '';
-    final approval = _validationApprovalFlags(rfi.validationStatus);
+    final validationRecorded = _isValidationRecorded(rfi);
+    final validationRemarks =
+        validationRecorded ? _validationRemarksForPdf(rfi) : '';
+    final validationComment =
+        validationRecorded ? _validationCommentForPdf(rfi) : '';
+    final validatedBy =
+        validationRecorded && isEngineer ? _validationAuthorForPdf(rfi) : '';
+    final validatedOn =
+        validationRecorded && isEngineer ? _validationDateForPdf(rfi) : '';
+    final approval = validationRecorded
+        ? _validationApprovalFlags(rfi.validationStatus)
+        : (approved: false, rejected: false);
 
     return [
       pw.Text(
@@ -729,7 +732,7 @@ class InspectionSubmitPdfBuilder {
     required String representativeName,
     required pw.Font font,
     required pw.Font fontBold,
-    double stampAreaHeight = 78,
+    double stampAreaHeight = 112,
   }) {
     final name = representativeName.trim();
     return pw.Expanded(
@@ -745,10 +748,16 @@ class InspectionSubmitPdfBuilder {
             alignment: pw.Alignment.bottomCenter,
             child: name.isEmpty
                 ? null
-                : pw.Text(
-                    name,
-                    style: pw.TextStyle(font: fontBold, fontSize: 9),
-                    textAlign: pw.TextAlign.center,
+                : pw.Center(
+                    child: pw.FittedBox(
+                      fit: pw.BoxFit.scaleDown,
+                      child: pw.Text(
+                        name,
+                        style: pw.TextStyle(font: fontBold, fontSize: 8),
+                        textAlign: pw.TextAlign.center,
+                        maxLines: 2,
+                      ),
+                    ),
                   ),
           ),
           pw.SizedBox(height: 6),
@@ -953,6 +962,19 @@ class InspectionSubmitPdfBuilder {
     return u == 'ENG' || u == 'ENGG' || u == 'AE' || u.startsWith('ENG');
   }
 
+  static bool _isDyHodInspectionDetail(InspectionDetail detail) {
+    final u = detail.uploadedBy?.trim().toUpperCase() ?? '';
+    if (u.isEmpty) return false;
+    if (_isContractorInspectionDetail(detail) ||
+        _isEngineerInspectionDetail(detail)) {
+      return false;
+    }
+    return u.contains('DYHOD') ||
+        u == 'HOD' ||
+        u.contains('DATA') ||
+        u.contains('ADMIN');
+  }
+
   static String _displayDate(String? raw) {
     if (raw == null || raw.trim().isEmpty) return '';
     try {
@@ -1045,99 +1067,55 @@ class InspectionSubmitPdfBuilder {
         status == 'Rectification';
   }
 
-  static String _validationRemarksForPdf(
-    InspectionFormState state,
-    InspectionItem rfi,
-  ) {
-    final fromDyHod = _dyHodRemarksFromInspectionDetails(
-      state.rfiDetails?.inspectionDetails,
-    );
-    if (fromDyHod != null && fromDyHod.isNotEmpty) return fromDyHod;
+  static bool _isValidationRecorded(InspectionItem rfi) {
+    final status = (rfi.validationStatus ?? '').trim().toUpperCase();
+    final remarks = (rfi.validationRemarks ?? '').trim();
+    final comment = (rfi.validationComments ?? '').trim();
+    final author = (rfi.validationAuthor ?? '').trim();
 
-    return '';
-  }
-
-  static String? _dyHodRemarksFromInspectionDetails(
-    List<InspectionDetail>? details,
-  ) {
-    if (details == null || details.isEmpty) return null;
-
-    for (final detail in details) {
-      if (!_isDyHodInspectionDetail(detail)) continue;
-      final remarks = detail.engineerRemarks?.trim();
-      if (remarks != null && remarks.isNotEmpty) return remarks;
+    if (remarks.isNotEmpty || comment.isNotEmpty || author.isNotEmpty) {
+      return true;
     }
-    return null;
+
+    if (status.isEmpty) return false;
+
+    const pending = {
+      'PENDING',
+      'OPEN',
+      'IN_PROGRESS',
+      'NOT_VALIDATED',
+      'AWAITING_VALIDATION',
+    };
+    if (pending.contains(status)) return false;
+
+    return status == 'APPROVED' ||
+        status == 'REJECTED' ||
+        status == 'NOR' ||
+        status.contains('APPROV') ||
+        status.contains('REJECT');
   }
 
-  static bool _isDyHodInspectionDetail(InspectionDetail detail) {
-    final u = detail.uploadedBy?.trim().toUpperCase() ?? '';
-    if (u.isEmpty) return false;
-    if (_isContractorInspectionDetail(detail) ||
-        _isEngineerInspectionDetail(detail)) {
-      return false;
-    }
-    return u.contains('DY') ||
-        u == 'HOD' ||
-        u.contains('DATA') ||
-        u.contains('ADMIN');
+  static String _validationRemarksForPdf(InspectionItem rfi) {
+    return (rfi.validationRemarks ?? '').trim();
   }
 
-  static String _validationCommentForPdf(
-    InspectionFormState state,
-    InspectionItem rfi,
-  ) {
-    final clientDesc = state.clientDescription.trim();
-    if (clientDesc.isNotEmpty) return clientDesc;
-
-    final fromApi = _clientDescriptionFromInspectionDetails(
-      state.rfiDetails?.inspectionDetails,
-    );
-    if (fromApi != null && fromApi.isNotEmpty) return fromApi;
-
-    return '';
+  static String _validationCommentForPdf(InspectionItem rfi) {
+    return (rfi.validationComments ?? '').trim();
   }
 
-  static String? _clientDescriptionFromInspectionDetails(
-    List<InspectionDetail>? details,
-  ) {
-    if (details == null || details.isEmpty) return null;
-
-    for (final detail in details) {
-      if (!_isEngineerInspectionDetail(detail) && !_isDyHodInspectionDetail(detail)) continue;
-      final text = detail.descriptionEnclosure?.trim();
-      if (text != null && text.isNotEmpty) {
-        final location = detail.location?.trim();
-        if (location != null && location.isNotEmpty && text == location) {
-          continue;
-        }
-        return text;
-      }
-    }
-    return null;
-  }
-
-  static String _validationAuthorForPdf({
-    required InspectionItem rfi,
-    required Map<String, dynamic>? submitUser,
-    required bool isEngineer,
-  }) {
-    final submitter = _displayNameFromUser(submitUser);
-    if (submitter.isNotEmpty) return submitter;
-
-    final assigned = rfi.assignedPersonClient?.trim();
-    if (assigned != null && assigned.isNotEmpty) return assigned;
+  static String _validationAuthorForPdf(InspectionItem rfi) {
+    final author = (rfi.validationAuthor ?? '').trim();
+    if (author.isNotEmpty) return author;
 
     return '';
   }
 
   static String _validationDateForPdf(InspectionItem rfi) {
-    final fromInspection = rfi.dateOfInspection?.trim();
-    if (fromInspection != null && fromInspection.isNotEmpty) {
-      final formatted = _displayDate(fromInspection);
-      if (formatted.isNotEmpty) return formatted;
+    final fromValidation = rfi.validationDate?.trim();
+    if (fromValidation != null && fromValidation.isNotEmpty) {
+      return _displayDate(fromValidation);
     }
-    return DateFormat('yyyy-MM-dd').format(DateTime.now());
+    return '';
   }
 
   static ({bool approved, bool rejected}) _validationApprovalFlags(
@@ -1267,6 +1245,7 @@ class InspectionSubmitPdfBuilder {
     required InspectionFormState state,
     required InspectionItem rfi,
     required bool includeEngineerImages,
+    required bool includeCurrentSessionPaths,
   }) {
     final merged = <String>{};
 
@@ -1279,8 +1258,10 @@ class InspectionSubmitPdfBuilder {
     }
 
     // 1) Freshly selected images in current inspection session.
-    for (final path in state.siteImagePaths) {
-      if (path.trim().isNotEmpty) merged.add(path.trim());
+    if (includeCurrentSessionPaths) {
+      for (final path in state.siteImagePaths) {
+        if (path.trim().isNotEmpty) merged.add(path.trim());
+      }
     }
 
     // 2) Server-side contractor image paths already saved on RFI.
@@ -1293,6 +1274,7 @@ class InspectionSubmitPdfBuilder {
     }
 
     if (includeEngineerImages) {
+      addRaw(rfi.imgClient);
       for (final detail in rfi.inspectionDetails ?? const <InspectionDetail>[]) {
         if (!_isEngineerInspectionDetail(detail) &&
             !_isDyHodInspectionDetail(detail)) {

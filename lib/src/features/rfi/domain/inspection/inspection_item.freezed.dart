@@ -1206,6 +1206,12 @@ mixin _$InspectionItem {
   String? get approvalStatus => throw _privateConstructorUsedError;
   String? get dateOfSubmission => throw _privateConstructorUsedError;
   String? get validationStatus => throw _privateConstructorUsedError;
+  @JsonKey(name: 'remarks')
+  String? get validationRemarks => throw _privateConstructorUsedError;
+  String? get validationComments => throw _privateConstructorUsedError;
+  @JsonKey(name: 'valdationAuth')
+  String? get validationAuthor => throw _privateConstructorUsedError;
+  String? get validationDate => throw _privateConstructorUsedError;
   String? get imgContractor => throw _privateConstructorUsedError;
   String? get representativeReportingToContractor =>
       throw _privateConstructorUsedError;
@@ -1263,6 +1269,10 @@ abstract class $InspectionItemCopyWith<$Res> {
     String? approvalStatus,
     String? dateOfSubmission,
     String? validationStatus,
+    @JsonKey(name: 'remarks') String? validationRemarks,
+    String? validationComments,
+    @JsonKey(name: 'valdationAuth') String? validationAuthor,
+    String? validationDate,
     String? imgContractor,
     String? representativeReportingToContractor,
     String? testResCon,
@@ -1319,6 +1329,10 @@ class _$InspectionItemCopyWithImpl<$Res, $Val extends InspectionItem>
     Object? approvalStatus = freezed,
     Object? dateOfSubmission = freezed,
     Object? validationStatus = freezed,
+    Object? validationRemarks = freezed,
+    Object? validationComments = freezed,
+    Object? validationAuthor = freezed,
+    Object? validationDate = freezed,
     Object? imgContractor = freezed,
     Object? representativeReportingToContractor = freezed,
     Object? testResCon = freezed,
@@ -1442,6 +1456,22 @@ class _$InspectionItemCopyWithImpl<$Res, $Val extends InspectionItem>
                 ? _value.validationStatus
                 : validationStatus // ignore: cast_nullable_to_non_nullable
                       as String?,
+            validationRemarks: freezed == validationRemarks
+                ? _value.validationRemarks
+                : validationRemarks // ignore: cast_nullable_to_non_nullable
+                      as String?,
+            validationComments: freezed == validationComments
+                ? _value.validationComments
+                : validationComments // ignore: cast_nullable_to_non_nullable
+                      as String?,
+            validationAuthor: freezed == validationAuthor
+                ? _value.validationAuthor
+                : validationAuthor // ignore: cast_nullable_to_non_nullable
+                      as String?,
+            validationDate: freezed == validationDate
+                ? _value.validationDate
+                : validationDate // ignore: cast_nullable_to_non_nullable
+                      as String?,
             imgContractor: freezed == imgContractor
                 ? _value.imgContractor
                 : imgContractor // ignore: cast_nullable_to_non_nullable
@@ -1533,6 +1563,10 @@ abstract class _$$InspectionItemImplCopyWith<$Res>
     String? approvalStatus,
     String? dateOfSubmission,
     String? validationStatus,
+    @JsonKey(name: 'remarks') String? validationRemarks,
+    String? validationComments,
+    @JsonKey(name: 'valdationAuth') String? validationAuthor,
+    String? validationDate,
     String? imgContractor,
     String? representativeReportingToContractor,
     String? testResCon,
@@ -1589,6 +1623,10 @@ class __$$InspectionItemImplCopyWithImpl<$Res>
     Object? approvalStatus = freezed,
     Object? dateOfSubmission = freezed,
     Object? validationStatus = freezed,
+    Object? validationRemarks = freezed,
+    Object? validationComments = freezed,
+    Object? validationAuthor = freezed,
+    Object? validationDate = freezed,
     Object? imgContractor = freezed,
     Object? representativeReportingToContractor = freezed,
     Object? testResCon = freezed,
@@ -1712,6 +1750,22 @@ class __$$InspectionItemImplCopyWithImpl<$Res>
             ? _value.validationStatus
             : validationStatus // ignore: cast_nullable_to_non_nullable
                   as String?,
+        validationRemarks: freezed == validationRemarks
+            ? _value.validationRemarks
+            : validationRemarks // ignore: cast_nullable_to_non_nullable
+                  as String?,
+        validationComments: freezed == validationComments
+            ? _value.validationComments
+            : validationComments // ignore: cast_nullable_to_non_nullable
+                  as String?,
+        validationAuthor: freezed == validationAuthor
+            ? _value.validationAuthor
+            : validationAuthor // ignore: cast_nullable_to_non_nullable
+                  as String?,
+        validationDate: freezed == validationDate
+            ? _value.validationDate
+            : validationDate // ignore: cast_nullable_to_non_nullable
+                  as String?,
         imgContractor: freezed == imgContractor
             ? _value.imgContractor
             : imgContractor // ignore: cast_nullable_to_non_nullable
@@ -1782,6 +1836,10 @@ class _$InspectionItemImpl implements _InspectionItem {
     this.approvalStatus,
     this.dateOfSubmission,
     this.validationStatus,
+    @JsonKey(name: 'remarks') this.validationRemarks,
+    this.validationComments,
+    @JsonKey(name: 'valdationAuth') this.validationAuthor,
+    this.validationDate,
     this.imgContractor,
     this.representativeReportingToContractor,
     this.testResCon,
@@ -1855,6 +1913,16 @@ class _$InspectionItemImpl implements _InspectionItem {
   @override
   final String? validationStatus;
   @override
+  @JsonKey(name: 'remarks')
+  final String? validationRemarks;
+  @override
+  final String? validationComments;
+  @override
+  @JsonKey(name: 'valdationAuth')
+  final String? validationAuthor;
+  @override
+  final String? validationDate;
+  @override
   final String? imgContractor;
   @override
   final String? representativeReportingToContractor;
@@ -1898,7 +1966,7 @@ class _$InspectionItemImpl implements _InspectionItem {
 
   @override
   String toString() {
-    return 'InspectionItem(id: $id, element: $element, status: $status, imgClient: $imgClient, contractId: $contractId, contract: $contract, structure: $structure, assignedPersonClient: $assignedPersonClient, action: $action, rfiId: $rfiId, activity: $activity, rfiDescription: $rfiDescription, description: $description, timeOfInspection: $timeOfInspection, nameOfRepresentative: $nameOfRepresentative, inspectionStatus: $inspectionStatus, measurementType: $measurementType, totalQty: $totalQty, createdBy: $createdBy, dateOfInspection: $dateOfInspection, project: $project, work: $work, structureType: $structureType, component: $component, typeOfRFI: $typeOfRFI, approvalStatus: $approvalStatus, dateOfSubmission: $dateOfSubmission, validationStatus: $validationStatus, imgContractor: $imgContractor, representativeReportingToContractor: $representativeReportingToContractor, testResCon: $testResCon, testResEngg: $testResEngg, enclosuresList: $enclosuresList, enclosure: $enclosure, inspectionDetails: $inspectionDetails, measurements: $measurements)';
+    return 'InspectionItem(id: $id, element: $element, status: $status, imgClient: $imgClient, contractId: $contractId, contract: $contract, structure: $structure, assignedPersonClient: $assignedPersonClient, action: $action, rfiId: $rfiId, activity: $activity, rfiDescription: $rfiDescription, description: $description, timeOfInspection: $timeOfInspection, nameOfRepresentative: $nameOfRepresentative, inspectionStatus: $inspectionStatus, measurementType: $measurementType, totalQty: $totalQty, createdBy: $createdBy, dateOfInspection: $dateOfInspection, project: $project, work: $work, structureType: $structureType, component: $component, typeOfRFI: $typeOfRFI, approvalStatus: $approvalStatus, dateOfSubmission: $dateOfSubmission, validationStatus: $validationStatus, validationRemarks: $validationRemarks, validationComments: $validationComments, validationAuthor: $validationAuthor, validationDate: $validationDate, imgContractor: $imgContractor, representativeReportingToContractor: $representativeReportingToContractor, testResCon: $testResCon, testResEngg: $testResEngg, enclosuresList: $enclosuresList, enclosure: $enclosure, inspectionDetails: $inspectionDetails, measurements: $measurements)';
   }
 
   @override
@@ -1955,6 +2023,14 @@ class _$InspectionItemImpl implements _InspectionItem {
                 other.dateOfSubmission == dateOfSubmission) &&
             (identical(other.validationStatus, validationStatus) ||
                 other.validationStatus == validationStatus) &&
+            (identical(other.validationRemarks, validationRemarks) ||
+                other.validationRemarks == validationRemarks) &&
+            (identical(other.validationComments, validationComments) ||
+                other.validationComments == validationComments) &&
+            (identical(other.validationAuthor, validationAuthor) ||
+                other.validationAuthor == validationAuthor) &&
+            (identical(other.validationDate, validationDate) ||
+                other.validationDate == validationDate) &&
             (identical(other.imgContractor, imgContractor) ||
                 other.imgContractor == imgContractor) &&
             (identical(
@@ -2015,6 +2091,10 @@ class _$InspectionItemImpl implements _InspectionItem {
     approvalStatus,
     dateOfSubmission,
     validationStatus,
+    validationRemarks,
+    validationComments,
+    validationAuthor,
+    validationDate,
     imgContractor,
     representativeReportingToContractor,
     testResCon,
@@ -2072,6 +2152,10 @@ abstract class _InspectionItem implements InspectionItem {
     final String? approvalStatus,
     final String? dateOfSubmission,
     final String? validationStatus,
+    @JsonKey(name: 'remarks') final String? validationRemarks,
+    final String? validationComments,
+    @JsonKey(name: 'valdationAuth') final String? validationAuthor,
+    final String? validationDate,
     final String? imgContractor,
     final String? representativeReportingToContractor,
     final String? testResCon,
@@ -2142,6 +2226,16 @@ abstract class _InspectionItem implements InspectionItem {
   String? get dateOfSubmission;
   @override
   String? get validationStatus;
+  @override
+  @JsonKey(name: 'remarks')
+  String? get validationRemarks;
+  @override
+  String? get validationComments;
+  @override
+  @JsonKey(name: 'valdationAuth')
+  String? get validationAuthor;
+  @override
+  String? get validationDate;
   @override
   String? get imgContractor;
   @override

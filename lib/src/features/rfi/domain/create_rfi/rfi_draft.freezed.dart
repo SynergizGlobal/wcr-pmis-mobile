@@ -21,7 +21,6 @@ RfiDraft _$RfiDraftFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$RfiDraft {
-  // Selections
   DropdownItem? get project => throw _privateConstructorUsedError;
   DropdownItem? get work => throw _privateConstructorUsedError;
   DropdownItem? get contract => throw _privateConstructorUsedError;
@@ -30,19 +29,16 @@ mixin _$RfiDraft {
   DropdownItem? get component => throw _privateConstructorUsedError;
   DropdownItem? get element => throw _privateConstructorUsedError;
   DropdownItem? get activity => throw _privateConstructorUsedError;
-  DropdownItem? get rfiDescription =>
-      throw _privateConstructorUsedError; // Step 2 Fields
+  DropdownItem? get rfiDescription => throw _privateConstructorUsedError;
   int get currentStep => throw _privateConstructorUsedError;
   String? get action => throw _privateConstructorUsedError;
   String? get typeOfRfi => throw _privateConstructorUsedError;
   String? get contractorRepresentative => throw _privateConstructorUsedError;
   String? get dateOfSubmission => throw _privateConstructorUsedError;
   String? get timeOfInspection => throw _privateConstructorUsedError;
-  String? get dateOfInspection =>
-      throw _privateConstructorUsedError; // Step 3 Fields
+  String? get dateOfInspection => throw _privateConstructorUsedError;
   List<String> get selectedEnclosures => throw _privateConstructorUsedError;
-  String? get rfiDescriptionText =>
-      throw _privateConstructorUsedError; // Cached Lists
+  String? get rfiDescriptionText => throw _privateConstructorUsedError;
   List<DropdownItem> get projects => throw _privateConstructorUsedError;
   List<DropdownItem> get works => throw _privateConstructorUsedError;
   List<DropdownItem> get contracts => throw _privateConstructorUsedError;
@@ -670,7 +666,6 @@ class _$RfiDraftImpl implements _RfiDraft {
   factory _$RfiDraftImpl.fromJson(Map<String, dynamic> json) =>
       _$$RfiDraftImplFromJson(json);
 
-  // Selections
   @override
   final DropdownItem? project;
   @override
@@ -689,7 +684,6 @@ class _$RfiDraftImpl implements _RfiDraft {
   final DropdownItem? activity;
   @override
   final DropdownItem? rfiDescription;
-  // Step 2 Fields
   @override
   @JsonKey()
   final int currentStep;
@@ -705,9 +699,7 @@ class _$RfiDraftImpl implements _RfiDraft {
   final String? timeOfInspection;
   @override
   final String? dateOfInspection;
-  // Step 3 Fields
   final List<String> _selectedEnclosures;
-  // Step 3 Fields
   @override
   @JsonKey()
   List<String> get selectedEnclosures {
@@ -719,9 +711,7 @@ class _$RfiDraftImpl implements _RfiDraft {
 
   @override
   final String? rfiDescriptionText;
-  // Cached Lists
   final List<DropdownItem> _projects;
-  // Cached Lists
   @override
   @JsonKey()
   List<DropdownItem> get projects {
@@ -974,7 +964,6 @@ abstract class _RfiDraft implements RfiDraft {
   factory _RfiDraft.fromJson(Map<String, dynamic> json) =
       _$RfiDraftImpl.fromJson;
 
-  // Selections
   @override
   DropdownItem? get project;
   @override
@@ -992,7 +981,7 @@ abstract class _RfiDraft implements RfiDraft {
   @override
   DropdownItem? get activity;
   @override
-  DropdownItem? get rfiDescription; // Step 2 Fields
+  DropdownItem? get rfiDescription;
   @override
   int get currentStep;
   @override
@@ -1006,11 +995,11 @@ abstract class _RfiDraft implements RfiDraft {
   @override
   String? get timeOfInspection;
   @override
-  String? get dateOfInspection; // Step 3 Fields
+  String? get dateOfInspection;
   @override
   List<String> get selectedEnclosures;
   @override
-  String? get rfiDescriptionText; // Cached Lists
+  String? get rfiDescriptionText;
   @override
   List<DropdownItem> get projects;
   @override

@@ -7,6 +7,7 @@ import 'package:path_provider/path_provider.dart';
 
 import '../widgets/global_alert_dialog.dart';
 import '../widgets/rfi_remote_media_preview.dart';
+import 'rfi_file_paths.dart';
 import 'rfi_preview_fetch.dart';
 
 /// Play Store–safe file view/download for RFI attachments.
@@ -20,7 +21,7 @@ abstract final class RfiFileActions {
     required Dio dio,
     String? title,
   }) async {
-    final trimmed = path.trim();
+    final trimmed = normalizeRfiAttachmentPath(path);
     if (trimmed.isEmpty) return;
 
     if (RfiPreviewFetch.isRemoteInspectablePath(trimmed)) {
@@ -134,7 +135,7 @@ abstract final class RfiFileActions {
     required String path,
     String? preferredFileName,
   }) async {
-    final trimmed = path.trim();
+    final trimmed = normalizeRfiAttachmentPath(path);
     if (trimmed.isEmpty) {
       throw Exception('Empty file path');
     }
