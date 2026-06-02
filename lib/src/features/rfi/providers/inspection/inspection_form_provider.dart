@@ -45,14 +45,41 @@ class InspectionFormNotifier extends StateNotifier<InspectionFormState> {
       
       String? initialChainage;
       String? initialContractorDesc;
+      String? initialEngineerRemarks;
+      String? initialClientDescription;
+      final contractorRep = details.nameOfRepresentative?.trim() ?? '';
       if (details.inspectionDetails != null && details.inspectionDetails!.isNotEmpty) {
-        final lastDetail = details.inspectionDetails!.first;
-        initialChainage = lastDetail.chainage;
-        
-        if (lastDetail.descriptionEnclosure != null && 
-            lastDetail.descriptionEnclosure!.isNotEmpty &&
-            lastDetail.descriptionEnclosure != lastDetail.location) {
-          initialContractorDesc = lastDetail.descriptionEnclosure;
+        for (final detail in details.inspectionDetails!) {
+          if (initialChainage == null || initialChainage.isEmpty) {
+            initialChainage = detail.chainage;
+          }
+
+          final uploadedBy = detail.uploadedBy?.trim().toUpperCase() ?? '';
+          final isContractor = uploadedBy == 'CON';
+          final isEngineer = uploadedBy == 'ENG' ||
+              uploadedBy == 'ENGG' ||
+              uploadedBy == 'AE' ||
+              uploadedBy.startsWith('ENG');
+
+          if (isContractor &&
+              detail.descriptionEnclosure != null &&
+              detail.descriptionEnclosure!.isNotEmpty &&
+              detail.descriptionEnclosure != detail.location) {
+            initialContractorDesc ??= detail.descriptionEnclosure;
+          }
+
+          if (isEngineer) {
+            final remarks = detail.engineerRemarks?.trim();
+            if (remarks != null && remarks.isNotEmpty) {
+              initialEngineerRemarks ??= remarks;
+            }
+            final desc = detail.descriptionEnclosure?.trim();
+            if (desc != null &&
+                desc.isNotEmpty &&
+                desc != detail.location?.trim()) {
+              initialClientDescription ??= desc;
+            }
+          }
         }
       }
 
@@ -97,6 +124,15 @@ class InspectionFormNotifier extends StateNotifier<InspectionFormState> {
         isLoading: false,
         chainage: state.chainage.isEmpty ? (initialChainage ?? "") : state.chainage,
         contractorDescription: state.contractorDescription.isEmpty ? (initialContractorDesc ?? "") : state.contractorDescription,
+        contractorRepresentative: state.contractorRepresentative.isEmpty
+            ? contractorRep
+            : state.contractorRepresentative,
+        engineerRemarks: state.engineerRemarks.isEmpty
+            ? (initialEngineerRemarks ?? '')
+            : state.engineerRemarks,
+        clientDescription: state.clientDescription.isEmpty
+            ? (initialClientDescription ?? '')
+            : state.clientDescription,
         measurements: initialMeasurements,
       );
       _loadDraft();
@@ -729,6 +765,7 @@ class InspectionFormNotifier extends StateNotifier<InspectionFormState> {
         isOffline: isOffline,
         rfiId: _rfiId,
         dio: dio,
+        submitUser: userData,
       );
 
       final isEngineerRole = role == UserRole.engineer ||

@@ -30,6 +30,7 @@ class InspectionSubmitPdfBuilder {
     required bool isOffline,
     required int rfiId,
     required Dio dio,
+    Map<String, dynamic>? submitUser,
   }) async {
     final rfi = state.rfiDetails;
     if (rfi == null) {
@@ -72,8 +73,9 @@ class InspectionSubmitPdfBuilder {
           crossAxisAlignment: pw.CrossAxisAlignment.start,
           children: _buildPartTwoEngineerRemarksPage(
             state: state,
+            rfi: rfi,
             isEngineer: isEngineer,
-            isOffline: isOffline,
+            submitUser: submitUser,
             font: font,
             fontBold: fontBold,
           ),
@@ -90,7 +92,8 @@ class InspectionSubmitPdfBuilder {
           children: _buildPartThreeValidationPage(
             state: state,
             rfi: rfi,
-            isOffline: isOffline,
+            isEngineer: isEngineer,
+            submitUser: submitUser,
             font: font,
             fontBold: fontBold,
           ),
@@ -326,21 +329,23 @@ class InspectionSubmitPdfBuilder {
 
   static List<pw.Widget> _buildPartTwoEngineerRemarksPage({
     required InspectionFormState state,
+    required InspectionItem rfi,
     required bool isEngineer,
-    required bool isOffline,
+    required Map<String, dynamic>? submitUser,
     required pw.Font font,
     required pw.Font fontBold,
   }) {
     final status = state.inspectionStatus.trim();
-    final isAccepted = status.toUpperCase() == 'ACCEPTED';
-    final isRejected = status.toUpperCase() == 'REJECTED' ||
-        status.toUpperCase() == 'RETURNED_FOR_RECTIFICATION' ||
-        status == 'Rectification';
-    // Online submit: stampEnggPdfFromXml overlays ticks, remarks, and signatures.
-    final showApprovalMarks = isOffline && isEngineer;
-    final remarks = isOffline && isEngineer && isRejected
-        ? state.engineerRemarks.trim()
-        : '';
+    final isAccepted = _isAcceptedInspectionStatus(status);
+    final isRejected = _isRejectedInspectionStatus(status);
+
+    final remarks = _engineerRemarksForPdf(state);
+    final contractorRepName = _resolveContractorRepresentativeName(state, rfi);
+    final mrvcRepName = _resolveMrvcRepresentativeName(
+      rfi: rfi,
+      submitUser: submitUser,
+      isEngineer: isEngineer,
+    );
 
     return [
       pw.Text(
@@ -351,8 +356,8 @@ class InspectionSubmitPdfBuilder {
       _buildEngineerApprovalTable(
         font: font,
         fontBold: fontBold,
-        isAccepted: showApprovalMarks && isAccepted,
-        isRejected: showApprovalMarks && isRejected,
+        isAccepted: isEngineer && isAccepted,
+        isRejected: isEngineer && isRejected,
       ),
       pw.SizedBox(height: 12),
       _formFieldBox(
@@ -360,33 +365,35 @@ class InspectionSubmitPdfBuilder {
         value: remarks,
         font: font,
         fontBold: fontBold,
-        minHeight: 40,
+        minHeight: 44,
       ),
       pw.SizedBox(height: 16),
       pw.Row(
         crossAxisAlignment: pw.CrossAxisAlignment.start,
         children: [
-          _signaturePlaceholder(
+          _signatureBlock(
             title: 'Contractor Representative',
+            representativeName: contractorRepName,
             font: font,
-            boxHeight: 92,
+            fontBold: fontBold,
           ),
           pw.SizedBox(width: 28),
-          _signaturePlaceholder(
+          _signatureBlock(
             title: 'MRVC Representative',
+            representativeName: mrvcRepName,
             font: font,
-            boxHeight: 92,
+            fontBold: fontBold,
           ),
         ],
       ),
     ];
   }
 
-  /// Fixed page for server [stampPdfFromXml] / validation overlays (web template).
   static List<pw.Widget> _buildPartThreeValidationPage({
     required InspectionFormState state,
     required InspectionItem rfi,
-    required bool isOffline,
+    required bool isEngineer,
+    required Map<String, dynamic>? submitUser,
     required pw.Font font,
     required pw.Font fontBold,
   }) {
@@ -398,6 +405,15 @@ class InspectionSubmitPdfBuilder {
       state: state,
       forContractor: false,
     );
+    final validationRemarks = _validationRemarksForPdf(state, rfi);
+    final validationComment = _validationCommentForPdf(state, rfi);
+    final validatedBy = _validationAuthorForPdf(
+      rfi: rfi,
+      submitUser: submitUser,
+      isEngineer: isEngineer,
+    );
+    final validatedOn = _validationDateForPdf(rfi);
+    final approval = _validationApprovalFlags(rfi.validationStatus);
 
     return [
       pw.Text(
@@ -410,35 +426,39 @@ class InspectionSubmitPdfBuilder {
         children: [
           _labeledCheckbox(
             label: 'Approved',
-            checked: false,
+            checked: approval.approved,
             font: font,
             fontBold: fontBold,
           ),
           pw.SizedBox(width: 40),
           _labeledCheckbox(
             label: 'Rejected',
-            checked: false,
+            checked: approval.rejected,
             font: font,
             fontBold: fontBold,
           ),
         ],
       ),
       pw.SizedBox(height: 10),
-      pw.Text('Remarks:', style: pw.TextStyle(font: fontBold, fontSize: 10)),
-      pw.SizedBox(height: 4),
-      pw.Text('Comment:', style: pw.TextStyle(font: fontBold, fontSize: 10)),
-      pw.SizedBox(height: 4),
-      _stampReserveBox(
-        height: 72,
-        value: isOffline ? (rfi.validationStatus ?? '').trim() : '',
+      _formFieldBox(
+        label: 'Remarks:',
+        value: validationRemarks,
         font: font,
+        fontBold: fontBold,
+        minHeight: 28,
+      ),
+      pw.SizedBox(height: 10),
+      _formFieldBox(
+        label: 'Comment:',
+        value: validationComment,
+        font: font,
+        fontBold: fontBold,
+        minHeight: 36,
       ),
       pw.SizedBox(height: 12),
       _validatedByOnStampZone(
-        validatedBy: isOffline ? (rfi.assignedPersonClient ?? '').trim() : '',
-        validatedOn: isOffline
-            ? DateFormat('yyyy-MM-dd').format(DateTime.now())
-            : '',
+        validatedBy: validatedBy,
+        validatedOn: validatedOn,
         font: font,
         fontBold: fontBold,
       ),
@@ -702,51 +722,42 @@ class InspectionSubmitPdfBuilder {
     );
   }
 
-  static pw.Widget _signaturePlaceholder({
+  /// Signature area: reserved space for e-stamp with representative name visible.
+  static pw.Widget _signatureBlock({
     required String title,
+    required String representativeName,
     required pw.Font font,
-    double boxHeight = 92,
+    required pw.Font fontBold,
+    double stampAreaHeight = 78,
   }) {
+    final name = representativeName.trim();
     return pw.Expanded(
-      child: pw.Container(
-        height: boxHeight + 22,
-        padding: const pw.EdgeInsets.symmetric(horizontal: 6, vertical: 6),
-        decoration: pw.BoxDecoration(
-          border: pw.Border.all(color: PdfColors.grey600, width: 0.75),
-        ),
-        child: pw.Column(
-          crossAxisAlignment: pw.CrossAxisAlignment.stretch,
-          children: [
-            pw.Text(
-              title,
-              style: pw.TextStyle(font: font, fontSize: 9),
-              textAlign: pw.TextAlign.center,
+      child: pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+        children: [
+          pw.Container(
+            height: stampAreaHeight,
+            padding: const pw.EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+            decoration: pw.BoxDecoration(
+              border: pw.Border.all(color: PdfColors.grey600, width: 0.75),
             ),
-            pw.SizedBox(height: 6),
-            pw.Expanded(child: pw.SizedBox()),
-          ],
-        ),
+            alignment: pw.Alignment.bottomCenter,
+            child: name.isEmpty
+                ? null
+                : pw.Text(
+                    name,
+                    style: pw.TextStyle(font: fontBold, fontSize: 9),
+                    textAlign: pw.TextAlign.center,
+                  ),
+          ),
+          pw.SizedBox(height: 6),
+          pw.Text(
+            title,
+            style: pw.TextStyle(font: font, fontSize: 9),
+            textAlign: pw.TextAlign.center,
+          ),
+        ],
       ),
-    );
-  }
-
-  /// Empty bordered area for server-stamped remarks / comment text.
-  static pw.Widget _stampReserveBox({
-    required double height,
-    required String value,
-    required pw.Font font,
-  }) {
-    return pw.Container(
-      width: double.infinity,
-      height: height,
-      padding: const pw.EdgeInsets.symmetric(horizontal: 6, vertical: 5),
-      decoration: pw.BoxDecoration(
-        border: pw.Border.all(color: PdfColors.grey600, width: 0.75),
-      ),
-      alignment: pw.Alignment.topLeft,
-      child: value.isEmpty
-          ? null
-          : pw.Text(value, style: pw.TextStyle(font: font, fontSize: 9)),
     );
   }
 
@@ -911,7 +922,8 @@ class InspectionSubmitPdfBuilder {
     for (final detail in details) {
       if (forContractor) {
         if (!_isContractorInspectionDetail(detail)) continue;
-      } else if (!_isEngineerInspectionDetail(detail)) {
+      } else if (!_isEngineerInspectionDetail(detail) &&
+          !_isDyHodInspectionDetail(detail)) {
         continue;
       }
       final text = _descriptionEnclosureFromDetail(detail);
@@ -948,6 +960,196 @@ class InspectionSubmitPdfBuilder {
     } catch (_) {
       return raw;
     }
+  }
+
+  static String _resolveContractorRepresentativeName(
+    InspectionFormState state,
+    InspectionItem rfi,
+  ) {
+    final fromState = state.contractorRepresentative.trim();
+    if (fromState.isNotEmpty) return fromState;
+
+    final fromRfi = rfi.nameOfRepresentative?.trim();
+    if (fromRfi != null && fromRfi.isNotEmpty) return fromRfi;
+
+    final reporting = rfi.representativeReportingToContractor?.trim();
+    if (reporting != null && reporting.isNotEmpty) return reporting;
+
+    return '';
+  }
+
+  static String _resolveMrvcRepresentativeName({
+    required InspectionItem rfi,
+    required Map<String, dynamic>? submitUser,
+    required bool isEngineer,
+  }) {
+    if (isEngineer) {
+      final submitter = _displayNameFromUser(submitUser);
+      if (submitter.isNotEmpty) return submitter;
+    }
+
+    final assigned = rfi.assignedPersonClient?.trim();
+    if (assigned != null && assigned.isNotEmpty) return assigned;
+
+    return '';
+  }
+
+  static String _displayNameFromUser(Map<String, dynamic>? user) {
+    if (user == null) return '';
+    final userName = user['userName']?.toString().trim();
+    if (userName != null && userName.isNotEmpty) return userName;
+
+    final name = user['name']?.toString().trim();
+    if (name != null && name.isNotEmpty) return name;
+
+    final first = user['firstName']?.toString().trim() ?? '';
+    final last = user['lastName']?.toString().trim() ?? '';
+    final combined = '$first $last'.trim();
+    return combined;
+  }
+
+  static String _engineerRemarksForPdf(InspectionFormState state) {
+    final fromState = state.engineerRemarks.trim();
+    if (fromState.isNotEmpty) return fromState;
+
+    return _engineerRemarksFromInspectionDetails(
+          state.rfiDetails?.inspectionDetails,
+        ) ??
+        '';
+  }
+
+  static String? _engineerRemarksFromInspectionDetails(
+    List<InspectionDetail>? details,
+  ) {
+    if (details == null || details.isEmpty) return null;
+
+    for (final detail in details) {
+      if (!_isEngineerInspectionDetail(detail) && !_isDyHodInspectionDetail(detail)) continue;
+      final remarks = detail.engineerRemarks?.trim();
+      if (remarks != null && remarks.isNotEmpty) return remarks;
+    }
+    return null;
+  }
+
+  static bool _isAcceptedInspectionStatus(String status) {
+    final u = status.trim().toUpperCase();
+    return u == 'ACCEPTED' || u == 'APPROVED';
+  }
+
+  static bool _isRejectedInspectionStatus(String status) {
+    final u = status.trim().toUpperCase();
+    return u == 'REJECTED' ||
+        u == 'RETURNED_FOR_RECTIFICATION' ||
+        u.contains('RECTIFICATION') ||
+        status == 'Rectification';
+  }
+
+  static String _validationRemarksForPdf(
+    InspectionFormState state,
+    InspectionItem rfi,
+  ) {
+    final fromDyHod = _dyHodRemarksFromInspectionDetails(
+      state.rfiDetails?.inspectionDetails,
+    );
+    if (fromDyHod != null && fromDyHod.isNotEmpty) return fromDyHod;
+
+    return '';
+  }
+
+  static String? _dyHodRemarksFromInspectionDetails(
+    List<InspectionDetail>? details,
+  ) {
+    if (details == null || details.isEmpty) return null;
+
+    for (final detail in details) {
+      if (!_isDyHodInspectionDetail(detail)) continue;
+      final remarks = detail.engineerRemarks?.trim();
+      if (remarks != null && remarks.isNotEmpty) return remarks;
+    }
+    return null;
+  }
+
+  static bool _isDyHodInspectionDetail(InspectionDetail detail) {
+    final u = detail.uploadedBy?.trim().toUpperCase() ?? '';
+    if (u.isEmpty) return false;
+    if (_isContractorInspectionDetail(detail) ||
+        _isEngineerInspectionDetail(detail)) {
+      return false;
+    }
+    return u.contains('DY') ||
+        u == 'HOD' ||
+        u.contains('DATA') ||
+        u.contains('ADMIN');
+  }
+
+  static String _validationCommentForPdf(
+    InspectionFormState state,
+    InspectionItem rfi,
+  ) {
+    final clientDesc = state.clientDescription.trim();
+    if (clientDesc.isNotEmpty) return clientDesc;
+
+    final fromApi = _clientDescriptionFromInspectionDetails(
+      state.rfiDetails?.inspectionDetails,
+    );
+    if (fromApi != null && fromApi.isNotEmpty) return fromApi;
+
+    return '';
+  }
+
+  static String? _clientDescriptionFromInspectionDetails(
+    List<InspectionDetail>? details,
+  ) {
+    if (details == null || details.isEmpty) return null;
+
+    for (final detail in details) {
+      if (!_isEngineerInspectionDetail(detail) && !_isDyHodInspectionDetail(detail)) continue;
+      final text = detail.descriptionEnclosure?.trim();
+      if (text != null && text.isNotEmpty) {
+        final location = detail.location?.trim();
+        if (location != null && location.isNotEmpty && text == location) {
+          continue;
+        }
+        return text;
+      }
+    }
+    return null;
+  }
+
+  static String _validationAuthorForPdf({
+    required InspectionItem rfi,
+    required Map<String, dynamic>? submitUser,
+    required bool isEngineer,
+  }) {
+    final submitter = _displayNameFromUser(submitUser);
+    if (submitter.isNotEmpty) return submitter;
+
+    final assigned = rfi.assignedPersonClient?.trim();
+    if (assigned != null && assigned.isNotEmpty) return assigned;
+
+    return '';
+  }
+
+  static String _validationDateForPdf(InspectionItem rfi) {
+    final fromInspection = rfi.dateOfInspection?.trim();
+    if (fromInspection != null && fromInspection.isNotEmpty) {
+      final formatted = _displayDate(fromInspection);
+      if (formatted.isNotEmpty) return formatted;
+    }
+    return DateFormat('yyyy-MM-dd').format(DateTime.now());
+  }
+
+  static ({bool approved, bool rejected}) _validationApprovalFlags(
+    String? validationStatus,
+  ) {
+    final status = (validationStatus ?? '').trim().toUpperCase();
+    if (status.isEmpty) {
+      return (approved: false, rejected: false);
+    }
+    if (status.contains('REJECT') || status.contains('NOT APPROV')) {
+      return (approved: false, rejected: true);
+    }
+    return (approved: true, rejected: false);
   }
 
   /// Web [pdfUtils]: merge enclosure → supporting → test report PDFs only.

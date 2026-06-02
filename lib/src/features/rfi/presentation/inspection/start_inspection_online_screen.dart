@@ -8,11 +8,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
-import 'package:open_file/open_file.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../../core/network/environment.dart';
 import '../../core/utils/rfi_file_paths.dart';
+import '../../core/utils/rfi_file_actions.dart';
+import '../../core/utils/rfi_media_permissions.dart';
 import '../../core/utils/rfi_preview_fetch.dart';
 import '../../core/widgets/rfi_remote_media_preview.dart';
 import '../../core/providers/dio_provider.dart';
@@ -2190,50 +2190,54 @@ class _StartInspectionOnlineScreenState
     );
   }
 
-  Future<bool> _handlePermission(Permission permission) async {
-    var status = await permission.status;
-    if (status.isGranted || status.isLimited) return true;
+  Future<bool> _ensureRfiMediaPermission({
+    required Future<RfiPermissionOutcome> Function() prepare,
+    required String permissionLabel,
+  }) async {
+    final outcome = await prepare();
+    if (outcome == RfiPermissionOutcome.granted) return true;
 
-    if (status.isDenied) {
-      status = await permission.request();
-      if (status.isGranted || status.isLimited) return true;
-    }
-
-    if (status.isPermanentlyDenied || status.isRestricted) {
-      if (mounted) {
-        showDialog(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            title: const Text('Permission Required'),
-            content: Text(
-                'Please enable ${permission.toString().split('.').last} permission in Settings to continue.'),
-            actions: [
-              TextButton(
-                  onPressed: () => Navigator.pop(ctx),
-                  child: const Text('Cancel')),
-              TextButton(
-                onPressed: () {
-                  openAppSettings();
-                  Navigator.pop(ctx);
-                },
-                child: const Text('Open Settings'),
-              ),
-            ],
+    if (outcome == RfiPermissionOutcome.permanentlyDenied && mounted) {
+      showDialog<void>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Permission Required'),
+          content: Text(
+            'Please enable $permissionLabel permission in Settings to continue.',
           ),
-        );
-      }
-      return false;
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                openAppSettings();
+                Navigator.pop(ctx);
+              },
+              child: const Text('Open Settings'),
+            ),
+          ],
+        ),
+      );
     }
-
     return false;
   }
 
-  Future<bool> _handleGalleryPermission() async {
-    return true;
+  Future<bool> _handleGalleryPermission() {
+    return _ensureRfiMediaPermission(
+      prepare: RfiMediaPermissions.prepareGalleryPick,
+      permissionLabel: 'Photos',
+    );
   }
 
   Future<void> _takeSelfie(InspectionFormNotifier notifier) async {
-    if (!await _handlePermission(Permission.camera)) return;
+    if (!await _ensureRfiMediaPermission(
+      prepare: RfiMediaPermissions.prepareCamera,
+      permissionLabel: 'Camera',
+    )) {
+      return;
+    }
 
     try {
       final picker = ImagePicker();
@@ -2558,126 +2562,19 @@ class _StartInspectionOnlineScreenState
   }
 
   Future<void> _viewFile(String path, {bool isPDF = false}) async {
-    final trimmed = path.trim();
-    if (trimmed.isEmpty) return;
-
-    final localFile = File(trimmed);
-    if (await localFile.exists()) {
-      final result = await OpenFile.open(trimmed);
-      if (!mounted) return;
-      if (result.type != ResultType.done) {
-        GlobalAlertDialog.show(
-          context,
-          title: 'Unable to open file',
-          message: 'Could not open file: ${result.message}',
-          type: DialogType.error,
-        );
-      }
-      return;
-    }
-
-    if (!mounted) return;
-    await RfiMediaViewerDialog.show(
+    await RfiFileActions.view(
       context,
-      source: trimmed,
+      path: path,
       dio: ref.read(dioProvider),
-      title: trimmed.split('/').last.split('?').first,
     );
   }
 
   Future<void> _downloadFile(String path) async {
-    if (!mounted) return;
-
-    if (path.startsWith('http') ||
-        path.contains('view-enclosure') ||
-        path.contains('previewFiles')) {
-      showDialog<void>(
-        context: context,
-        barrierDismissible: false,
-        builder: (_) => const Center(child: CircularProgressIndicator()),
-      );
-
-      try {
-        final dio = ref.read(dioProvider);
-        final dir = await getApplicationDocumentsDirectory();
-        var fileName = path.split('/').last.split('?').first;
-        if (fileName.isEmpty || fileName.contains('=')) {
-          fileName = 'enclosure_${DateTime.now().millisecondsSinceEpoch}.pdf';
-        }
-        fileName = fileName.replaceAll(RegExp(r'[\\/:*?"<>|]'), '_');
-        final savePath = '${dir.path}/$fileName';
-
-        if (path.contains('view-enclosure')) {
-          final idMatch =
-              RegExp(r'id=(\d+)').firstMatch(path)?.group(1);
-          if (idMatch != null) {
-            await dio.download(
-              'api/rfi/view-enclosure',
-              savePath,
-              queryParameters: <String, String>{'id': idMatch},
-              options: Options(extra: <String, dynamic>{'silentError': true}),
-            );
-          } else {
-            await dio.download(
-              path,
-              savePath,
-              options: Options(extra: <String, dynamic>{'silentError': true}),
-            );
-          }
-        } else {
-          final bytes = await RfiPreviewFetch.fetchBytes(dio, path);
-          await File(savePath).writeAsBytes(bytes);
-        }
-
-        if (!mounted) return;
-        Navigator.of(context, rootNavigator: true).pop();
-        await OpenFile.open(savePath);
-      } catch (e) {
-        if (!mounted) return;
-        Navigator.of(context, rootNavigator: true).pop();
-        GlobalAlertDialog.show(
-          context,
-          title: 'Download failed',
-          message: e.toString(),
-          type: DialogType.error,
-        );
-      }
-      return;
-    }
-
-    try {
-      final file = File(path);
-      if (!await file.exists()) {
-        if (mounted) {
-          GlobalAlertDialog.show(
-            context,
-            title: 'File not found',
-            message: 'File does not exist',
-            type: DialogType.error,
-          );
-        }
-        return;
-      }
-      if (!mounted) return;
-      await Future.delayed(const Duration(seconds: 1));
-      if (mounted) {
-        GlobalAlertDialog.show(
-          context,
-          title: 'Success',
-          message: 'File saved to local storage.',
-          type: DialogType.success,
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        GlobalAlertDialog.show(
-          context,
-          title: 'Download failed',
-          message: 'Download failed: $e',
-          type: DialogType.error,
-        );
-      }
-    }
+    await RfiFileActions.download(
+      context,
+      path: path,
+      dio: ref.read(dioProvider),
+    );
   }
 
   String _getPublicUrl(String path) => RfiPreviewFetch.resolvePublicUrl(path);

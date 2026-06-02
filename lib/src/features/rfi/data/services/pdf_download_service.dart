@@ -2,8 +2,10 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:open_file/open_file.dart';
+
 import 'package:path_provider/path_provider.dart';
+
+import '../../core/utils/rfi_file_actions.dart';
 import '../../core/widgets/global_alert_dialog.dart';
 
 class PdfDownloadService {
@@ -21,7 +23,8 @@ class PdfDownloadService {
     );
 
     try {
-      final savePath = await _getSavePath(rfiId);
+      final dir = await _downloadsDirectory();
+      final savePath = '${dir.path}/${rfiId}_report.pdf';
 
       await dio.download(
         '/api/rfiLog/pdf/download/$rfiId/$txnId',
@@ -45,7 +48,12 @@ class PdfDownloadService {
       if (context.mounted) {
         Navigator.of(context, rootNavigator: true).pop();
       }
-      await _openFile(savePath);
+      if (!context.mounted) return;
+      await RfiFileActions.viewLocalFile(
+        context,
+        localPath: savePath,
+        title: '${rfiId}_report.pdf',
+      );
     } catch (e) {
       if (context.mounted) {
         Navigator.of(context, rootNavigator: true).pop();
@@ -81,17 +89,12 @@ class PdfDownloadService {
     return 'Unable to download report right now. Please try again.';
   }
 
-  static Future<String> _getSavePath(String rfiId) async {
-    final fileName = '${rfiId}_report.pdf';
+  static Future<Directory> _downloadsDirectory() async {
     final appDir = await getApplicationDocumentsDirectory();
-    return '${appDir.path}/$fileName';
-  }
-
-  static Future<void> _openFile(String filePath) async {
-    try {
-      await OpenFile.open(filePath);
-    } catch (e) {
-      debugPrint('Could not open file: $e');
+    final downloadsDir = Directory('${appDir.path}/rfi_downloads');
+    if (!await downloadsDir.exists()) {
+      await downloadsDir.create(recursive: true);
     }
+    return downloadsDir;
   }
 }

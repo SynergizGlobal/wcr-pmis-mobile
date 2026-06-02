@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dio/dio.dart';
 
 import 'package:path_provider/path_provider.dart';
-import 'package:open_file/open_file.dart';
 import 'dart:io';
 
 
@@ -12,6 +11,7 @@ import '../../domain/rfi_details/rfi_inspection_model.dart';
 import '../../domain/rfi_details/enclosure_checklist_item.dart';
 import '../../core/widgets/error_state_widget.dart';
 import '../../core/network/environment.dart';
+import '../../core/utils/rfi_file_actions.dart';
 import '../../core/utils/rfi_preview_fetch.dart';
 import '../../core/widgets/rfi_remote_media_preview.dart';
 import '../../core/providers/dio_provider.dart';
@@ -479,7 +479,11 @@ class _ViewRfiDetailsScreenState extends ConsumerState<ViewRfiDetailsScreen> {
 
       if (!mounted) return;
       Navigator.of(context, rootNavigator: true).pop();
-      await OpenFile.open(savePath);
+      await RfiFileActions.viewLocalFile(
+        context,
+        localPath: savePath,
+        title: fileName,
+      );
       
     } catch (e) {
       if (!mounted) return;

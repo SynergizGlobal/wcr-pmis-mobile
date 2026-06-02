@@ -370,23 +370,19 @@ class RfiLogScreen extends ConsumerWidget {
                                               ),
                                       ),
                                       DataCell(
-                                        (item.rfiId.isEmpty ||
-                                                item.txnId == null ||
-                                                item.txnId!.isEmpty)
+                                        !_canShowDownload(item)
                                             ? const SizedBox.shrink()
                                             : IconButton(
                                                 icon: const Icon(Icons.download,
                                                     size: 20,
                                                     color: Colors.blueAccent),
                                                 onPressed: () {
-                                                  if (item.rfiId.isEmpty ||
-                                                      item.txnId == null ||
-                                                      item.txnId!.isEmpty) {
+                                                  if (!_canShowDownload(item)) {
                                                     GlobalAlertDialog.show(
                                                       context,
                                                       title: 'Download unavailable',
                                                       message:
-                                                          'Missing RFI ID or Transaction ID.',
+                                                          'Download is available only when eStatus is ENGG_SUCCESS or CON_SUCCESS and Transaction ID is present.',
                                                       type: DialogType.info,
                                                     );
                                                     return;
@@ -397,7 +393,7 @@ class RfiLogScreen extends ConsumerWidget {
                                                     context: context,
                                                     dio: dio,
                                                     rfiId: item.rfiId,
-                                                    txnId: item.txnId!,
+                                                    txnId: item.txnId!.trim(),
                                                   );
                                                 },
                                                 tooltip: 'Download',
@@ -432,4 +428,12 @@ class RfiLogScreen extends ConsumerWidget {
     ),
   );
 }
+
+  static bool _canShowDownload(RfiLogItem item) {
+    if (item.rfiId.trim().isEmpty) return false;
+    if (item.txnId == null || item.txnId!.trim().isEmpty) return false;
+
+    final eStatus = (item.estatus ?? '').trim().toUpperCase();
+    return eStatus == 'ENGG_SUCCESS' || eStatus == 'CON_SUCCESS';
+  }
 }

@@ -243,36 +243,6 @@ class _RfiRemoteMediaPreviewState extends State<RfiRemoteMediaPreview> {
   }
 }
 
-class _UnavailableMedia extends StatelessWidget {
-  const _UnavailableMedia({required this.message});
-
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.broken_image, color: scheme.onSurfaceVariant, size: 48),
-            const SizedBox(height: 8),
-            Text(
-              message.length > 120 ? '${message.substring(0, 120)}...' : message,
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: scheme.onSurfaceVariant,
-                  ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 class RfiMediaViewerDialog extends StatelessWidget {
   const RfiMediaViewerDialog({
     super.key,
@@ -326,6 +296,196 @@ class RfiMediaViewerDialog extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// In-app preview for files already on device (app-private or readable paths).
+class RfiLocalMediaViewerDialog extends StatelessWidget {
+  const RfiLocalMediaViewerDialog({
+    super.key,
+    required this.bytes,
+    required this.sourceHint,
+    this.title,
+  });
+
+  final Uint8List bytes;
+  final String sourceHint;
+  final String? title;
+
+  static Future<void> show(
+    BuildContext context, {
+    required Uint8List bytes,
+    required String sourceHint,
+    String? title,
+  }) {
+    return showDialog<void>(
+      context: context,
+      builder: (ctx) => RfiLocalMediaViewerDialog(
+        bytes: bytes,
+        sourceHint: sourceHint,
+        title: title,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Dialog.fullscreen(
+      backgroundColor: scheme.surface,
+      child: Column(
+        children: [
+          AppBar(
+            leading: IconButton(
+              icon: const Icon(Icons.close),
+              onPressed: () => Navigator.pop(context),
+            ),
+            title: Text(
+              title ?? sourceHint.split('/').last.split('?').first,
+              style: const TextStyle(fontSize: 16),
+            ),
+          ),
+          Expanded(
+            child: RfiMemoryMediaPreview(
+              bytes: bytes,
+              sourceHint: sourceHint,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class RfiMemoryMediaPreview extends StatefulWidget {
+  const RfiMemoryMediaPreview({
+    super.key,
+    required this.bytes,
+    required this.sourceHint,
+    this.height,
+    this.fit = BoxFit.contain,
+  });
+
+  final Uint8List bytes;
+  final String sourceHint;
+  final double? height;
+  final BoxFit fit;
+
+  @override
+  State<RfiMemoryMediaPreview> createState() => _RfiMemoryMediaPreviewState();
+}
+
+class _RfiMemoryMediaPreviewState extends State<RfiMemoryMediaPreview> {
+  PdfControllerPinch? _pdfController;
+  RfiMediaKind? _kind;
+
+  @override
+  void initState() {
+    super.initState();
+    _kind = RfiMediaUtils.classify(widget.sourceHint, widget.bytes);
+    if (_kind == RfiMediaKind.pdf) {
+      if (!RfiPreviewFetch.looksLikePdfBytes(widget.bytes)) {
+        _kind = RfiMediaKind.unsupported;
+        return;
+      }
+      _pdfController = PdfControllerPinch(
+        document: PdfDocument.openData(widget.bytes),
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    _pdfController?.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final height = widget.height ?? 400;
+
+    switch (_kind) {
+      case RfiMediaKind.pdf:
+        if (_pdfController == null) {
+          return SizedBox(
+            height: height,
+            child: const _UnavailableMedia(message: 'PDF unavailable'),
+          );
+        }
+        return SizedBox(
+          height: height,
+          width: double.infinity,
+          child: PdfViewPinch(controller: _pdfController!),
+        );
+      case RfiMediaKind.svg:
+        return SizedBox(
+          height: height,
+          width: double.infinity,
+          child: InteractiveViewer(
+            minScale: 0.5,
+            maxScale: 5,
+            child: Center(
+              child: SvgPicture.memory(
+                widget.bytes,
+                fit: widget.fit,
+              ),
+            ),
+          ),
+        );
+      case RfiMediaKind.raster:
+        return ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: InteractiveViewer(
+            minScale: 0.5,
+            maxScale: 5,
+            child: Image.memory(
+              widget.bytes,
+              fit: widget.fit,
+              errorBuilder: (_, __, ___) => const _UnavailableMedia(
+                message: 'Could not display image',
+              ),
+            ),
+          ),
+        );
+      case RfiMediaKind.unsupported:
+      case null:
+        return SizedBox(
+          height: height,
+          child: const _UnavailableMedia(
+            message: 'Unsupported file format',
+          ),
+        );
+    }
+  }
+}
+
+class _UnavailableMedia extends StatelessWidget {
+  const _UnavailableMedia({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.broken_image, color: scheme.onSurfaceVariant, size: 48),
+            const SizedBox(height: 8),
+            Text(
+              message.length > 120 ? '${message.substring(0, 120)}...' : message,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: scheme.onSurfaceVariant,
+                  ),
+            ),
+          ],
+        ),
       ),
     );
   }

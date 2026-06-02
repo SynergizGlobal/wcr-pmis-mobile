@@ -268,4 +268,22 @@ abstract final class RfiPreviewFetch {
         bytes[2] == 0x44 &&
         bytes[3] == 0x46;
   }
+
+  /// Paths that must be fetched from the API — not readable as on-device files.
+  static bool isRemoteInspectablePath(String path) {
+    final trimmed = path.trim();
+    if (trimmed.isEmpty) return false;
+    if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+      return true;
+    }
+    if (trimmed.contains('previewFiles') ||
+        trimmed.contains('view-enclosure')) {
+      return true;
+    }
+    if (trimmed.startsWith('api/')) return true;
+    if (trimmed.startsWith('/home/') || trimmed.contains('ec2-user')) {
+      return true;
+    }
+    return _needsPreviewFilesEndpoint(trimmed) || _isServerFilesystemPath(trimmed);
+  }
 }
