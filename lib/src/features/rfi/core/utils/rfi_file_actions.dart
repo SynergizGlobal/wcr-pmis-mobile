@@ -180,11 +180,16 @@ abstract final class RfiFileActions {
       final bytes = await RfiPreviewFetch.fetchBytes(dio, trimmed);
       await File(savePath).writeAsBytes(bytes);
     } else {
-      final source = File(trimmed);
-      if (!await source.exists()) {
-        throw Exception('File does not exist');
+      try {
+        final bytes = await RfiPreviewFetch.fetchBytes(dio, trimmed);
+        await File(savePath).writeAsBytes(bytes);
+      } catch (_) {
+        final source = File(trimmed);
+        if (!await source.exists()) {
+          throw Exception('File does not exist');
+        }
+        await source.copy(savePath);
       }
-      await source.copy(savePath);
     }
 
     final saved = File(savePath);

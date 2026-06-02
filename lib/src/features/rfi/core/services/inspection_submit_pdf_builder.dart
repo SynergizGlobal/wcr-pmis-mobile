@@ -49,29 +49,40 @@ class InspectionSubmitPdfBuilder {
     final pdf = pw.Document();
     final enclosureNames = _enclosureNames(state, rfi);
 
+    final contractorSiteImagePaths = _collectSiteImagePaths(
+      state: state,
+      rfi: rfi,
+      includeEngineerImages: false,
+    );
+    final engineerSiteImagePaths = _collectSiteImagePaths(
+      state: state,
+      rfi: rfi,
+      includeEngineerImages: true,
+    );
+    final contractorSiteImages = await _loadSiteImages(
+      contractorSiteImagePaths,
+      dio,
+    );
+    final engineerSiteImages = await _loadSiteImages(
+      engineerSiteImagePaths,
+      dio,
+    );
     pdf.addPage(
       pw.MultiPage(
         pageFormat: PdfPageFormat.a4,
         margin: const pw.EdgeInsets.all(_margin),
-        build: (context) => _buildPageOne(
-          state: state,
-          rfi: rfi,
-          enclosureNames: enclosureNames,
-          isEngineer: isEngineer,
-          font: font,
-          fontBold: fontBold,
-          logo: logo,
-        ),
-      ),
-    );
-
-    pdf.addPage(
-      pw.Page(
-        pageFormat: PdfPageFormat.a4,
-        margin: const pw.EdgeInsets.all(_margin),
-        build: (context) => pw.Column(
-          crossAxisAlignment: pw.CrossAxisAlignment.start,
-          children: _buildPartTwoEngineerRemarksPage(
+        build: (context) => [
+          ..._buildPageOne(
+            state: state,
+            rfi: rfi,
+            enclosureNames: enclosureNames,
+            isEngineer: isEngineer,
+            font: font,
+            fontBold: fontBold,
+            logo: logo,
+          ),
+          pw.SizedBox(height: 12),
+          ..._buildPartTwoEngineerRemarksPage(
             state: state,
             rfi: rfi,
             isEngineer: isEngineer,
@@ -79,17 +90,8 @@ class InspectionSubmitPdfBuilder {
             font: font,
             fontBold: fontBold,
           ),
-        ),
-      ),
-    );
-
-    pdf.addPage(
-      pw.Page(
-        pageFormat: PdfPageFormat.a4,
-        margin: const pw.EdgeInsets.all(_margin),
-        build: (context) => pw.Column(
-          crossAxisAlignment: pw.CrossAxisAlignment.start,
-          children: _buildPartThreeValidationPage(
+          pw.SizedBox(height: 14),
+          ..._buildPartThreeValidationPage(
             state: state,
             rfi: rfi,
             isEngineer: isEngineer,
@@ -97,25 +99,19 @@ class InspectionSubmitPdfBuilder {
             font: font,
             fontBold: fontBold,
           ),
-        ),
-      ),
-    );
-
-    final siteImages = await _loadSiteImages(state.siteImagePaths, dio);
-    pdf.addPage(
-      pw.MultiPage(
-        pageFormat: PdfPageFormat.a4,
-        margin: const pw.EdgeInsets.all(_margin),
-        build: (context) => _buildPageTwo(
-          state: state,
-          rfi: rfi,
-          rfiId: rfiId,
-          enclosureNames: enclosureNames,
-          isEngineer: isEngineer,
-          font: font,
-          fontBold: fontBold,
-          siteImages: siteImages,
-        ),
+          pw.SizedBox(height: 14),
+          ..._buildPageTwo(
+            state: state,
+            rfi: rfi,
+            rfiId: rfiId,
+            enclosureNames: enclosureNames,
+            isEngineer: isEngineer,
+            font: font,
+            fontBold: fontBold,
+            contractorSiteImages: contractorSiteImages,
+            engineerSiteImages: engineerSiteImages,
+          ),
+        ],
       ),
     );
 
@@ -340,12 +336,15 @@ class InspectionSubmitPdfBuilder {
     final isRejected = _isRejectedInspectionStatus(status);
 
     final remarks = _engineerRemarksForPdf(state);
-    final contractorRepName = _resolveContractorRepresentativeName(state, rfi);
-    final mrvcRepName = _resolveMrvcRepresentativeName(
-      rfi: rfi,
-      submitUser: submitUser,
-      isEngineer: isEngineer,
-    );
+    final contractorRepName =
+        isEngineer ? _resolveContractorRepresentativeName(state, rfi) : '';
+    final mrvcRepName = isEngineer
+        ? _resolveMrvcRepresentativeName(
+            rfi: rfi,
+            submitUser: submitUser,
+            isEngineer: isEngineer,
+          )
+        : '';
 
     return [
       pw.Text(
@@ -407,12 +406,14 @@ class InspectionSubmitPdfBuilder {
     );
     final validationRemarks = _validationRemarksForPdf(state, rfi);
     final validationComment = _validationCommentForPdf(state, rfi);
-    final validatedBy = _validationAuthorForPdf(
-      rfi: rfi,
-      submitUser: submitUser,
-      isEngineer: isEngineer,
-    );
-    final validatedOn = _validationDateForPdf(rfi);
+    final validatedBy = isEngineer
+        ? _validationAuthorForPdf(
+            rfi: rfi,
+            submitUser: submitUser,
+            isEngineer: isEngineer,
+          )
+        : '';
+    final validatedOn = isEngineer ? _validationDateForPdf(rfi) : '';
     final approval = _validationApprovalFlags(rfi.validationStatus);
 
     return [
@@ -487,17 +488,10 @@ class InspectionSubmitPdfBuilder {
     required bool isEngineer,
     required pw.Font font,
     required pw.Font fontBold,
-    required List<pw.MemoryImage> siteImages,
+    required List<pw.MemoryImage> contractorSiteImages,
+    required List<pw.MemoryImage> engineerSiteImages,
   }) {
     final measurements = state.measurements;
-
-    final footerText = isEngineer
-        ? 'RFI No. ${rfi.rfiId ?? rfiId} is submitted by Contractor on '
-            '${_displayDate(rfi.dateOfSubmission)} and approved by Engineer on '
-            '${_displayDate(DateTime.now().toIso8601String())}. '
-            'It is a digitally generated document and is electronically signed on '
-            '1st page of this RFI.'
-        : null;
 
     return [
         pw.Text('Measurement Record', style: pw.TextStyle(font: fontBold, fontSize: 11)),
@@ -544,7 +538,7 @@ class InspectionSubmitPdfBuilder {
                 ),
               ),
             ),
-        if (siteImages.isNotEmpty) ...[
+        if (contractorSiteImages.isNotEmpty) ...[
           pw.SizedBox(height: 12),
           pw.Text('Contractor Site Images:',
               style: pw.TextStyle(font: fontBold, fontSize: 10)),
@@ -552,19 +546,26 @@ class InspectionSubmitPdfBuilder {
           pw.Wrap(
             spacing: 8,
             runSpacing: 8,
-            children: siteImages
+            children: contractorSiteImages
                 .map(
                   (img) => pw.Image(img, width: 200, height: 120, fit: pw.BoxFit.cover),
                 )
                 .toList(),
           ),
         ],
-        if (footerText != null) ...[
-          pw.SizedBox(height: 20),
-          pw.Text(
-            footerText,
-            style: pw.TextStyle(font: font, fontSize: 7, color: PdfColors.grey700),
-            textAlign: pw.TextAlign.center,
+        if (engineerSiteImages.isNotEmpty) ...[
+          pw.SizedBox(height: 12),
+          pw.Text('Engineer Site Images:',
+              style: pw.TextStyle(font: fontBold, fontSize: 10)),
+          pw.SizedBox(height: 6),
+          pw.Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: engineerSiteImages
+                .map(
+                  (img) => pw.Image(img, width: 200, height: 120, fit: pw.BoxFit.cover),
+                )
+                .toList(),
           ),
         ],
       ];
@@ -1185,6 +1186,9 @@ class InspectionSubmitPdfBuilder {
     for (final doc in state.supportingDocuments) {
       addSourcePdf(doc.path, 'Supporting Document');
     }
+    for (final detail in rfi.inspectionDetails ?? const <InspectionDetail>[]) {
+      addSourcePdf(detail.supportingDocuments, 'Supporting Document');
+    }
 
     // 3. Test report (web: testReportFile — role-specific path on RFI)
     final testReportPath = isEngineer
@@ -1193,6 +1197,10 @@ class InspectionSubmitPdfBuilder {
             : rfi.testResCon)
         : rfi.testResCon;
     addSourcePdf(testReportPath, 'Test Report');
+    for (final detail in rfi.inspectionDetails ?? const <InspectionDetail>[]) {
+      addSourcePdf(detail.testSiteDocuments, 'Test Report');
+      addSourcePdf(detail.postTestReportPath, 'Test Report');
+    }
 
     final seen = <String>{};
     final result = <_LabeledPdf>[];
@@ -1253,6 +1261,48 @@ class InspectionSubmitPdfBuilder {
       }
     }
     return images;
+  }
+
+  static List<String> _collectSiteImagePaths({
+    required InspectionFormState state,
+    required InspectionItem rfi,
+    required bool includeEngineerImages,
+  }) {
+    final merged = <String>{};
+
+    void addRaw(String? raw) {
+      if (raw == null || raw.trim().isEmpty) return;
+      final values = _splitPaths(raw);
+      for (final value in values) {
+        if (value.trim().isNotEmpty) merged.add(value.trim());
+      }
+    }
+
+    // 1) Freshly selected images in current inspection session.
+    for (final path in state.siteImagePaths) {
+      if (path.trim().isNotEmpty) merged.add(path.trim());
+    }
+
+    // 2) Server-side contractor image paths already saved on RFI.
+    addRaw(rfi.imgContractor);
+
+    // 3) Contractor-side inspection detail image paths.
+    for (final detail in rfi.inspectionDetails ?? const <InspectionDetail>[]) {
+      if (!_isContractorInspectionDetail(detail)) continue;
+      addRaw(detail.siteImage);
+    }
+
+    if (includeEngineerImages) {
+      for (final detail in rfi.inspectionDetails ?? const <InspectionDetail>[]) {
+        if (!_isEngineerInspectionDetail(detail) &&
+            !_isDyHodInspectionDetail(detail)) {
+          continue;
+        }
+        addRaw(detail.siteImage);
+      }
+    }
+
+    return merged.toList();
   }
 
   static Future<List<pw.MemoryImage>> _renderPdfBytes(Uint8List bytes) async {

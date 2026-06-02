@@ -43,6 +43,7 @@ class StartInspectionOnlineScreen extends ConsumerStatefulWidget {
 class _StartInspectionOnlineScreenState
     extends ConsumerState<StartInspectionOnlineScreen> {
   final PageController _pageController = PageController();
+  final Set<String> _hiddenReadonlySupportingPaths = <String>{};
 
   @override
   void dispose() {
@@ -1058,6 +1059,7 @@ class _StartInspectionOnlineScreenState
 
   Widget _buildContractorSupportingDocsSection(
     BuildContext context,
+    InspectionFormNotifier notifier,
     List<SupportingDocumentEntry> documents,
   ) {
     const accent = Color(0xFF50589C);
@@ -1094,13 +1096,28 @@ class _StartInspectionOnlineScreenState
             ),
           ] else ...[
             const SizedBox(height: 12),
-            ...documents.map(
+            ...documents
+                .where(
+                  (doc) => !_hiddenReadonlySupportingPaths
+                      .contains(doc.filePath.trim()),
+                )
+                .map(
               (doc) => _ReadonlySupportingDocumentRow(
                 key: ValueKey(doc.filePath),
                 entry: doc,
                 accentColor: accent,
                 onView: () => _viewFile(doc.filePath),
                 onDownload: () => _downloadFile(doc.filePath),
+                onDelete: () async {
+                  final confirm = await _confirmDeleteSupportingDocument();
+                  if (confirm != true) return;
+                  final target = doc.filePath.trim();
+                  if (target.isEmpty) return;
+                  notifier.removeSupportingDocByPath(target);
+                  setState(() {
+                    _hiddenReadonlySupportingPaths.add(target);
+                  });
+                },
               ),
             ),
           ],
@@ -1132,6 +1149,8 @@ class _StartInspectionOnlineScreenState
     final role = UserRole.fromLoginResponse(userData ?? {});
     final isContractorRep = role == UserRole.contractorRep;
     final isClientSide = role == UserRole.engineer || role == UserRole.dyHodEngineer || role == UserRole.hod || role == UserRole.dyHod;
+    final showClientDescription =
+        isClientSide || state.clientDescription.trim().isNotEmpty;
 
 
     final contractorSupportingDocs =
@@ -1145,6 +1164,7 @@ class _StartInspectionOnlineScreenState
         if (isClientSide) ...[
           _buildContractorSupportingDocsSection(
             context,
+            notifier,
             contractorSupportingDocs,
           ),
           const SizedBox(height: 16),
@@ -1205,7 +1225,12 @@ class _StartInspectionOnlineScreenState
                     notifier: notifier,
                     onView: () => _viewFile(path),
                     onDownload: () => _downloadFile(path),
-                    onDelete: () => notifier.removeSupportingDoc(i),
+                    onDelete: () async {
+                      final confirm = await _confirmDeleteSupportingDocument();
+                      if (confirm == true) {
+                        notifier.removeSupportingDoc(i);
+                      }
+                    },
                   );
                 }),
               ],
@@ -1241,14 +1266,15 @@ class _StartInspectionOnlineScreenState
             ),
           ),
         ),
-        if (isClientSide) ...[
+        if (showClientDescription) ...[
           const SizedBox(height: 16),
           const Text('Description By Client',
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
           const SizedBox(height: 8),
           TextField(
             maxLines: 2,
-            onChanged: notifier.updateClientDescription,
+            enabled: isClientSide,
+            onChanged: isClientSide ? notifier.updateClientDescription : null,
             style: const TextStyle(fontSize: 14),
             decoration: InputDecoration(
               border:
@@ -1258,7 +1284,7 @@ class _StartInspectionOnlineScreenState
                   borderSide: BorderSide(color: Colors.grey.shade300)),
               hintText: 'Enter description...',
               hintStyle: const TextStyle(fontSize: 13),
-              fillColor: Colors.white,
+              fillColor: isClientSide ? Colors.white : Colors.grey.shade50,
               filled: true,
               contentPadding:
                   const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -2577,6 +2603,29 @@ class _StartInspectionOnlineScreenState
     );
   }
 
+  Future<bool?> _confirmDeleteSupportingDocument() {
+    return showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Remove Supporting Document'),
+        content: const Text(
+          'Are you sure you want to remove this supporting document?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+  }
+
   String _getPublicUrl(String path) => RfiPreviewFetch.resolvePublicUrl(path);
 
   Widget _buildChecklistOpenButton(
@@ -3065,12 +3114,14 @@ class _ReadonlySupportingDocumentRow extends StatelessWidget {
     required this.accentColor,
     required this.onView,
     required this.onDownload,
+    required this.onDelete,
   });
 
   final SupportingDocumentEntry entry;
   final Color accentColor;
   final VoidCallback onView;
   final VoidCallback onDownload;
+  final VoidCallback onDelete;
 
   Widget _miniIcon(IconData icon, Color color, VoidCallback onTap) {
     return Material(
@@ -3121,6 +3172,11 @@ class _ReadonlySupportingDocumentRow extends StatelessWidget {
                 Icons.download_for_offline_outlined,
                 Colors.green,
                 onDownload,
+              ),
+              _miniIcon(
+                Icons.delete_outline_rounded,
+                Colors.red,
+                onDelete,
               ),
             ],
           ),

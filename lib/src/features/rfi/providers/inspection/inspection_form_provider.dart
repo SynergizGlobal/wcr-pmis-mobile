@@ -12,6 +12,7 @@ import '../../core/providers/dio_provider.dart';
 import '../../core/providers/shared_prefs_provider.dart';
 import '../../core/services/inspection_submit_pdf_builder.dart';
 import '../../core/utils/final_submit_payload.dart';
+import '../../core/utils/rfi_file_paths.dart';
 import '../../core/utils/txn_id.dart';
 import '../../core/utils/user_role.dart';
 import '../auth/auth_provider.dart';
@@ -42,6 +43,10 @@ class InspectionFormNotifier extends StateNotifier<InspectionFormState> {
     state = state.copyWith(isLoading: true);
     try {
       final details = await _repository.getRfiDetails(_rfiId);
+      final userData = _ref.read(authNotifierProvider).value;
+      final role = UserRole.fromLoginResponse(userData ?? {});
+      final isContractorSide =
+          role == UserRole.contractor || role == UserRole.contractorRep;
       
       String? initialChainage;
       String? initialContractorDesc;
@@ -133,6 +138,17 @@ class InspectionFormNotifier extends StateNotifier<InspectionFormState> {
         clientDescription: state.clientDescription.isEmpty
             ? (initialClientDescription ?? '')
             : state.clientDescription,
+        supportingDocuments: state.supportingDocuments.isEmpty && isContractorSide
+            ? extractContractorSupportingFromInspectionDetails(
+                    details.inspectionDetails)
+                .map(
+                  (e) => SupportingDocument(
+                    path: e.filePath,
+                    description: e.documentsDescription,
+                  ),
+                )
+                .toList()
+            : state.supportingDocuments,
         measurements: initialMeasurements,
       );
       _loadDraft();
@@ -314,6 +330,16 @@ class InspectionFormNotifier extends StateNotifier<InspectionFormState> {
   void removeSupportingDoc(int index) {
     final list = List<SupportingDocument>.from(state.supportingDocuments);
     list.removeAt(index);
+    state = state.copyWith(supportingDocuments: list);
+  }
+
+  void removeSupportingDocByPath(String path) {
+    final target = path.trim();
+    if (target.isEmpty) return;
+    final list = List<SupportingDocument>.from(state.supportingDocuments);
+    final idx = list.indexWhere((d) => d.path.trim() == target);
+    if (idx < 0) return;
+    list.removeAt(idx);
     state = state.copyWith(supportingDocuments: list);
   }
 
