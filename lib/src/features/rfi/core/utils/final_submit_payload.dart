@@ -13,6 +13,7 @@ class FinalSubmitPayload {
     required String? userId,
     required String? Function(String?) mapInspectionStatus,
     required String? Function(String?) mapTestType,
+    bool isEngineer = false,
   }) {
     final firstM = state.measurements.isNotEmpty
         ? state.measurements.first
@@ -44,7 +45,10 @@ class FinalSubmitPayload {
       'testInsiteLab': mapTestType(state.inspectionStatus),
       'engineerRemarks':
           state.engineerRemarks.isEmpty ? null : state.engineerRemarks,
-      'descriptionEnclosure': _resolveDescriptionEnclosure(state),
+      'descriptionEnclosure': _resolveDescriptionEnclosure(
+        state,
+        isEngineer: isEngineer,
+      ),
       'supportingDescriptions': supportingDescriptions,
     };
   }
@@ -92,9 +96,17 @@ class FinalSubmitPayload {
     return userId?.trim() ?? '';
   }
 
-  static String? _resolveDescriptionEnclosure(InspectionFormState state) {
-    final contractor = state.contractorDescription.trim();
-    if (contractor.isNotEmpty) return contractor;
+  static String? _resolveDescriptionEnclosure(
+    InspectionFormState state, {
+    required bool isEngineer,
+  }) {
+    if (isEngineer) {
+      final client = state.clientDescription.trim();
+      if (client.isNotEmpty) return client;
+    } else {
+      final contractor = state.contractorDescription.trim();
+      if (contractor.isNotEmpty) return contractor;
+    }
 
     final rfiDesc = state.rfiDetails?.description?.trim();
     if (rfiDesc != null && rfiDesc.isNotEmpty) return rfiDesc;

@@ -90,32 +90,36 @@ class RfiPreviewDialog extends ConsumerWidget {
           body: Column(
             children: [
               Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Stack(
+                padding: const EdgeInsets.fromLTRB(8, 8, 4, 0),
+                child: Row(
                   children: [
-                    const Align(
-                      alignment: Alignment.center,
+                    const SizedBox(width: 48),
+                    Expanded(
                       child: Column(
                         children: [
                           Text(
                             'RFI Details Preview',
+                            textAlign: TextAlign.center,
                             style: TextStyle(
-                                fontSize: 20, fontWeight: FontWeight.normal),
+                              fontSize: 20,
+                              fontWeight: FontWeight.normal,
+                            ),
                           ),
                           SizedBox(height: 4),
                           Text(
                             'Request For Inspection (RFI)',
-                            style: TextStyle(fontSize: 18, color: Colors.black87),
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 18,
+                              color: Colors.black87,
+                            ),
                           ),
                         ],
                       ),
                     ),
-                    Align(
-                      alignment: Alignment.topRight,
-                      child: IconButton(
-                        icon: const Icon(Icons.close),
-                        onPressed: () => Navigator.of(context).pop(),
-                      ),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.of(context).pop(),
                     ),
                   ],
                 ),

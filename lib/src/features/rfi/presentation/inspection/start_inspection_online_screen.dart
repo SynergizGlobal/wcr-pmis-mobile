@@ -1108,16 +1108,6 @@ class _StartInspectionOnlineScreenState
                 accentColor: accent,
                 onView: () => _viewFile(doc.filePath),
                 onDownload: () => _downloadFile(doc.filePath),
-                onDelete: () async {
-                  final confirm = await _confirmDeleteSupportingDocument();
-                  if (confirm != true) return;
-                  final target = doc.filePath.trim();
-                  if (target.isEmpty) return;
-                  notifier.removeSupportingDocByPath(target);
-                  setState(() {
-                    _hiddenReadonlySupportingPaths.add(target);
-                  });
-                },
               ),
             ),
           ],
@@ -3114,14 +3104,12 @@ class _ReadonlySupportingDocumentRow extends StatelessWidget {
     required this.accentColor,
     required this.onView,
     required this.onDownload,
-    required this.onDelete,
   });
 
   final SupportingDocumentEntry entry;
   final Color accentColor;
   final VoidCallback onView;
   final VoidCallback onDownload;
-  final VoidCallback onDelete;
 
   Widget _miniIcon(IconData icon, Color color, VoidCallback onTap) {
     return Material(
@@ -3172,11 +3160,6 @@ class _ReadonlySupportingDocumentRow extends StatelessWidget {
                 Icons.download_for_offline_outlined,
                 Colors.green,
                 onDownload,
-              ),
-              _miniIcon(
-                Icons.delete_outline_rounded,
-                Colors.red,
-                onDelete,
               ),
             ],
           ),

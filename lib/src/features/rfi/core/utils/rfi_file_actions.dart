@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:open_file/open_file.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
@@ -23,6 +24,16 @@ abstract final class RfiFileActions {
   }) async {
     final trimmed = normalizeRfiAttachmentPath(path);
     if (trimmed.isEmpty) return;
+
+    // Case 1: freshly picked / on-device file — open locally, no API.
+    if (RfiPreviewFetch.isLocalDevicePath(trimmed)) {
+      await viewLocalFile(
+        context,
+        localPath: trimmed,
+        title: title ?? _fileLabel(trimmed),
+      );
+      return;
+    }
 
     if (RfiPreviewFetch.isRemoteInspectablePath(trimmed)) {
       if (!context.mounted) return;
@@ -88,7 +99,7 @@ abstract final class RfiFileActions {
     );
   }
 
-  /// Downloads to app-private storage and opens in the in-app viewer.
+  /// Saves the file to app storage and opens it with the system viewer.
   static Future<void> download(
     BuildContext context, {
     required String path,
@@ -113,10 +124,10 @@ abstract final class RfiFileActions {
       if (!context.mounted) return;
       Navigator.of(context, rootNavigator: true).pop();
 
-      await viewLocalFile(
+      await openDownloadedWithSystemViewer(
         context,
-        localPath: savePath,
-        title: title ?? _fileLabel(savePath),
+        savePath: savePath,
+        fileName: title ?? _fileLabel(savePath),
       );
     } catch (e) {
       if (!context.mounted) return;
@@ -155,7 +166,14 @@ abstract final class RfiFileActions {
     fileName = fileName.replaceAll(RegExp(r'[\\/:*?"<>|]'), '_');
     final savePath = p.join(downloadsDir.path, fileName);
 
-    if (trimmed.contains('view-enclosure')) {
+    // Case 1: local file — copy directly, no API.
+    if (RfiPreviewFetch.isLocalDevicePath(trimmed)) {
+      final source = File(trimmed);
+      if (!await source.exists()) {
+        throw Exception('File does not exist');
+      }
+      await source.copy(savePath);
+    } else if (trimmed.contains('view-enclosure')) {
       final idMatch = RegExp(r'id=(\d+)').firstMatch(trimmed)?.group(1);
       if (idMatch != null) {
         await dio.download(
@@ -208,6 +226,26 @@ abstract final class RfiFileActions {
     }
 
     return savePath;
+  }
+
+  /// Opens a saved file in the device PDF / file viewer (store friendly).
+  static Future<void> openDownloadedWithSystemViewer(
+    BuildContext context, {
+    required String savePath,
+    required String fileName,
+  }) async {
+    final result = await OpenFile.open(savePath);
+    if (!context.mounted) return;
+    if (result.type != ResultType.done) {
+      GlobalAlertDialog.show(
+        context,
+        title: 'Download complete',
+        message: result.message.trim().isNotEmpty
+            ? '$fileName saved.\n\n${result.message}'
+            : '$fileName has been saved. Open it from your file manager if needed.',
+        type: DialogType.success,
+      );
+    }
   }
 
   static String _fileLabel(String path) {

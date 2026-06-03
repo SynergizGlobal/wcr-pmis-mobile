@@ -839,6 +839,7 @@ class InspectionFormNotifier extends StateNotifier<InspectionFormState> {
         userId: userId,
         mapInspectionStatus: _mapInspectionStatus,
         mapTestType: _mapTestType,
+        isEngineer: isEngineerRole,
       );
 
       final finalFormData = await FinalSubmitPayload.buildFormData(

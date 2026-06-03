@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
@@ -21,6 +22,10 @@ abstract final class RfiPreviewFetch {
   static List<String> resolveFetchCandidates(String urlOrPath) {
     final trimmed = urlOrPath.trim();
     if (trimmed.isEmpty) return [];
+
+    if (isLocalDevicePath(trimmed)) {
+      return [trimmed];
+    }
 
     if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
       return [trimmed];
@@ -115,7 +120,20 @@ abstract final class RfiPreviewFetch {
   }
 
   static Future<Uint8List> fetchBytes(Dio dio, String urlOrPath) async {
-    final candidates = resolveFetchCandidates(urlOrPath);
+    final trimmed = urlOrPath.trim();
+    if (trimmed.isEmpty) {
+      throw Exception('Empty file path');
+    }
+
+    if (isLocalDevicePath(trimmed)) {
+      final file = File(trimmed);
+      if (!await file.exists()) {
+        throw Exception('Local file not found');
+      }
+      return file.readAsBytes();
+    }
+
+    final candidates = resolveFetchCandidates(trimmed);
     if (candidates.isEmpty) {
       throw Exception('Empty file path');
     }
@@ -200,9 +218,48 @@ abstract final class RfiPreviewFetch {
   }
 
   static bool _needsPreviewFilesEndpoint(String path) {
+    if (isLocalDevicePath(path)) return false;
     if (_isServerFilesystemPath(path)) return true;
     return path.startsWith('/home/ec2-user/') ||
-        (path.startsWith('/') && !path.startsWith('/api/'));
+        (path.startsWith('/home/') && path.contains('/uploads/'));
+  }
+
+  /// On-device paths from file picker / app storage — never call previewFiles.
+  static bool isLocalDevicePath(String path) {
+    final trimmed = path.trim();
+    if (trimmed.isEmpty) return false;
+
+    if (trimmed.startsWith('file://')) return true;
+
+    final normalized = trimmed.replaceAll('\\', '/');
+    final lower = normalized.toLowerCase();
+
+    if (lower.startsWith('/data/') ||
+        lower.startsWith('/storage/') ||
+        lower.startsWith('/sdcard/') ||
+        lower.contains('/cache/file_picker/') ||
+        lower.contains('/app_flutter/') ||
+        lower.contains('/rfi_downloads/')) {
+      return true;
+    }
+
+    if (lower.contains('/containers/data/application/') ||
+        lower.startsWith('/var/mobile/') ||
+        lower.startsWith('/private/var/mobile/')) {
+      return true;
+    }
+
+    if (lower.startsWith('/users/') ||
+        lower.startsWith('/tmp/') ||
+        lower.startsWith('/var/folders/')) {
+      return true;
+    }
+
+    if (_windowsOrDrivePathPattern.hasMatch(trimmed)) {
+      return true;
+    }
+
+    return false;
   }
 
   static bool _isAbsoluteServerPath(String path) {
@@ -212,8 +269,11 @@ abstract final class RfiPreviewFetch {
   }
 
   static bool _isServerFilesystemPath(String path) {
-    if (path.contains(r'\')) return true;
-    return _windowsOrDrivePathPattern.hasMatch(path);
+    if (isLocalDevicePath(path)) return false;
+    if (path.contains(r'\') && !_windowsOrDrivePathPattern.hasMatch(path)) {
+      return true;
+    }
+    return false;
   }
 
   static Uint8List _validatePdfOrImageBytes(List<int>? data, String source) {
@@ -279,6 +339,7 @@ abstract final class RfiPreviewFetch {
   static bool isRemoteInspectablePath(String path) {
     final trimmed = path.trim();
     if (trimmed.isEmpty) return false;
+    if (isLocalDevicePath(trimmed)) return false;
     if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
       return true;
     }
@@ -293,6 +354,6 @@ abstract final class RfiPreviewFetch {
     if (!trimmed.contains('/') && !trimmed.contains('\\')) {
       return true;
     }
-    return _needsPreviewFilesEndpoint(trimmed) || _isServerFilesystemPath(trimmed);
+    return _needsPreviewFilesEndpoint(trimmed);
   }
 }

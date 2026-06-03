@@ -401,10 +401,12 @@ class InspectionSubmitPdfBuilder {
     final contractorDesc = _inspectionDescriptionForPdf(
       state: state,
       forContractor: true,
+      isEngineerSubmit: isEngineer,
     );
     final clientDesc = _inspectionDescriptionForPdf(
       state: state,
       forContractor: false,
+      isEngineerSubmit: isEngineer,
     );
     final validationRecorded = _isValidationRecorded(rfi);
     final validationRemarks =
@@ -908,17 +910,41 @@ class InspectionSubmitPdfBuilder {
   static String _inspectionDescriptionForPdf({
     required InspectionFormState state,
     required bool forContractor,
+    required bool isEngineerSubmit,
   }) {
+    if (forContractor) {
+      final fromApi = _descriptionEnclosureFromInspectionDetails(
+        state.rfiDetails?.inspectionDetails,
+        forContractor: true,
+      );
+      if (fromApi != null && fromApi.isNotEmpty) return fromApi;
+
+      if (!isEngineerSubmit) {
+        final live = state.contractorDescription.trim();
+        if (live.isNotEmpty) return live;
+      } else {
+        final savedCon = state.contractorDescription.trim();
+        if (savedCon.isNotEmpty) return savedCon;
+      }
+      return '-';
+    }
+
+    // Client / engineer description — never fall back to contractor text.
+    if (isEngineerSubmit) {
+      final live = state.clientDescription.trim();
+      if (live.isNotEmpty) return live;
+    }
+
     final fromApi = _descriptionEnclosureFromInspectionDetails(
       state.rfiDetails?.inspectionDetails,
-      forContractor: forContractor,
+      forContractor: false,
     );
     if (fromApi != null && fromApi.isNotEmpty) return fromApi;
 
-    final fromForm = forContractor
-        ? state.contractorDescription.trim()
-        : state.clientDescription.trim();
-    if (fromForm.isNotEmpty) return fromForm;
+    if (!isEngineerSubmit) {
+      final live = state.clientDescription.trim();
+      if (live.isNotEmpty) return live;
+    }
 
     return '-';
   }
@@ -929,7 +955,8 @@ class InspectionSubmitPdfBuilder {
   }) {
     if (details == null || details.isEmpty) return null;
 
-    for (final detail in details) {
+    for (var i = details.length - 1; i >= 0; i--) {
+      final detail = details[i];
       if (forContractor) {
         if (!_isContractorInspectionDetail(detail)) continue;
       } else if (!_isEngineerInspectionDetail(detail) &&
