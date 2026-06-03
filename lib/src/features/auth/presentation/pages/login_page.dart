@@ -7,6 +7,7 @@ import 'package:wcr_pmis_mobile/src/core/widgets/app_dialog.dart';
 import 'package:wcr_pmis_mobile/src/features/auth/data/datasources/auth_local_data_source.dart';
 import 'package:wcr_pmis_mobile/src/features/auth/domain/entities/auth_session.dart';
 import 'package:wcr_pmis_mobile/src/features/auth/presentation/controllers/auth_controller.dart';
+import 'package:wcr_pmis_mobile/src/features/auth/presentation/providers/login_notice_provider.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
   const LoginPage({super.key});
@@ -35,6 +36,19 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     await Future<void>.delayed(Duration.zero);
     if (!mounted) {
       return;
+    }
+    final String? loginNotice = ref.read(loginNoticeProvider);
+    if (loginNotice != null && loginNotice.trim().isNotEmpty) {
+      ref.read(loginNoticeProvider.notifier).state = null;
+      await AppDialog.show(
+        context: context,
+        title: 'Session Expired',
+        message: loginNotice,
+        type: AppDialogType.error,
+      );
+      if (!mounted) {
+        return;
+      }
     }
     final AuthLocalSnapshot snapshot = await ref
         .read(authLocalDataSourceProvider)

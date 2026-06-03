@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:wcr_pmis_mobile/src/core/auth/wcr_unauthorized.dart';
 import 'package:wcr_pmis_mobile/src/features/auth/domain/entities/auth_session.dart';
 import 'package:wcr_pmis_mobile/src/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:wcr_pmis_mobile/src/features/rfi/domain/rfi_list_kind.dart';
@@ -254,16 +255,21 @@ class _RfiDashboardPageState extends ConsumerState<RfiDashboardPage> {
             ],
           ),
         ),
-        error: (Object error, StackTrace stack) => Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: RfiHomeError(
-              title: 'Could not connect to RFI.',
-              message: error.toString(),
-              onRetry: _refreshAll,
+        error: (Object error, StackTrace stack) {
+          if (isWcrUnauthorizedError(error)) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: RfiHomeError(
+                title: 'Could not connect to RFI.',
+                message: error.toString(),
+                onRetry: _refreshAll,
+              ),
             ),
-          ),
-        ),
+          );
+        },
         data: (_) => AnimatedSwitcher(
           duration: const Duration(milliseconds: 220),
           child: _buildSectionBody(

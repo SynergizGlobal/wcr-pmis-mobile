@@ -30,7 +30,7 @@ String rfiDioErrorMessage(DioException error) {
 
   final int? status = error.response?.statusCode;
   if (status == 401) {
-    return 'Session expired. Open RFI again from the app menu.';
+    return 'Session expired. Please sign in again.';
   }
   if (status == 403) {
     return 'You do not have permission for this action.';

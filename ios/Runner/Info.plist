@@ -29,7 +29,9 @@
 	<key>NSCameraUsageDescription</key>
 	<string>Camera access is used to capture inspection site photos for RFI records.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Location is used to record the inspection site address for RFI.</string>
+	<string>Location is used to record the inspection site address for RFI while you use the app.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Location is used only while you use inspection features to record the site address. IMPACT PMIS does not track location in the background.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Photo library access is used to attach images to RFI inspections.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
