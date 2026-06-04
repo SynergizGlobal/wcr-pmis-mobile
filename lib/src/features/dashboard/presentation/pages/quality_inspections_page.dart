@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:wcr_pmis_mobile/src/core/widgets/app_dialog.dart';
 import 'package:wcr_pmis_mobile/src/core/widgets/app_table_pagination_footer.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/data/datasources/dashboard_remote_data_source.dart';
+import 'package:wcr_pmis_mobile/src/features/dashboard/domain/utils/quality_inspection_user_access.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/add_quality_inspection_form_page.dart';
 
-class QualityInspectionsPage extends StatefulWidget {
+class QualityInspectionsPage extends ConsumerStatefulWidget {
   const QualityInspectionsPage({super.key, required this.dataSource});
 
   static const String routeName = 'quality-inspections';
@@ -14,10 +16,11 @@ class QualityInspectionsPage extends StatefulWidget {
   final DashboardRemoteDataSource dataSource;
 
   @override
-  State<QualityInspectionsPage> createState() => _QualityInspectionsPageState();
+  ConsumerState<QualityInspectionsPage> createState() =>
+      _QualityInspectionsPageState();
 }
 
-class _QualityInspectionsPageState extends State<QualityInspectionsPage> {
+class _QualityInspectionsPageState extends ConsumerState<QualityInspectionsPage> {
   static const List<int> _pageSizeOptions = <int>[5, 10, 25, 50, 100];
   static const List<String> _headers = <String>[
     'Inspection ID',
@@ -513,15 +516,17 @@ class _QualityInspectionsPageState extends State<QualityInspectionsPage> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
-                  SizedBox(
-                    width: double.infinity,
-                    child: FilledButton.icon(
-                      onPressed: _onAddTap,
-                      icon: const Icon(Icons.add_rounded),
-                      label: const Text('Add'),
+                  if (ref.watch(qualityInspectionAccessProvider).canCreateInspection) ...<Widget>[
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      width: double.infinity,
+                      child: FilledButton.icon(
+                        onPressed: _onAddTap,
+                        icon: const Icon(Icons.add_rounded),
+                        label: const Text('Add'),
+                      ),
                     ),
-                  ),
+                  ],
                 ],
               ),
             ),
@@ -697,11 +702,7 @@ class _QualityInspectionsPageState extends State<QualityInspectionsPage> {
             SizedBox(
               width: _columnWidth('View/Edit'),
               child: Center(
-                child: IconButton(
-                  tooltip: 'View/Edit',
-                  onPressed: () => _onEditTap(row),
-                  icon: Icon(Icons.edit_square, color: colorScheme.primary),
-                ),
+                child: _buildRowAction(context, row, colorScheme),
               ),
             ),
           ],
@@ -993,6 +994,17 @@ class _QualityInspectionsPageState extends State<QualityInspectionsPage> {
   }
 
   Future<void> _onAddTap() async {
+    final QualityInspectionUserAccess access =
+        ref.read(qualityInspectionAccessProvider);
+    if (!access.canCreateInspection) {
+      await AppDialog.show(
+        context: context,
+        title: 'Not allowed',
+        message: 'Only DyHOD and Officers can create quality inspections.',
+        type: AppDialogType.info,
+      );
+      return;
+    }
     final bool? saved = await context.pushNamed<bool>(
       AddQualityInspectionFormPage.routeName,
     );
@@ -1001,7 +1013,40 @@ class _QualityInspectionsPageState extends State<QualityInspectionsPage> {
     }
   }
 
-  Future<void> _onEditTap(Map<String, dynamic> row) async {
+  Widget? _buildRowAction(
+    BuildContext context,
+    Map<String, dynamic> row,
+    ColorScheme colorScheme,
+  ) {
+    final QualityInspectionUserAccess access =
+        ref.watch(qualityInspectionAccessProvider);
+    final int step = QualityInspectionUserAccess.resolveWorkflowStep(row);
+    if (!access.canOpenInspection(step)) {
+      return null;
+    }
+    final bool canWork = access.canWorkOnWorkflowStep(step);
+    return IconButton(
+      tooltip: canWork ? 'View/Edit' : 'View',
+      onPressed: () => _onEditTap(row, step),
+      icon: Icon(
+        canWork ? Icons.edit_square : Icons.visibility_outlined,
+        color: colorScheme.primary,
+      ),
+    );
+  }
+
+  Future<void> _onEditTap(Map<String, dynamic> row, int workflowStep) async {
+    final QualityInspectionUserAccess access =
+        ref.read(qualityInspectionAccessProvider);
+    if (!access.canOpenInspection(workflowStep)) {
+      await AppDialog.show(
+        context: context,
+        title: 'Not allowed',
+        message: _permissionMessageForStep(workflowStep),
+        type: AppDialogType.info,
+      );
+      return;
+    }
     final String id = _string(row['inspection_id']);
     if (id.isEmpty) {
       await AppDialog.show(
@@ -1018,6 +1063,23 @@ class _QualityInspectionsPageState extends State<QualityInspectionsPage> {
     );
     if (saved == true && mounted) {
       await _loadList();
+    }
+  }
+
+  String _permissionMessageForStep(int step) {
+    switch (step) {
+      case 1:
+        return 'Only DyHOD and Officers can create quality inspections.';
+      case 2:
+        return 'Only DyHOD and Officers can raise NCR.';
+      case 3:
+        return 'Only Contractor and Contractor Rep can respond to raised NCR.';
+      case 4:
+        return 'Only DyHOD and Officers can close this inspection.';
+      case 5:
+        return 'This inspection is passed and is view only.';
+      default:
+        return 'You do not have permission for this action.';
     }
   }
 

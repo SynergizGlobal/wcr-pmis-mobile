@@ -15,6 +15,7 @@ import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/issues
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/project_details_page.dart';
 import 'package:wcr_pmis_mobile/src/features/rfi/presentation/pages/rfi_dashboard_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/new_activities_update_page.dart';
+import 'package:wcr_pmis_mobile/src/features/dashboard/domain/utils/quality_inspection_user_access.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/quality_inspections_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/utility_shifting_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/providers/home_dashboard_provider.dart';
@@ -809,7 +810,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
       return true;
     }
     if (key.contains('quality') && key.contains('inspection')) {
-      return true;
+      return ref.watch(qualityInspectionAccessProvider).canAccessModule;
     }
     return false;
   }
@@ -886,6 +887,16 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     if (urlKey.contains('qualityinspection') ||
         (combinedKey.contains('quality') && combinedKey.contains('inspection'))) {
       if (!mounted) {
+        return;
+      }
+      if (!ref.read(qualityInspectionAccessProvider).canAccessModule) {
+        await AppDialog.show(
+          context: context,
+          title: 'Not available',
+          message:
+              'Quality Inspection is not available for your user type.',
+          type: AppDialogType.info,
+        );
         return;
       }
       context.pushNamed(QualityInspectionsPage.routeName);

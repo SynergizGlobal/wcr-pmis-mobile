@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:wcr_pmis_mobile/src/core/widgets/app_compact_form_field.dart';
 import 'package:wcr_pmis_mobile/src/core/widgets/app_date_form_field.dart';
@@ -10,8 +11,9 @@ import 'package:wcr_pmis_mobile/src/core/widgets/app_dialog.dart';
 import 'package:wcr_pmis_mobile/src/core/widgets/app_select_sheet_field.dart';
 import 'package:wcr_pmis_mobile/src/core/widgets/app_text_form_field.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/data/datasources/dashboard_remote_data_source.dart';
+import 'package:wcr_pmis_mobile/src/features/dashboard/domain/utils/quality_inspection_user_access.dart';
 
-class AddQualityInspectionFormPage extends StatefulWidget {
+class AddQualityInspectionFormPage extends ConsumerStatefulWidget {
   const AddQualityInspectionFormPage({
     super.key,
     required this.dataSource,
@@ -26,7 +28,7 @@ class AddQualityInspectionFormPage extends StatefulWidget {
   final String? inspectionId;
 
   @override
-  State<AddQualityInspectionFormPage> createState() =>
+  ConsumerState<AddQualityInspectionFormPage> createState() =>
       _AddQualityInspectionFormPageState();
 }
 
@@ -55,19 +57,30 @@ class _TestParameterRow {
   final String frequency;
   final String? qualityNcrId;
   final TextEditingController resultCtrl = TextEditingController();
+  final TextEditingController revisedResultCtrl = TextEditingController();
   String? passFail;
+  String? revisedPassFail;
   String? ncrRequired;
   String? attachmentName;
   Uint8List? attachmentBytes;
 }
 
 class _AddQualityInspectionFormPageState
-    extends State<AddQualityInspectionFormPage> {
+    extends ConsumerState<AddQualityInspectionFormPage> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final TextEditingController _locationCtrl = TextEditingController();
   final TextEditingController _inspectionByCtrl = TextEditingController();
   final TextEditingController _lotBatchCtrl = TextEditingController();
   final TextEditingController _correctiveActionCtrl = TextEditingController();
+  final TextEditingController _correctiveActionTakenCtrl =
+      TextEditingController();
+  final TextEditingController _commentsCtrl = TextEditingController();
+
+  int _workflowStep = 1;
+  DateTime? _complianceDate;
+  DateTime? _closedOn;
+  String? _finalAttachmentName;
+  Uint8List? _finalAttachmentBytes;
 
   bool _loading = true;
   bool _cascadeBusy = false;
@@ -75,6 +88,7 @@ class _AddQualityInspectionFormPageState
   String? _loadError;
   String? _inspectionNo;
   String? _savedInspectionId;
+  String _inspectedByFk = '';
 
   List<_QiOption> _projects = <_QiOption>[];
   List<_QiOption> _sections = <_QiOption>[];
@@ -97,6 +111,7 @@ class _AddQualityInspectionFormPageState
   _QiOption? _subCategory;
 
   DateTime? _targetDate;
+  bool? _isCorrectionRequired;
   List<_TestParameterRow> _parameterRows = <_TestParameterRow>[];
   bool _parametersLoading = false;
 
@@ -109,8 +124,47 @@ class _AddQualityInspectionFormPageState
     }
   }
 
-  bool get _hasAnyFail =>
-      _parameterRows.any(( _TestParameterRow r) => r.passFail == 'Fail');
+  /// Pass+Yes or Fail+Yes — correction required is forced Yes (radios disabled).
+  bool get _correctionRequiredLocked =>
+      _parameterRows.any(( _TestParameterRow r) => r.ncrRequired == 'Yes');
+
+  bool get _isViewOnly =>
+      _effectiveWorkflowStep >= 5 ||
+      (_isEditMode && !_access.canWorkOnWorkflowStep(_effectiveWorkflowStep));
+
+  bool get _showCorrectionRequiredSection {
+    if (_parameterRows.isEmpty) {
+      return false;
+    }
+    if (_canEditCreateFields) {
+      return _parameterRows.any(
+        ( _TestParameterRow r) =>
+            (r.passFail == 'Pass' || r.passFail == 'Fail') &&
+            (r.ncrRequired == 'Yes' || r.ncrRequired == 'No'),
+      );
+    }
+    return _effectiveWorkflowStep >= 3 &&
+        (_isCorrectionRequired == true ||
+            _isCorrectionRequired == false ||
+            _correctiveActionCtrl.text.trim().isNotEmpty ||
+            _targetDate != null ||
+            _correctionRequiredLocked);
+  }
+
+  bool get _showCorrectiveActionFields {
+    if (!_showCorrectionRequiredSection) {
+      return false;
+    }
+    if (_correctionRequiredLocked) {
+      return true;
+    }
+    return _isCorrectionRequired == true;
+  }
+
+  bool get _showRespondFields =>
+      _effectiveWorkflowStep >= 3 && _showCorrectiveActionFields;
+
+  bool get _showClosureSection => _effectiveWorkflowStep >= 4;
 
   bool get _hasRequiredSelections =>
       _project != null &&
@@ -134,31 +188,183 @@ class _AddQualityInspectionFormPageState
       if (row.passFail == null || row.passFail!.isEmpty) {
         return false;
       }
+      if (_showNcrColumn && _requiresNcrSelection) {
+        if (row.ncrRequired == null || row.ncrRequired!.isEmpty) {
+          return false;
+        }
+      }
     }
     return true;
   }
 
+  bool get _requiresNcrSelection =>
+      _canEditCreateFields || _canEditRaiseNcrFields;
+
   bool get _hasRequiredFollowUp {
-    if (!_hasAnyFail) {
+    if (!_showCorrectionRequiredSection) {
+      return true;
+    }
+    if (!_correctionRequiredLocked && _isCorrectionRequired == null) {
+      return false;
+    }
+    if (!_showCorrectiveActionFields) {
       return true;
     }
     return _correctiveActionCtrl.text.trim().isNotEmpty && _targetDate != null;
   }
 
-  bool get _canSubmit =>
-      !_loading &&
-      !_cascadeBusy &&
-      !_parametersLoading &&
-      _hasRequiredSelections &&
-      _locationCtrl.text.trim().isNotEmpty &&
-      _hasRequiredParameters &&
-      _hasRequiredFollowUp;
+  void _syncCorrectionRequiredFromParameters() {
+    if (_correctionRequiredLocked) {
+      _isCorrectionRequired = true;
+      return;
+    }
+    if (_canEditCreateFields) {
+      final bool hasNcrNoRow = _parameterRows.any(
+        ( _TestParameterRow r) =>
+            (r.passFail == 'Pass' || r.passFail == 'Fail') &&
+            r.ncrRequired == 'No',
+      );
+      if (!hasNcrNoRow) {
+        _isCorrectionRequired = null;
+      }
+    }
+  }
+
+  /// Value shown on [SegmentedButton]; never leaves the widget in an invalid state.
+  bool? _correctionRequiredSegmentValue() {
+    if (_correctionRequiredLocked) {
+      return true;
+    }
+    if (_isCorrectionRequired != null) {
+      return _isCorrectionRequired;
+    }
+    if (_correctiveActionCtrl.text.trim().isNotEmpty || _targetDate != null) {
+      return true;
+    }
+    if (_effectiveWorkflowStep >= 3 &&
+        (_correctiveActionCtrl.text.trim().isNotEmpty ||
+            _targetDate != null ||
+            _correctionRequiredLocked ||
+            _isCorrectionRequired == true)) {
+      return true;
+    }
+    return null;
+  }
+
+  bool get _canSubmit {
+    if (_loading || _cascadeBusy || _parametersLoading) {
+      return false;
+    }
+    if (_canEditRespondFields) {
+      return _correctiveActionTakenCtrl.text.trim().isNotEmpty &&
+          _complianceDate != null;
+    }
+    if (_canEditRaiseNcrFields) {
+      return _hasRaiseNcrRequirements;
+    }
+    if (_canEditClosureFields) {
+      return _hasClosureRequirements;
+    }
+    if (_isViewOnly || !_canEditCreateFields) {
+      return false;
+    }
+    return _hasRequiredSelections &&
+        _locationCtrl.text.trim().isNotEmpty &&
+        _hasRequiredParameters &&
+        _hasRequiredFollowUp;
+  }
+
+  bool get _hasRaiseNcrRequirements {
+    if (_parameterRows.isEmpty) {
+      return false;
+    }
+    for (final _TestParameterRow row in _parameterRows) {
+      if (row.passFail == 'Fail' &&
+          (row.ncrRequired == null || row.ncrRequired!.isEmpty)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  bool get _hasClosureRequirements =>
+      _closedOn != null && _commentsCtrl.text.trim().isNotEmpty;
 
   bool get _canSaveDraft =>
-      !_loading && !_cascadeBusy && _project != null;
+      _canEditCreateFields && !_loading && !_cascadeBusy && _project != null;
 
   bool get _isEditMode =>
       widget.inspectionId != null && widget.inspectionId!.trim().isNotEmpty;
+
+  QualityInspectionUserAccess get _access =>
+      ref.watch(qualityInspectionAccessProvider);
+
+  int get _effectiveWorkflowStep => _isEditMode ? _workflowStep : 1;
+
+  bool get _canEditCreateFields =>
+      _effectiveWorkflowStep == 1 &&
+      (_access.isItAdmin || _access.canCreateInspection);
+
+  bool get _canEditRaiseNcrFields =>
+      _effectiveWorkflowStep == 2 &&
+      (_access.isItAdmin || _access.canRaiseNcr);
+
+  bool get _canEditRespondFields =>
+      !_isViewOnly &&
+      _effectiveWorkflowStep == 3 &&
+      (_access.isItAdmin || _access.canRespondToNcr);
+
+  bool get _canEditClosureFields =>
+      !_isViewOnly &&
+      _effectiveWorkflowStep == 4 &&
+      (_access.isItAdmin || _access.canCloseInspection);
+
+  bool get _canEditInspectionMetadata =>
+      !_isViewOnly && (_canEditCreateFields || _canEditClosureFields);
+
+  bool get _showNcrColumn =>
+      _effectiveWorkflowStep >= 1 && _effectiveWorkflowStep <= 4;
+
+  bool get _canEditNcrFields =>
+      _canEditCreateFields || _canEditRaiseNcrFields;
+
+  bool get _showReinspectionColumns => false;
+
+  String get _pageTitle {
+    if (_isViewOnly) {
+      return 'View Quality Inspection';
+    }
+    if (!_isEditMode) {
+      return 'Add Quality Inspection';
+    }
+    switch (_effectiveWorkflowStep) {
+      case 2:
+        return 'Raise NCR';
+      case 3:
+        return _canEditRespondFields ? 'Respond to NCR' : 'View Quality Inspection';
+      case 4:
+        return 'Complete inspection';
+      default:
+        return 'Edit Quality Inspection';
+    }
+  }
+
+  String get _submitButtonLabel {
+    switch (_effectiveWorkflowStep) {
+      case 1:
+        return _parameterRows.any(( _TestParameterRow r) => r.ncrRequired == 'Yes')
+            ? 'Raise NCR'
+            : 'Submit';
+      case 2:
+        return 'Raise NCR';
+      case 3:
+        return 'Submit';
+      case 4:
+        return 'Submit';
+      default:
+        return 'Submit';
+    }
+  }
 
   @override
   void initState() {
@@ -169,6 +375,8 @@ class _AddQualityInspectionFormPageState
     }
     _locationCtrl.addListener(_onFormChanged);
     _correctiveActionCtrl.addListener(_onFormChanged);
+    _correctiveActionTakenCtrl.addListener(_onFormChanged);
+    _commentsCtrl.addListener(_onFormChanged);
     WidgetsBinding.instance.addPostFrameCallback((_) => _loadInitial());
   }
 
@@ -178,10 +386,14 @@ class _AddQualityInspectionFormPageState
   void dispose() {
     _locationCtrl.removeListener(_onFormChanged);
     _correctiveActionCtrl.removeListener(_onFormChanged);
+    _correctiveActionTakenCtrl.removeListener(_onFormChanged);
+    _commentsCtrl.removeListener(_onFormChanged);
     _locationCtrl.dispose();
     _inspectionByCtrl.dispose();
     _lotBatchCtrl.dispose();
     _correctiveActionCtrl.dispose();
+    _correctiveActionTakenCtrl.dispose();
+    _commentsCtrl.dispose();
     _clearParameterRows();
     super.dispose();
   }
@@ -213,7 +425,15 @@ class _AddQualityInspectionFormPageState
       if (_isEditMode) {
         await _loadInspectionForEdit(widget.inspectionId!.trim());
       } else if (mounted) {
-        setState(() => _loading = false);
+        if (!_access.canCreateInspection) {
+          setState(() {
+            _loading = false;
+            _loadError =
+                'You do not have permission to create quality inspections.';
+          });
+        } else {
+          setState(() => _loading = false);
+        }
       }
     } catch (error) {
       if (!mounted) {
@@ -269,10 +489,21 @@ class _AddQualityInspectionFormPageState
     return out;
   }
 
+  static String _formatIdNameLabel(String id, String name) {
+    if (id.isEmpty) {
+      return name;
+    }
+    if (name.isEmpty) {
+      return id;
+    }
+    return '$id - $name';
+  }
+
   List<_QiOption> _parseIdName(
     Map<String, dynamic> response, {
     required String idKey,
     required String nameKey,
+    bool labelWithId = false,
   }) {
     final List<_QiOption> out = <_QiOption>[];
     for (final dynamic row in _dataList(response)) {
@@ -287,7 +518,13 @@ class _AddQualityInspectionFormPageState
       if (id.isEmpty || name.isEmpty) {
         continue;
       }
-      out.add(_QiOption(id: id, label: name, raw: map));
+      out.add(
+        _QiOption(
+          id: id,
+          label: labelWithId ? _formatIdNameLabel(id, name) : name,
+          raw: map,
+        ),
+      );
     }
     return out;
   }
@@ -411,13 +648,16 @@ class _AddQualityInspectionFormPageState
     for (final _TestParameterRow row in _parameterRows) {
       row.resultCtrl.removeListener(_onFormChanged);
       row.resultCtrl.dispose();
+      row.revisedResultCtrl.dispose();
     }
     _parameterRows = <_TestParameterRow>[];
+    _isCorrectionRequired = null;
   }
 
   void _attachParameterListeners() {
     for (final _TestParameterRow row in _parameterRows) {
       row.resultCtrl.addListener(_onFormChanged);
+      row.revisedResultCtrl.addListener(_onFormChanged);
     }
   }
 
@@ -516,6 +756,19 @@ class _AddQualityInspectionFormPageState
 
   void _applyInspectionByFromProject(_QiOption? project) {
     _inspectionByCtrl.text = _inspectedByFromProject(project);
+    if (project?.raw != null) {
+      _inspectedByFk = _str(
+        _pickMapValue(
+          project!.raw!,
+          const <String>[
+            'inspected_by_fk',
+            'inspectedByFk',
+            'inspected_by',
+            'inspectedBy',
+          ],
+        ),
+      );
+    }
   }
 
   Future<void> _reloadContractsAndStructureTypes(String projectId) async {
@@ -534,7 +787,12 @@ class _AddQualityInspectionFormPageState
       return;
     }
     setState(() {
-      _contracts = _parseIdName(results[0], idKey: 'id', nameKey: 'name');
+      _contracts = _parseIdName(
+        results[0],
+        idKey: 'id',
+        nameKey: 'name',
+        labelWithId: true,
+      );
       _structureTypes = _parseStructureTypes(results[1]);
     });
   }
@@ -603,6 +861,14 @@ class _AddQualityInspectionFormPageState
       if (ncr.isNotEmpty) {
         paramRow.ncrRequired = ncr;
       }
+      final String revisedResult = _str(map['revised_result']);
+      if (revisedResult.isNotEmpty) {
+        paramRow.revisedResultCtrl.text = revisedResult;
+      }
+      final String revisedPassFail = _str(map['revised_pass_fail']);
+      if (revisedPassFail.isNotEmpty) {
+        paramRow.revisedPassFail = revisedPassFail;
+      }
       final String fileName = _str(map['file_name']);
       if (fileName.isNotEmpty) {
         paramRow.attachmentName = fileName;
@@ -630,10 +896,20 @@ class _AddQualityInspectionFormPageState
       if (!mounted) {
         return;
       }
+      final int step = QualityInspectionUserAccess.resolveWorkflowStep(data);
+      if (!_access.canOpenInspection(step)) {
+        setState(() {
+          _loading = false;
+          _loadError =
+              'You do not have permission to open this inspection at the current stage.';
+        });
+        return;
+      }
       setState(() {
         _loading = false;
         _loadError = null;
         _inspectionNo = _str(data['inspection_no']);
+        _workflowStep = step;
       });
     } catch (error) {
       if (!mounted) {
@@ -649,10 +925,29 @@ class _AddQualityInspectionFormPageState
   Future<void> _applyInspectionView(Map<String, dynamic> data) async {
     setState(() => _cascadeBusy = true);
     try {
+      _workflowStep = QualityInspectionUserAccess.resolveWorkflowStep(data);
       _locationCtrl.text = _str(data['location']);
       _lotBatchCtrl.text = _str(data['lot_no']);
       _correctiveActionCtrl.text = _str(data['corrective_action_reqd']);
+      _correctiveActionTakenCtrl.text = _str(data['corrective_action_taken']);
       _targetDate = _parseApiDate(data['action_target_date']);
+      _complianceDate = _parseApiDate(data['compliance_date']);
+      _closedOn = _parseApiDate(data['inspection_closed_on']);
+      _commentsCtrl.text = _str(data['comments']);
+      final String finalAttachment = _str(data['final_attachment']);
+      if (finalAttachment.isNotEmpty) {
+        _finalAttachmentName = finalAttachment.split('/').last;
+      }
+      final String correctionFlag =
+          _str(data['is_correction_required']).toLowerCase();
+      if (correctionFlag == 'yes') {
+        _isCorrectionRequired = true;
+      } else if (correctionFlag == 'no') {
+        _isCorrectionRequired = false;
+      } else if (_correctiveActionCtrl.text.trim().isNotEmpty ||
+          _targetDate != null) {
+        _isCorrectionRequired = true;
+      }
 
       final String projectId = _str(data['project_id_fk']);
       _project = _optionOrFallback(
@@ -661,11 +956,20 @@ class _AddQualityInspectionFormPageState
         _str(data['project_name']),
       );
       _applyInspectionByFromProject(_project);
+      _inspectedByFk = _str(data['inspected_by_fk']);
       if (_inspectionByCtrl.text.isEmpty) {
         _inspectionByCtrl.text = _str(data['inspected_by_name']);
         if (_inspectionByCtrl.text.isEmpty) {
-          _inspectionByCtrl.text = _str(data['inspected_by_fk']);
+          _inspectionByCtrl.text = _inspectedByFk;
         }
+      }
+      final String loadedId = _str(data['inspection_id']);
+      if (loadedId.isNotEmpty) {
+        _savedInspectionId = loadedId;
+      }
+      final String loadedNo = _str(data['inspection_no']);
+      if (loadedNo.isNotEmpty) {
+        _inspectionNo = loadedNo;
       }
 
       if (projectId.isNotEmpty) {
@@ -677,13 +981,14 @@ class _AddQualityInspectionFormPageState
         _str(data['section_id_fk']),
         _str(data['section_name']),
       );
-      final String contractLabel = _str(data['contract_short_name']).isNotEmpty
+      final String contractId = _str(data['contract_id_fk']);
+      final String contractName = _str(data['contract_short_name']).isNotEmpty
           ? _str(data['contract_short_name'])
           : _str(data['contract_name']);
       _contract = _optionOrFallback(
         _contracts,
-        _str(data['contract_id_fk']),
-        contractLabel,
+        contractId,
+        _formatIdNameLabel(contractId, contractName),
       );
 
       final String structureTypeFk = _str(data['structure_type_fk']);
@@ -700,7 +1005,10 @@ class _AddQualityInspectionFormPageState
         );
       }
 
-      _structure = _findStructureOption(_structures, _str(data['structure']));
+      final String structureId = _str(data['structure_id_fk']).isNotEmpty
+          ? _str(data['structure_id_fk'])
+          : _str(data['structure']);
+      _structure = _findStructureOption(_structures, structureId);
       final String itemLabel = _str(data['item_code']).isNotEmpty
           ? '${_str(data['item_name'])} (${_str(data['item_code'])})'
           : _str(data['item_name']);
@@ -733,6 +1041,7 @@ class _AddQualityInspectionFormPageState
         await _loadTestParameters();
       }
 
+      _syncCorrectionRequiredFromParameters();
       if (mounted) {
         setState(() {});
       }
@@ -859,6 +1168,7 @@ class _AddQualityInspectionFormPageState
         _parametersLoading = false;
       });
       _attachParameterListeners();
+      _syncCorrectionRequiredFromParameters();
     } catch (_) {
       if (!mounted) {
         return;
@@ -906,6 +1216,55 @@ class _AddQualityInspectionFormPageState
     });
   }
 
+  Future<void> _pickClosedOn() async {
+    final DateTime now = DateTime.now();
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _closedOn ?? now,
+      firstDate: DateTime(now.year - 5),
+      lastDate: DateTime(now.year + 5),
+    );
+    if (picked != null && mounted) {
+      setState(() => _closedOn = picked);
+    }
+  }
+
+  Future<void> _pickFinalAttachment() async {
+    final FilePickerResult? result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: <String>[
+        'jpg',
+        'jpeg',
+        'png',
+        'pdf',
+        'xls',
+        'xlsx',
+      ],
+      withData: true,
+    );
+    if (result == null || result.files.isEmpty) {
+      return;
+    }
+    final PlatformFile file = result.files.first;
+    setState(() {
+      _finalAttachmentName = file.name;
+      _finalAttachmentBytes = file.bytes;
+    });
+  }
+
+  Future<void> _pickComplianceDate() async {
+    final DateTime now = DateTime.now();
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _complianceDate ?? now,
+      firstDate: DateTime(now.year - 5),
+      lastDate: DateTime(now.year + 5),
+    );
+    if (picked != null && mounted) {
+      setState(() => _complianceDate = picked);
+    }
+  }
+
   Future<void> _pickTargetDate() async {
     final DateTime now = DateTime.now();
     final DateTime? picked = await showDatePicker(
@@ -929,6 +1288,35 @@ class _AddQualityInspectionFormPageState
   }
 
   String? _firstSubmitMissingRequirement() {
+    if (_effectiveWorkflowStep >= 2 &&
+        _effectiveInspectionId.isEmpty &&
+        !_canEditCreateFields) {
+      return 'Inspection ID is missing. Open the inspection from the list and try again.';
+    }
+    if (_canEditRespondFields) {
+      if (_correctiveActionTakenCtrl.text.trim().isEmpty) {
+        return 'Please enter corrective action taken.';
+      }
+      if (_complianceDate == null) {
+        return 'Please select compliance date.';
+      }
+      return null;
+    }
+    if (_canEditRaiseNcrFields) {
+      if (!_hasRaiseNcrRequirements) {
+        return 'Please set Is NCR Required for all failed test parameters.';
+      }
+      return null;
+    }
+    if (_canEditClosureFields) {
+      if (_closedOn == null) {
+        return 'Please select closed on date.';
+      }
+      if (_commentsCtrl.text.trim().isEmpty) {
+        return 'Please enter comments.';
+      }
+      return null;
+    }
     if (_parametersLoading) {
       return 'Test parameters are still loading. Please wait.';
     }
@@ -972,13 +1360,23 @@ class _AddQualityInspectionFormPageState
       if (row.passFail == null || row.passFail!.isEmpty) {
         return 'Please select Pass / Fail for all test parameters.';
       }
+      if (_showNcrColumn && _requiresNcrSelection) {
+        if (row.ncrRequired == null || row.ncrRequired!.isEmpty) {
+          return 'Please select Is NCR Required (Yes/No) for all test parameters.';
+        }
+      }
     }
-    if (_hasAnyFail) {
+    if (_showCorrectionRequiredSection &&
+        !_correctionRequiredLocked &&
+        _isCorrectionRequired == null) {
+      return 'Please select Is Correction Required (Yes/No).';
+    }
+    if (_showCorrectiveActionFields) {
       if (_correctiveActionCtrl.text.trim().isEmpty) {
-        return 'Please enter corrective action when a test has failed.';
+        return 'Please enter corrective action required.';
       }
       if (_targetDate == null) {
-        return 'Please select target date when a test has failed.';
+        return 'Please select target date.';
       }
     }
     return null;
@@ -1010,8 +1408,33 @@ class _AddQualityInspectionFormPageState
 
   void _applySaveResponse(Map<String, dynamic> response) {
     final Map<String, dynamic> data = _asStringKeyedMap(response['data']);
-    final String id = _str(data['inspection_id']);
-    final String no = _str(data['inspection_no']);
+    String id = _str(data['inspection_id']);
+    String no = _str(data['inspection_no']);
+    if (id.isEmpty) {
+      id = _str(response['inspection_id']);
+    }
+    if (no.isEmpty) {
+      no = _str(response['inspection_no']);
+    }
+    if (id.isEmpty || no.isEmpty) {
+      final String fromMessage = _str(response['message']);
+      if (no.isEmpty) {
+        final RegExp noMatch = RegExp(
+          r'INSP/[A-Za-z0-9_./\s()\-]+/\d{4}/\d{4}',
+        );
+        final Match? m = noMatch.firstMatch(fromMessage);
+        if (m != null) {
+          no = m.group(0)!.trim();
+        }
+      }
+      if (id.isEmpty) {
+        final RegExp idMatch = RegExp(r'inspection\s*id\s*[:=]?\s*(\d+)', caseSensitive: false);
+        final Match? m = idMatch.firstMatch(fromMessage);
+        if (m != null) {
+          id = m.group(1)!.trim();
+        }
+      }
+    }
     if (id.isNotEmpty || no.isNotEmpty) {
       setState(() {
         if (id.isNotEmpty) {
@@ -1024,20 +1447,174 @@ class _AddQualityInspectionFormPageState
     }
   }
 
+  String _isCorrectionRequiredValue() {
+    if (_correctionRequiredLocked || _isCorrectionRequired == true) {
+      return 'Yes';
+    }
+    if (_isCorrectionRequired == false) {
+      return 'No';
+    }
+    if (_correctiveActionCtrl.text.trim().isNotEmpty || _targetDate != null) {
+      return 'Yes';
+    }
+    return 'No';
+  }
+
+  String _structureNameForSubmit() {
+    if (_structure == null) {
+      return '';
+    }
+    final String fromRaw = _str(_structure!.raw?['structure_name']);
+    if (fromRaw.isNotEmpty) {
+      return fromRaw;
+    }
+    return _structure!.label;
+  }
+
+  /// True when submitting with NCR Raised in one shot (create or raise-NCR edit).
+  bool _shouldSubmitAsNcrRaised({required bool asDraft}) {
+    if (asDraft) {
+      return false;
+    }
+    if (_effectiveWorkflowStep != 1 && _effectiveWorkflowStep != 2) {
+      return false;
+    }
+    return _parameterRows.any(( _TestParameterRow r) => r.ncrRequired == 'Yes');
+  }
+
+  List<String> _failedParameterNames() {
+    return _parameterRows
+        .where(( _TestParameterRow r) => r.passFail == 'Fail')
+        .map(( _TestParameterRow r) => r.parameter.trim())
+        .where((String name) => name.isNotEmpty)
+        .toList();
+  }
+
+  List<String> _ncrRequestedParameterNames() {
+    return _parameterRows
+        .where(( _TestParameterRow r) => r.ncrRequired == 'Yes')
+        .map(( _TestParameterRow r) => r.parameter.trim())
+        .where((String name) => name.isNotEmpty)
+        .toList();
+  }
+
+  int _submitInspectionStep({required bool asDraft}) {
+    if (asDraft) {
+      return _effectiveWorkflowStep <= 1 ? 1 : _effectiveWorkflowStep;
+    }
+    if (_shouldSubmitAsNcrRaised(asDraft: false)) {
+      return 3;
+    }
+    return _effectiveWorkflowStep + 1;
+  }
+
+  String _inspectionStatusForSubmit({required bool asDraft}) {
+    if (asDraft) {
+      return 'Draft';
+    }
+    if (_shouldSubmitAsNcrRaised(asDraft: false)) {
+      return 'NCR Raised';
+    }
+    switch (_effectiveWorkflowStep) {
+      case 1:
+        return 'In Progress';
+      case 2:
+        return 'NCR Raised';
+      case 3:
+        return 'Rectification Submitted';
+      case 4:
+        return 'Passed';
+      default:
+        return 'In Progress';
+    }
+  }
+
+  FormData _buildContractorRespondFormData() {
+    final FormData formData = FormData();
+    void addField(String name, String value) {
+      formData.fields.add(MapEntry<String, String>(name, value));
+    }
+    addField('inspection_id', _effectiveInspectionId);
+    addField('inspection_no', _inspectionNo ?? '');
+    addField('contract_id_fk', _contract?.id ?? '');
+    addField('inspection_status', 'Rectification Submitted');
+    addField('inspection_step', '4');
+    addField('submitted_via', 'MOBILE');
+    addField('corrective_action_taken', _correctiveActionTakenCtrl.text.trim());
+    addField('compliance_date', _formatSubmitDate(_complianceDate));
+    return formData;
+  }
+
+  FormData _buildEngineerClosureFormData() {
+    final FormData formData = FormData();
+    void addField(String name, String value) {
+      formData.fields.add(MapEntry<String, String>(name, value));
+    }
+    addField('inspection_id', _effectiveInspectionId);
+    addField('inspection_no', _inspectionNo ?? '');
+    addField('contract_id_fk', _contract?.id ?? '');
+    addField('inspection_status', 'Passed');
+    addField('inspection_step', '5');
+    addField('submitted_via', 'MOBILE');
+    for (final _TestParameterRow row in _parameterRows) {
+      addField('quality_ncr_ids', row.qualityNcrId ?? '');
+      addField('parameter_names', row.parameter);
+      addField('parameter_ids', row.parameterId);
+      addField('results', row.resultCtrl.text.trim());
+      addField('pass_fails', row.passFail ?? '');
+      addField('is_ncr_requireds', row.ncrRequired ?? '');
+      addField('re_inspected_ons', '');
+      addField('revised_results', row.revisedResultCtrl.text.trim());
+      addField('revised_pass_fails', row.revisedPassFail ?? '');
+    }
+    if (_finalAttachmentBytes != null &&
+        _finalAttachmentName != null &&
+        _finalAttachmentName!.isNotEmpty) {
+      formData.files.add(
+        MapEntry<String, MultipartFile>(
+          'final_attachment',
+          MultipartFile.fromBytes(
+            _finalAttachmentBytes!,
+            filename: _finalAttachmentName!,
+          ),
+        ),
+      );
+    }
+    addField('inspection_closed_on', _formatSubmitDate(_closedOn));
+    addField('comments', _commentsCtrl.text.trim());
+    return formData;
+  }
+
   FormData _buildSaveFormData({required bool asDraft}) {
+    if (!asDraft && _canEditRespondFields) {
+      return _buildContractorRespondFormData();
+    }
+    if (!asDraft && _canEditClosureFields) {
+      return _buildEngineerClosureFormData();
+    }
+
     final FormData formData = FormData();
     void addField(String name, String value) {
       formData.fields.add(MapEntry<String, String>(name, value));
     }
 
+    final int submitStep = _submitInspectionStep(asDraft: asDraft);
+
     addField('inspection_id', _effectiveInspectionId);
     addField('inspection_no', _inspectionNo ?? '');
-    addField('inspection_status', asDraft ? 'Draft' : 'Passed');
+    addField('contract_id_fk', _contract?.id ?? '');
+    addField(
+      'inspection_status',
+      _inspectionStatusForSubmit(asDraft: asDraft),
+    );
+    addField('inspection_step', '$submitStep');
+    addField('submitted_via', 'MOBILE');
+    addField('inspected_by_fk', _inspectedByFk);
     addField('project_id_fk', _project?.id ?? '');
     addField('section_id_fk', _section?.id ?? '');
-    addField('contract_id_fk', _contract?.id ?? '');
     addField('structure_type_fk', _structureType?.id ?? '');
-    addField('structure', _structure?.id ?? '');
+    addField('structure_id_fk', _structure?.id ?? '');
+    addField('structure_name', _structureNameForSubmit());
     addField('item_id_fk', _item?.id ?? '');
     addField('item_name', _itemFieldValue('item_name'));
     addField('item_code', _itemFieldValue('item_code'));
@@ -1046,20 +1623,26 @@ class _AddQualityInspectionFormPageState
     addField('sub_category_id_fk', _subCategory?.id ?? '');
     addField('location', _locationCtrl.text.trim());
     addField('lot_no', _lotBatchCtrl.text.trim());
-    addField('ncr_compliance', '');
-    addField('ncr_compliance_by', '');
-    addField('ncr_date', '');
-    addField('inspection_step', asDraft ? '1' : '4');
+    addField('is_correction_required', _isCorrectionRequiredValue());
+    addField(
+      'corrective_action_reqd',
+      _showCorrectiveActionFields ? _correctiveActionCtrl.text.trim() : '',
+    );
+    addField(
+      'action_target_date',
+      _showCorrectiveActionFields ? _formatSubmitDate(_targetDate) : '',
+    );
 
     for (final _TestParameterRow row in _parameterRows) {
       addField('quality_ncr_ids', row.qualityNcrId ?? '');
+      addField('parameter_names', row.parameter);
       addField('parameter_ids', row.parameterId);
       addField('results', row.resultCtrl.text.trim());
       addField('pass_fails', row.passFail ?? '');
       addField('is_ncr_requireds', row.ncrRequired ?? '');
       addField('re_inspected_ons', '');
-      addField('revised_results', '');
-      addField('revised_pass_fails', '');
+      addField('revised_results', row.revisedResultCtrl.text.trim());
+      addField('revised_pass_fails', row.revisedPassFail ?? '');
       if (row.attachmentBytes != null &&
           row.attachmentName != null &&
           row.attachmentName!.isNotEmpty) {
@@ -1075,23 +1658,38 @@ class _AddQualityInspectionFormPageState
       }
     }
 
-    addField('corrective_action_reqd', _correctiveActionCtrl.text.trim());
-    addField('action_target_date', _formatSubmitDate(_targetDate));
-    addField('corrective_action_taken', '');
-    addField('compliance_date', '');
-    addField('inspection_closed_on', '');
+    if (_shouldSubmitAsNcrRaised(asDraft: asDraft)) {
+      for (final String name in _failedParameterNames()) {
+        addField('failed_parameters', name);
+      }
+      for (final String name in _ncrRequestedParameterNames()) {
+        addField('ncr_requested_parameters', name);
+      }
+    }
+
+    addField('ncr_compliance', _canEditRespondFields ? 'Yes' : '');
+    addField('ncr_compliance_by', '');
+    addField('ncr_date', _canEditRespondFields ? _formatSubmitDate(_complianceDate) : '');
+    addField('corrective_action_taken', _correctiveActionTakenCtrl.text.trim());
+    addField('compliance_date', _formatSubmitDate(_complianceDate));
+    addField('inspection_closed_on', _formatSubmitDate(_closedOn));
+    addField('comments', _commentsCtrl.text.trim());
     return formData;
   }
 
   bool _responseIndicatesSuccess(Map<String, dynamic> response) {
+    final String message = _str(response['message']);
+    final String lower = message.toLowerCase();
+    if (lower.contains('failed') || lower.contains('error')) {
+      return false;
+    }
     if (response['success'] == true) {
       return true;
     }
-    final String message = _str(response['message']);
-    final String lower = message.toLowerCase();
-    return lower.contains('success') ||
-        lower.contains('passed') ||
-        lower.contains('draft');
+    return lower.contains('successfully') ||
+        lower.contains('saved successfully') ||
+        lower.contains('passed successfully') ||
+        (lower.contains('draft') && lower.contains('saved'));
   }
 
   String _responseMessage(
@@ -1170,9 +1768,7 @@ class _AddQualityInspectionFormPageState
     final ColorScheme cs = Theme.of(context).colorScheme;
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          _isEditMode ? 'Edit Quality Inspection' : 'Add Quality Inspection',
-        ),
+        title: Text(_pageTitle),
       ),
       body: Stack(
         children: <Widget>[
@@ -1192,9 +1788,11 @@ class _AddQualityInspectionFormPageState
                           mainAxisSize: MainAxisSize.min,
                           children: <Widget>[
                             Text(
-                              _isEditMode
-                                  ? 'Unable to load inspection for edit.'
-                                  : 'Unable to load form.',
+                              _loadError ??
+                                  (_isEditMode
+                                      ? 'Unable to load inspection for edit.'
+                                      : 'Unable to load form.'),
+                              textAlign: TextAlign.center,
                               style: Theme.of(context).textTheme.titleMedium,
                             ),
                             const SizedBox(height: 12),
@@ -1219,7 +1817,8 @@ class _AddQualityInspectionFormPageState
                                 label: 'Project',
                                 items: _projects,
                                 value: _project,
-                                enabled: !_cascadeBusy,
+                                enabled:
+                                    _canEditInspectionMetadata && !_cascadeBusy,
                                 onChanged: ( _QiOption v) => _onProjectChanged(v),
                               ),
                               const SizedBox(height: 10),
@@ -1227,7 +1826,8 @@ class _AddQualityInspectionFormPageState
                                 label: 'Section',
                                 items: _sections,
                                 value: _section,
-                                enabled: !_cascadeBusy,
+                                enabled:
+                                    _canEditInspectionMetadata && !_cascadeBusy,
                                 onChanged: ( _QiOption v) =>
                                     setState(() => _section = v),
                               ),
@@ -1236,7 +1836,10 @@ class _AddQualityInspectionFormPageState
                                 label: 'Contract',
                                 items: _contracts,
                                 value: _contract,
-                                enabled: _project != null && !_cascadeBusy,
+                                enabled:
+                                    _canEditInspectionMetadata &&
+                                    _project != null &&
+                                    !_cascadeBusy,
                                 placeholder: _project == null
                                     ? 'Select project first'
                                     : 'Select',
@@ -1248,7 +1851,10 @@ class _AddQualityInspectionFormPageState
                                 label: 'Structure Type',
                                 items: _structureTypes,
                                 value: _structureType,
-                                enabled: _project != null && !_cascadeBusy,
+                                enabled:
+                                    _canEditInspectionMetadata &&
+                                    _project != null &&
+                                    !_cascadeBusy,
                                 placeholder: _project == null
                                     ? 'Select project first'
                                     : 'Select',
@@ -1261,7 +1867,9 @@ class _AddQualityInspectionFormPageState
                                 items: _structures,
                                 value: _structure,
                                 enabled:
-                                    _structureType != null && !_cascadeBusy,
+                                    _canEditInspectionMetadata &&
+                                    _structureType != null &&
+                                    !_cascadeBusy,
                                 placeholder: _structureType == null
                                     ? 'Select structure type first'
                                     : 'Select',
@@ -1273,7 +1881,10 @@ class _AddQualityInspectionFormPageState
                                 label: 'Item',
                                 items: _items,
                                 value: _item,
-                                enabled: _structureType != null && !_cascadeBusy,
+                                enabled:
+                                    _canEditInspectionMetadata &&
+                                    _structureType != null &&
+                                    !_cascadeBusy,
                                 placeholder: _structureType == null
                                     ? 'Select structure type first'
                                     : 'Select',
@@ -1284,7 +1895,8 @@ class _AddQualityInspectionFormPageState
                                 label: 'Inspection Type',
                                 items: _inspectionTypes,
                                 value: _inspectionType,
-                                enabled: !_cascadeBusy,
+                                enabled:
+                                    _canEditInspectionMetadata && !_cascadeBusy,
                                 onChanged: ( _QiOption v) =>
                                     setState(() => _inspectionType = v),
                               ),
@@ -1293,7 +1905,8 @@ class _AddQualityInspectionFormPageState
                                 label: 'Category',
                                 items: _categories,
                                 value: _category,
-                                enabled: !_cascadeBusy,
+                                enabled:
+                                    _canEditInspectionMetadata && !_cascadeBusy,
                                 onChanged: ( _QiOption v) => _onCategoryChanged(v),
                               ),
                               const SizedBox(height: 10),
@@ -1301,7 +1914,10 @@ class _AddQualityInspectionFormPageState
                                 label: 'Sub-Category',
                                 items: _subCategories,
                                 value: _subCategory,
-                                enabled: _category != null && !_cascadeBusy,
+                                enabled:
+                                    _canEditInspectionMetadata &&
+                                    _category != null &&
+                                    !_cascadeBusy,
                                 placeholder: _category == null
                                     ? 'Select category first'
                                     : 'Select',
@@ -1312,6 +1928,8 @@ class _AddQualityInspectionFormPageState
                                 controller: _locationCtrl,
                                 label: 'Location *',
                                 hintText: 'Enter location',
+                                readOnly: !_canEditInspectionMetadata,
+                                enabled: _canEditInspectionMetadata,
                               ),
                               const SizedBox(height: 10),
                               AppTextFormField(
@@ -1328,37 +1946,24 @@ class _AddQualityInspectionFormPageState
                                 controller: _lotBatchCtrl,
                                 label: 'Lot/Batch No.',
                                 hintText: 'Enter lot or batch number',
+                                readOnly: !_canEditInspectionMetadata,
+                                enabled: _canEditInspectionMetadata,
                               ),
                             ],
                           ),
                           const SizedBox(height: 12),
                           _parametersSection(),
-                          if (_hasAnyFail) ...<Widget>[
+                          if (_showCorrectionRequiredSection) ...<Widget>[
                             const SizedBox(height: 12),
-                            Card(
-                              margin: EdgeInsets.zero,
-                              child: Padding(
-                                padding: const EdgeInsets.all(12),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                                  children: <Widget>[
-                                    AppTextFormField(
-                                      controller: _correctiveActionCtrl,
-                                      label: 'Corrective Action Required *',
-                                      hintText: 'Enter corrective action',
-                                      minLines: 3,
-                                      maxLines: 5,
-                                    ),
-                                    const SizedBox(height: 10),
-                                    AppDateFormField(
-                                      label: 'Target Date *',
-                                      value: _targetDate,
-                                      onTap: _pickTargetDate,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
+                            _correctionRequiredSection(context),
+                          ],
+                          if (_showRespondFields) ...<Widget>[
+                            const SizedBox(height: 12),
+                            _respondFieldsSection(),
+                          ],
+                          if (_showClosureSection) ...<Widget>[
+                            const SizedBox(height: 12),
+                            _closureSection(),
                           ],
                         ],
                       ),
@@ -1381,7 +1986,7 @@ class _AddQualityInspectionFormPageState
                   ],
                 ),
               ),
-                if (!_loading && _loadError == null)
+                if (!_loading && _loadError == null && !_isViewOnly)
                   Container(
                     padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
                     decoration: BoxDecoration(
@@ -1394,18 +1999,26 @@ class _AddQualityInspectionFormPageState
                     ),
                     child: Row(
                       children: <Widget>[
-                        Expanded(
-                          child: FilledButton.tonal(
-                            onPressed:
-                                _saving || !_canSaveDraft ? null : _saveDraft,
-                            child: const Text('Save as draft'),
+                        if (_canSaveDraft) ...<Widget>[
+                          Expanded(
+                            child: FilledButton.tonal(
+                              onPressed:
+                                  _saving || !_canSaveDraft ? null : _saveDraft,
+                              child: const Text('Save as draft'),
+                            ),
                           ),
-                        ),
-                        const SizedBox(width: 8),
+                          const SizedBox(width: 8),
+                        ],
                         Expanded(
                           child: FilledButton(
-                            onPressed: _saving || !_canSubmit ? null : _submit,
-                            child: const Text('Submit'),
+                            onPressed: _saving ||
+                                    !_access.canWorkOnWorkflowStep(
+                                      _effectiveWorkflowStep,
+                                    ) ||
+                                    !_canSubmit
+                                ? null
+                                : _submit,
+                            child: Text(_submitButtonLabel),
                           ),
                         ),
                       ],
@@ -1496,6 +2109,174 @@ class _AddQualityInspectionFormPageState
     );
   }
 
+  Widget _correctionRequiredSection(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    final bool locked = _correctionRequiredLocked;
+    final bool? segmentValue = _correctionRequiredSegmentValue();
+    final bool allowEmptySelection = segmentValue == null;
+
+    return Card(
+      margin: EdgeInsets.zero,
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: <Widget>[
+                Text(
+                  'Is Correction Required?',
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: SegmentedButton<bool>(
+                    emptySelectionAllowed: allowEmptySelection,
+                    showSelectedIcon: false,
+                    segments: const <ButtonSegment<bool>>[
+                      ButtonSegment<bool>(value: true, label: Text('Yes')),
+                      ButtonSegment<bool>(value: false, label: Text('No')),
+                    ],
+                    selected: segmentValue == null
+                        ? <bool>{}
+                        : <bool>{segmentValue},
+                    onSelectionChanged: locked || !_canEditCreateFields
+                        ? null
+                        : (Set<bool> selection) {
+                            if (selection.isEmpty) {
+                              setState(() {
+                                _isCorrectionRequired = null;
+                                _correctiveActionCtrl.clear();
+                                _targetDate = null;
+                              });
+                              return;
+                            }
+                            final bool yes = selection.first;
+                            setState(() {
+                              _isCorrectionRequired = yes;
+                              if (!yes) {
+                                _correctiveActionCtrl.clear();
+                                _targetDate = null;
+                              }
+                            });
+                          },
+                  ),
+                ),
+              ],
+            ),
+            if (_showCorrectiveActionFields) ...<Widget>[
+              const SizedBox(height: 12),
+              LayoutBuilder(
+                builder: (BuildContext context, BoxConstraints constraints) {
+                  final bool narrow = constraints.maxWidth < 560;
+                  final Widget actionField = AppTextFormField(
+                    controller: _correctiveActionCtrl,
+                    label: 'Corrective Action Required',
+                    hintText: 'Enter corrective action',
+                    minLines: 3,
+                    maxLines: 5,
+                    readOnly: !_canEditCreateFields,
+                    enabled: _canEditCreateFields,
+                  );
+                  final Widget dateField = AppDateFormField(
+                    label: 'Target Date',
+                    value: _targetDate,
+                    onTap: _pickTargetDate,
+                    enabled: _canEditCreateFields,
+                  );
+                  if (narrow) {
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: <Widget>[
+                        actionField,
+                        const SizedBox(height: 10),
+                        dateField,
+                      ],
+                    );
+                  }
+                  return Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Expanded(flex: 3, child: actionField),
+                      const SizedBox(width: 12),
+                      Expanded(flex: 2, child: dateField),
+                    ],
+                  );
+                },
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _respondFieldsSection() {
+    return _sectionCard(
+      title: 'Corrective action',
+      children: <Widget>[
+        AppTextFormField(
+          controller: _correctiveActionTakenCtrl,
+          label: 'Corrective Action Taken',
+          hintText: 'Enter action taken',
+          minLines: 3,
+          maxLines: 5,
+          readOnly: !_canEditRespondFields,
+          enabled: _canEditRespondFields,
+        ),
+        const SizedBox(height: 10),
+        AppDateFormField(
+          label: 'Compliance Date',
+          value: _complianceDate,
+          onTap: _pickComplianceDate,
+          enabled: _canEditRespondFields,
+        ),
+      ],
+    );
+  }
+
+  Widget _closureSection() {
+    return _sectionCard(
+      title: 'Closure',
+      children: <Widget>[
+        Row(
+          children: <Widget>[
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: _canEditClosureFields ? _pickFinalAttachment : null,
+                icon: const Icon(Icons.attach_file_rounded),
+                label: Text(
+                  _finalAttachmentName ?? 'Add Attachment / Photo',
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        AppDateFormField(
+          label: 'Closed On',
+          value: _closedOn,
+          onTap: _pickClosedOn,
+          enabled: _canEditClosureFields,
+        ),
+        const SizedBox(height: 10),
+        AppTextFormField(
+          controller: _commentsCtrl,
+          label: 'Comments',
+          hintText: 'Enter comments',
+          minLines: 3,
+          maxLines: 5,
+          readOnly: !_canEditClosureFields,
+          enabled: _canEditClosureFields,
+        ),
+      ],
+    );
+  }
+
   Widget _parametersSection() {
     final ColorScheme cs = Theme.of(context).colorScheme;
     final bool canLoad = _item != null && _category != null && _subCategory != null;
@@ -1534,18 +2315,33 @@ class _AddQualityInspectionFormPageState
     );
   }
 
-  Widget _parametersTable() {
-    const List<String> headers = <String>[
+  List<String> get _parameterHeaders {
+    final List<String> headers = <String>[
       'Parameters',
       'Acceptance Criteria',
       'UOM',
       'Frequency',
       'Result',
       'Pass / Fail',
-      'Is NCR Required',
-      'Attachment',
     ];
+    if (_showNcrColumn) {
+      headers.add('Is NCR Required');
+    }
+    if (_showReinspectionColumns) {
+      headers
+        ..add('Revised Result')
+        ..add('Revised Pass / Fail');
+    }
+    if (_canEditCreateFields) {
+      headers.add('Attachment');
+    }
+    return headers;
+  }
+
+  Widget _parametersTable() {
+    final List<String> headers = _parameterHeaders;
     final ColorScheme cs = Theme.of(context).colorScheme;
+    final bool canEditResults = _canEditCreateFields;
 
     return LayoutBuilder(
       builder: (BuildContext context, BoxConstraints constraints) {
@@ -1566,7 +2362,11 @@ class _AddQualityInspectionFormPageState
                             child: Padding(
                               padding: const EdgeInsets.symmetric(horizontal: 8),
                               child: Text(
-                                h == 'Result' || h == 'Pass / Fail' || h == 'Is NCR Required'
+                                h == 'Result' ||
+                                        h == 'Pass / Fail' ||
+                                        h == 'Is NCR Required' ||
+                                        h == 'Revised Result' ||
+                                        h == 'Revised Pass / Fail'
                                     ? '$h *'
                                     : h,
                                 style: TextStyle(
@@ -1606,33 +2406,49 @@ class _AddQualityInspectionFormPageState
                             padding: const EdgeInsets.symmetric(horizontal: 6),
                             child: AppCompactTextFormField(
                               controller: row.resultCtrl,
+                              enabled: canEditResults,
                             ),
                           ),
                         ),
                         _paramPassFailCell(row),
-                        _paramNcrCell(row),
-                        SizedBox(
-                          width: _paramColWidth('Attachment'),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 6),
-                            child: Column(
-                              children: <Widget>[
-                                IconButton.filled(
-                                  tooltip: 'Attach file',
-                                  onPressed: () => _pickAttachment(row),
-                                  icon: const Icon(Icons.attach_file_rounded),
-                                ),
-                                if (row.attachmentName != null)
-                                  Text(
-                                    row.attachmentName!,
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: Theme.of(context).textTheme.labelSmall,
-                                  ),
-                              ],
+                        if (_showNcrColumn) _paramNcrCell(row),
+                        if (_showReinspectionColumns) ...<Widget>[
+                          SizedBox(
+                            width: _paramColWidth('Revised Result'),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 6),
+                              child: AppCompactTextFormField(
+                                controller: row.revisedResultCtrl,
+                                enabled: false,
+                              ),
                             ),
                           ),
-                        ),
+                          _paramRevisedPassFailCell(row),
+                        ],
+                        if (_canEditCreateFields)
+                          SizedBox(
+                            width: _paramColWidth('Attachment'),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 6),
+                              child: Column(
+                                children: <Widget>[
+                                  IconButton.filled(
+                                    tooltip: 'Attach file',
+                                    onPressed: () => _pickAttachment(row),
+                                    icon: const Icon(Icons.attach_file_rounded),
+                                  ),
+                                  if (row.attachmentName != null)
+                                    Text(
+                                      row.attachmentName!,
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      style:
+                                          Theme.of(context).textTheme.labelSmall,
+                                    ),
+                                ],
+                              ),
+                            ),
+                          ),
                       ],
                     ),
                   );
@@ -1659,6 +2475,7 @@ class _AddQualityInspectionFormPageState
   }
 
   Widget _paramPassFailCell(_TestParameterRow row) {
+    final bool editable = _canEditCreateFields;
     return SizedBox(
       width: _paramColWidth('Pass / Fail'),
       child: Padding(
@@ -1667,18 +2484,23 @@ class _AddQualityInspectionFormPageState
           value: row.passFail,
           items: _passFailOptions,
           itemLabelBuilder: (String v) => v,
-          onChanged: (String? value) {
-            setState(() {
-              row.passFail = value;
-              if (value == 'Pass') {
-                row.ncrRequired = 'No';
-              } else if (value == 'Fail') {
-                row.ncrRequired = 'Yes';
-              } else {
-                row.ncrRequired = null;
-              }
-            });
-          },
+          onChanged: editable
+              ? (String? value) {
+                  setState(() {
+                    row.passFail = value;
+                    if (_canEditNcrFields) {
+                      if (value == 'Pass') {
+                        row.ncrRequired = 'No';
+                      } else if (value == 'Fail') {
+                        row.ncrRequired = 'Yes';
+                      } else {
+                        row.ncrRequired = null;
+                      }
+                    }
+                    _syncCorrectionRequiredFromParameters();
+                  });
+                }
+              : null,
         ),
       ),
     );
@@ -1692,6 +2514,26 @@ class _AddQualityInspectionFormPageState
         child: AppCompactDropdownField<String>(
           value: row.ncrRequired,
           items: _ncrOptions,
+          itemLabelBuilder: (String v) => v,
+          onChanged: _canEditNcrFields
+              ? (String? value) => setState(() {
+                  row.ncrRequired = value;
+                  _syncCorrectionRequiredFromParameters();
+                })
+              : null,
+        ),
+      ),
+    );
+  }
+
+  Widget _paramRevisedPassFailCell(_TestParameterRow row) {
+    return SizedBox(
+      width: _paramColWidth('Revised Pass / Fail'),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 6),
+        child: AppCompactDropdownField<String>(
+          value: row.revisedPassFail,
+          items: _passFailOptions,
           itemLabelBuilder: (String v) => v,
           onChanged: null,
         ),
@@ -1715,6 +2557,10 @@ class _AddQualityInspectionFormPageState
         return 110;
       case 'Is NCR Required':
         return 120;
+      case 'Revised Result':
+        return 110;
+      case 'Revised Pass / Fail':
+        return 130;
       case 'Attachment':
         return 88;
       default:
