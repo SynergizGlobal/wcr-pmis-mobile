@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:wcr_pmis_mobile/src/core/constants/pmis_web_routes.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/daily_progress_tab.dart';
-import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/pmis_project_web_view_tab.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/project_overview_tab.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/site_photos_tab.dart';
 
@@ -20,9 +18,7 @@ class ProjectSummaryArgs {
 enum _SummaryTab {
   projectOverview('Project Overview', Icons.dashboard_rounded),
   dailyProgress('Daily Progress', Icons.trending_up_rounded),
-  sitePhotos('Site Photos', Icons.photo_library_rounded),
-  executionOverview('Execution Overview', Icons.engineering_rounded),
-  progressTable('Progress Table', Icons.table_chart_rounded);
+  sitePhotos('Site Photos', Icons.photo_library_rounded);
 
   const _SummaryTab(this.label, this.icon);
 
@@ -47,10 +43,6 @@ class _ProjectSummaryPageState extends State<ProjectSummaryPage> {
   final Set<_SummaryTab> _visitedTabs = <_SummaryTab>{
     _SummaryTab.projectOverview,
   };
-
-  bool get _isWebTab =>
-      _selectedTab == _SummaryTab.executionOverview ||
-      _selectedTab == _SummaryTab.progressTable;
 
   void _selectTab(_SummaryTab tab) {
     setState(() {
@@ -174,19 +166,6 @@ class _ProjectSummaryPageState extends State<ProjectSummaryPage> {
   }
 
   Widget _tabBody() {
-    if (_isWebTab) {
-      final PmisEmbeddedWebPage page =
-          _selectedTab == _SummaryTab.executionOverview
-          ? PmisEmbeddedWebPage.executionOverview
-          : PmisEmbeddedWebPage.progressTable;
-      return PmisProjectWebViewTab(
-        key: ValueKey<PmisEmbeddedWebPage>(page),
-        projectId: widget.args.projectId,
-        projectName: widget.args.projectName,
-        page: page,
-      );
-    }
-
     final int tabIndex = _SummaryTab.values.indexOf(_selectedTab);
     return IndexedStack(
       index: tabIndex,
@@ -216,8 +195,6 @@ class _ProjectSummaryPageState extends State<ProjectSummaryPage> {
                 child: SitePhotosTab(projectId: widget.args.projectId),
               )
             : const SizedBox.shrink(),
-        const SizedBox.shrink(),
-        const SizedBox.shrink(),
       ],
     );
   }
