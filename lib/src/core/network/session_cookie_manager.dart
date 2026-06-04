@@ -31,4 +31,9 @@ class SessionCookieManager {
   Future<List<Cookie>> currentCookiesForBase() async {
     return cookieJar.loadForRequest(ApiConstants.wcrOriginUri);
   }
+
+  /// Cookies scoped to the PMIS web app path (used by embedded WebViews).
+  Future<List<Cookie>> currentCookiesForWebView() async {
+    return cookieJar.loadForRequest(Uri.parse(ApiConstants.wcrBaseUrl));
+  }
 }

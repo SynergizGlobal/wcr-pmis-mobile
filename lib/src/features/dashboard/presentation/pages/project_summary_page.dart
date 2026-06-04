@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:wcr_pmis_mobile/src/core/constants/pmis_web_routes.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/daily_progress_tab.dart';
+import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/pmis_project_web_view_tab.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/project_overview_tab.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/site_photos_tab.dart';
 
@@ -42,6 +44,20 @@ class ProjectSummaryPage extends StatefulWidget {
 
 class _ProjectSummaryPageState extends State<ProjectSummaryPage> {
   _SummaryTab _selectedTab = _SummaryTab.projectOverview;
+  final Set<_SummaryTab> _visitedTabs = <_SummaryTab>{
+    _SummaryTab.projectOverview,
+  };
+
+  bool get _isWebTab =>
+      _selectedTab == _SummaryTab.executionOverview ||
+      _selectedTab == _SummaryTab.progressTable;
+
+  void _selectTab(_SummaryTab tab) {
+    setState(() {
+      _selectedTab = tab;
+      _visitedTabs.add(tab);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -146,7 +162,7 @@ class _ProjectSummaryPageState extends State<ProjectSummaryPage> {
                     label: tab.label,
                     icon: tab.icon,
                     selected: selected,
-                    onTap: () => setState(() => _selectedTab = tab),
+                    onTap: () => _selectTab(tab),
                   ),
                 );
               }),
@@ -158,36 +174,52 @@ class _ProjectSummaryPageState extends State<ProjectSummaryPage> {
   }
 
   Widget _tabBody() {
-    return switch (_selectedTab) {
-      _SummaryTab.projectOverview => Padding(
-        padding: const EdgeInsets.all(12),
-        child: ProjectOverviewTab(
-          projectId: widget.args.projectId,
-          projectName: widget.args.projectName,
-        ),
-      ),
-      _SummaryTab.dailyProgress => Padding(
-        padding: const EdgeInsets.all(12),
-        child: DailyProgressTab(
-          projectId: widget.args.projectId,
-          projectName: widget.args.projectName,
-        ),
-      ),
-      _SummaryTab.sitePhotos => Padding(
-        padding: const EdgeInsets.all(12),
-        child: SitePhotosTab(projectId: widget.args.projectId),
-      ),
-      _ => Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Text(
-            '${_selectedTab.label} will be available in a future update.',
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-        ),
-      ),
-    };
+    if (_isWebTab) {
+      final PmisEmbeddedWebPage page =
+          _selectedTab == _SummaryTab.executionOverview
+          ? PmisEmbeddedWebPage.executionOverview
+          : PmisEmbeddedWebPage.progressTable;
+      return PmisProjectWebViewTab(
+        key: ValueKey<PmisEmbeddedWebPage>(page),
+        projectId: widget.args.projectId,
+        projectName: widget.args.projectName,
+        page: page,
+      );
+    }
+
+    final int tabIndex = _SummaryTab.values.indexOf(_selectedTab);
+    return IndexedStack(
+      index: tabIndex,
+      sizing: StackFit.expand,
+      children: <Widget>[
+        _visitedTabs.contains(_SummaryTab.projectOverview)
+            ? Padding(
+                padding: const EdgeInsets.all(12),
+                child: ProjectOverviewTab(
+                  projectId: widget.args.projectId,
+                  projectName: widget.args.projectName,
+                ),
+              )
+            : const SizedBox.shrink(),
+        _visitedTabs.contains(_SummaryTab.dailyProgress)
+            ? Padding(
+                padding: const EdgeInsets.all(12),
+                child: DailyProgressTab(
+                  projectId: widget.args.projectId,
+                  projectName: widget.args.projectName,
+                ),
+              )
+            : const SizedBox.shrink(),
+        _visitedTabs.contains(_SummaryTab.sitePhotos)
+            ? Padding(
+                padding: const EdgeInsets.all(12),
+                child: SitePhotosTab(projectId: widget.args.projectId),
+              )
+            : const SizedBox.shrink(),
+        const SizedBox.shrink(),
+        const SizedBox.shrink(),
+      ],
+    );
   }
 }
 
