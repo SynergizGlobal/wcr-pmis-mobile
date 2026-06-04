@@ -202,16 +202,9 @@ class _ProjectDetailsPageState extends ConsumerState<ProjectDetailsPage>
                 clipBehavior: Clip.antiAlias,
                 child: Stack(
                   children: <Widget>[
-                    Scrollbar(
+                    SingleChildScrollView(
                       controller: _horizontalScrollController,
-                      thumbVisibility: true,
-                      trackVisibility: true,
-                      interactive: true,
-                      notificationPredicate: (ScrollNotification notification) =>
-                          notification.metrics.axis == Axis.horizontal,
-                      child: SingleChildScrollView(
-                        controller: _horizontalScrollController,
-                        scrollDirection: Axis.horizontal,
+                      scrollDirection: Axis.horizontal,
                         child: SizedBox(
                           width: tableWidth,
                           child: ListView(
@@ -232,7 +225,6 @@ class _ProjectDetailsPageState extends ConsumerState<ProjectDetailsPage>
                           ),
                         ),
                       ),
-                    ),
                     if (visibleItems.isNotEmpty && showBounceArrowHint)
                       Positioned.fill(
                         child: Align(

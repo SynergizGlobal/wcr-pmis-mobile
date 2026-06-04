@@ -524,12 +524,10 @@ class _DailyProgressTabState extends ConsumerState<DailyProgressTab> {
         ],
       ),
       clipBehavior: Clip.antiAlias,
-      child: Scrollbar(
-        thumbVisibility: true,
-        child: SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: SizedBox(
-            width: tableWidth,
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: SizedBox(
+          width: tableWidth,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
@@ -565,7 +563,6 @@ class _DailyProgressTabState extends ConsumerState<DailyProgressTab> {
             ),
           ),
         ),
-      ),
     );
   }
 

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/daily_progress_tab.dart';
+import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/project_overview_tab.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/site_photos_tab.dart';
 
 class ProjectSummaryArgs {
@@ -158,6 +159,13 @@ class _ProjectSummaryPageState extends State<ProjectSummaryPage> {
 
   Widget _tabBody() {
     return switch (_selectedTab) {
+      _SummaryTab.projectOverview => Padding(
+        padding: const EdgeInsets.all(12),
+        child: ProjectOverviewTab(
+          projectId: widget.args.projectId,
+          projectName: widget.args.projectName,
+        ),
+      ),
       _SummaryTab.dailyProgress => Padding(
         padding: const EdgeInsets.all(12),
         child: DailyProgressTab(

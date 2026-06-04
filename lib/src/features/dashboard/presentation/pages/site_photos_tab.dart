@@ -189,12 +189,10 @@ class _SitePhotosTabState extends ConsumerState<SitePhotosTab> {
         ],
       ),
       clipBehavior: Clip.antiAlias,
-      child: Scrollbar(
-        thumbVisibility: true,
-        child: SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: SizedBox(
-            width: _SitePhotosColumnLayout.totalWidth,
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: SizedBox(
+          width: _SitePhotosColumnLayout.totalWidth,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
@@ -216,7 +214,6 @@ class _SitePhotosTabState extends ConsumerState<SitePhotosTab> {
             ),
           ),
         ),
-      ),
     );
   }
 
