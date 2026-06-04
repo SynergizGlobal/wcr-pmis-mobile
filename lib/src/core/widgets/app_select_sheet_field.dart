@@ -13,6 +13,7 @@ class AppSelectSheetField<T> extends StatelessWidget {
     this.leadingIcon,
     this.enabled = true,
     this.placeholderText = 'Select',
+    this.compact = false,
   });
 
   final String label;
@@ -24,6 +25,7 @@ class AppSelectSheetField<T> extends StatelessWidget {
   final IconData? leadingIcon;
   final bool enabled;
   final String placeholderText;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
@@ -184,10 +186,14 @@ class AppSelectSheetField<T> extends StatelessWidget {
           children: <Widget>[
             if (label.trim().isNotEmpty) ...<Widget>[
               Padding(
-                padding: const EdgeInsets.only(left: 2, bottom: 8),
+                padding: EdgeInsets.only(left: 2, bottom: compact ? 4 : 8),
                 child: Text(
                   label,
-                  style: AppFormFieldStyle.labelStyle(context),
+                  style: compact
+                      ? Theme.of(context).textTheme.labelLarge?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        )
+                      : AppFormFieldStyle.labelStyle(context),
                 ),
               ),
             ],
@@ -196,14 +202,28 @@ class AppSelectSheetField<T> extends StatelessWidget {
                 context,
                 filled: filled,
                 enabled: enabled,
-                prefixIcon: leadingIcon != null ? Icon(leadingIcon) : null,
-                suffixIcon: const Icon(Icons.keyboard_arrow_down_rounded),
+                isDense: compact,
+                prefixIcon: leadingIcon != null ? Icon(leadingIcon, size: compact ? 18 : 24) : null,
+                suffixIcon: Icon(
+                  Icons.keyboard_arrow_down_rounded,
+                  size: compact ? 20 : 24,
+                ),
+                contentPadding: compact
+                    ? const EdgeInsets.symmetric(horizontal: 10, vertical: 8)
+                    : null,
               ),
               child: Text(
                 filled ? selectedLabel : placeholderText,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: AppFormFieldStyle.valueStyle(context, filled: filled),
+                style: compact
+                    ? Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        fontWeight: filled ? FontWeight.w600 : FontWeight.w500,
+                        color: filled
+                            ? colorScheme.onSurface
+                            : colorScheme.onSurfaceVariant,
+                      )
+                    : AppFormFieldStyle.valueStyle(context, filled: filled),
               ),
             ),
           ],

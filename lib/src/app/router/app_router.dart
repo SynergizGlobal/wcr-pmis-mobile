@@ -14,6 +14,7 @@ import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/ai_cus
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/dashboard_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/issues_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/project_details_page.dart';
+import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/project_summary_page.dart';
 import 'package:wcr_pmis_mobile/src/features/rfi/presentation/rfi_routes.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/new_activities_update_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/add_quality_inspection_form_page.dart';
@@ -53,6 +54,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         return LoginPage.routePath;
       }
       if (!loggedIn && loc == ProjectDetailsPage.routePath) {
+        return LoginPage.routePath;
+      }
+      if (!loggedIn && loc == ProjectSummaryPage.routePath) {
         return LoginPage.routePath;
       }
       if (!loggedIn && loc == AddProjectPage.routePath) {
@@ -126,6 +130,20 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               ? state.extra! as String
               : 'Project';
           return ProjectDetailsPage(projectTypeName: projectTypeName);
+        },
+      ),
+      GoRoute(
+        path: ProjectSummaryPage.routePath,
+        name: ProjectSummaryPage.routeName,
+        builder: (BuildContext context, GoRouterState state) {
+          final ProjectSummaryArgs args = state.extra is ProjectSummaryArgs
+              ? state.extra! as ProjectSummaryArgs
+              : const ProjectSummaryArgs(
+                  projectTypeName: '',
+                  projectName: '',
+                  projectId: '',
+                );
+          return ProjectSummaryPage(args: args);
         },
       ),
       GoRoute(

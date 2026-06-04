@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:wcr_pmis_mobile/src/core/widgets/app_dialog.dart';
+import 'package:wcr_pmis_mobile/src/core/widgets/app_table_pagination_footer.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/data/datasources/dashboard_remote_data_source.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/add_utility_shifting_form_page.dart';
 
@@ -627,93 +628,14 @@ class _UtilityShiftingPageState extends State<UtilityShiftingPage>
     required VoidCallback? onPrev,
     required VoidCallback? onNext,
   }) {
-    final ColorScheme cs = Theme.of(context).colorScheme;
-    final TextTheme tt = Theme.of(context).textTheme;
-    return SafeArea(
-      top: false,
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
-        decoration: BoxDecoration(
-          color: cs.surface,
-          border: Border(
-            top: BorderSide(color: cs.outlineVariant.withValues(alpha: 0.6)),
-          ),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            Text(
-              total == 0
-                  ? 'Showing 0 to 0 of 0 entries'
-                  : 'Showing $start to $end of $total entries',
-              style: tt.bodySmall?.copyWith(
-                color: cs.onSurfaceVariant.withValues(alpha: 0.85),
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 12),
-            LayoutBuilder(
-              builder: (BuildContext context, BoxConstraints constraints) {
-                final bool compact = constraints.maxWidth < 430;
-                final double buttonWidth = compact ? 92 : 100;
-                final double gap = compact ? 8 : 10;
-                final double pillHorizontalPadding = compact ? 12 : 18;
-                final TextStyle? pageStyle = tt.bodySmall?.copyWith(
-                  color: cs.primary,
-                  fontWeight: FontWeight.w700,
-                );
-                return Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: <Widget>[
-                    ConstrainedBox(
-                      constraints: BoxConstraints(
-                        minWidth: buttonWidth,
-                        maxWidth: buttonWidth + 14,
-                      ),
-                      child: OutlinedButton.icon(
-                        onPressed: onPrev,
-                        icon: const Icon(Icons.chevron_left_rounded),
-                        label: const Text('Prev'),
-                        style: OutlinedButton.styleFrom(
-                          minimumSize: Size(buttonWidth, 46),
-                        ),
-                      ),
-                    ),
-                    SizedBox(width: gap),
-                    Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: pillHorizontalPadding,
-                        vertical: 12,
-                      ),
-                      decoration: BoxDecoration(
-                        color: cs.primaryContainer.withValues(alpha: 0.45),
-                        borderRadius: BorderRadius.circular(24),
-                      ),
-                      child: Text('Page $page of $pageCount', style: pageStyle),
-                    ),
-                    SizedBox(width: gap),
-                    ConstrainedBox(
-                      constraints: BoxConstraints(
-                        minWidth: buttonWidth,
-                        maxWidth: buttonWidth + 14,
-                      ),
-                      child: OutlinedButton.icon(
-                        onPressed: onNext,
-                        iconAlignment: IconAlignment.end,
-                        icon: const Icon(Icons.chevron_right_rounded),
-                        label: const Text('Next'),
-                        style: OutlinedButton.styleFrom(
-                          minimumSize: Size(buttonWidth, 46),
-                        ),
-                      ),
-                    ),
-                  ],
-                );
-              },
-            ),
-          ],
-        ),
-      ),
+    return AppTablePaginationFooter(
+      total: total,
+      startIndex: total == 0 ? 0 : start - 1,
+      endIndex: end,
+      currentPage: total == 0 ? 0 : page - 1,
+      pageCount: pageCount,
+      onPrevious: onPrev,
+      onNext: onNext,
     );
   }
 

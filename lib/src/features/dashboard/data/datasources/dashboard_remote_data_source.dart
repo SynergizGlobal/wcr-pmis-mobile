@@ -121,6 +121,39 @@ class DashboardRemoteDataSource {
     return _normalizeResponse(response.data);
   }
 
+  Future<List<Map<String, dynamic>>> fetchDailyProgress({
+    required String projectId,
+    required String date,
+  }) async {
+    final Response<dynamic> response = await _dio.get<dynamic>(
+      '/execution/daily-progress',
+      queryParameters: <String, String>{
+        'projectId': projectId,
+        'date': date,
+      },
+      options: _requestOptions,
+    );
+    return _extractRowList(response.data);
+  }
+
+  List<Map<String, dynamic>> _extractRowList(dynamic data) {
+    if (data is List<dynamic>) {
+      return data.whereType<Map>().map(_mapRow).toList();
+    }
+    final Map<String, dynamic> normalized = _normalizeResponse(data);
+    final dynamic payload = normalized['data'] ?? normalized['result'];
+    if (payload is List<dynamic>) {
+      return payload.whereType<Map>().map(_mapRow).toList();
+    }
+    return <Map<String, dynamic>>[];
+  }
+
+  Map<String, dynamic> _mapRow(Map row) {
+    return row.map(
+      (dynamic key, dynamic value) => MapEntry(key.toString(), value),
+    );
+  }
+
   Future<Map<String, dynamic>> fetchIssuesList({
     String? contractId,
     String? department,

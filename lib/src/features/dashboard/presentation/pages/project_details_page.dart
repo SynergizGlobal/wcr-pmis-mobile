@@ -1,8 +1,10 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:wcr_pmis_mobile/src/core/widgets/app_select_sheet_field.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/domain/entities/home_dashboard_data.dart';
+import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/project_summary_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/providers/project_details_provider.dart';
 
 class ProjectDetailsPage extends ConsumerStatefulWidget {
@@ -70,6 +72,22 @@ class _ProjectDetailsPageState extends ConsumerState<ProjectDetailsPage>
       target,
       duration: const Duration(milliseconds: 420),
       curve: Curves.easeOutCubic,
+    );
+  }
+
+  void _openProjectSummary(ProjectDetailsData data) {
+    final String? projectName = _selectedProject;
+    if (projectName == null) {
+      return;
+    }
+    final String projectId = data.projectIdsByName[projectName]?.trim() ?? '';
+    context.pushNamed(
+      ProjectSummaryPage.routeName,
+      extra: ProjectSummaryArgs(
+        projectTypeName: widget.projectTypeName,
+        projectName: projectName,
+        projectId: projectId,
+      ),
     );
   }
 
@@ -155,6 +173,17 @@ class _ProjectDetailsPageState extends ConsumerState<ProjectDetailsPage>
               ? 'Select project'
               : 'No projects available',
           onChanged: (String value) => setState(() => _selectedProject = value),
+        ),
+        const SizedBox(height: 10),
+        SizedBox(
+          width: double.infinity,
+          child: FilledButton.tonalIcon(
+            onPressed: _selectedProject == null
+                ? null
+                : () => _openProjectSummary(data),
+            icon: const Icon(Icons.analytics_outlined),
+            label: const Text('Project Summary'),
+          ),
         ),
         const SizedBox(height: 12),
         Expanded(

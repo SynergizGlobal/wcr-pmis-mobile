@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:wcr_pmis_mobile/src/core/widgets/app_dialog.dart';
+import 'package:wcr_pmis_mobile/src/core/widgets/app_table_pagination_footer.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/data/datasources/dashboard_remote_data_source.dart';
 
 class NewActivitiesUpdatePage extends StatefulWidget {
@@ -1037,62 +1038,14 @@ class _NewActivitiesUpdatePageState extends State<NewActivitiesUpdatePage> {
     required int end,
   }) {
     final int pageCount = total == 0 ? 1 : (total / _pageSize).ceil();
-    final String summary = total == 0
-        ? 'Showing 0 to 0 of 0 entries'
-        : 'Showing ${start + 1} to $end of $total entries';
-    final int currentPage = total == 0 ? 0 : (_currentPage + 1);
-
-    return SafeArea(
-      top: false,
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
-          border: Border(
-            top: BorderSide(
-              color: Theme.of(context)
-                  .colorScheme
-                  .outlineVariant
-                  .withValues(alpha: 0.6),
-            ),
-          ),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            Text(
-              summary,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                OutlinedButton.icon(
-                  onPressed: _currentPage > 0
-                      ? () => setState(() => _currentPage--)
-                      : null,
-                  icon: const Icon(Icons.chevron_left_rounded),
-                  label: const Text('Prev'),
-                ),
-                const SizedBox(width: 12),
-                Text('Page $currentPage of $pageCount'),
-                const SizedBox(width: 12),
-                OutlinedButton.icon(
-                  onPressed: end < total
-                      ? () => setState(() => _currentPage++)
-                      : null,
-                  iconAlignment: IconAlignment.end,
-                  icon: const Icon(Icons.chevron_right_rounded),
-                  label: const Text('Next'),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
+    return AppTablePaginationFooter(
+      total: total,
+      startIndex: start,
+      endIndex: end,
+      currentPage: _currentPage,
+      pageCount: pageCount,
+      onPrevious: _currentPage > 0 ? () => setState(() => _currentPage--) : null,
+      onNext: end < total ? () => setState(() => _currentPage++) : null,
     );
   }
 

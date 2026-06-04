@@ -164,13 +164,21 @@ class DashboardRepositoryImpl implements DashboardRepository {
 
       final List<String> projectNames = <String>[];
       final Set<String> seenProjectNames = <String>{};
+      final Map<String, String> projectIdsByName = <String, String>{};
       for (final Map<String, dynamic> row in filteredProjects) {
         final String name =
             row['project_name']?.toString().trim() ??
             row['projectName']?.toString().trim() ??
             '';
+        final String projectId =
+            row['project_id']?.toString().trim() ??
+            row['projectId']?.toString().trim() ??
+            '';
         if (name.isNotEmpty && seenProjectNames.add(name)) {
           projectNames.add(name);
+        }
+        if (name.isNotEmpty && projectId.isNotEmpty) {
+          projectIdsByName[name] = projectId;
         }
       }
 
@@ -213,6 +221,7 @@ class DashboardRepositoryImpl implements DashboardRepository {
           projectTypeName: projectTypeName,
           projectNames: projectNames,
           items: items,
+          projectIdsByName: projectIdsByName,
         ),
       );
     } on DioException catch (error) {

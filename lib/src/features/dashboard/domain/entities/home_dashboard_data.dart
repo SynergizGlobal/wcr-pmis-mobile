@@ -49,9 +49,11 @@ class ProjectDetailsData {
     required this.projectTypeName,
     required this.projectNames,
     required this.items,
+    required this.projectIdsByName,
   });
 
   final String projectTypeName;
   final List<String> projectNames;
   final List<ProjectMajorItem> items;
+  final Map<String, String> projectIdsByName;
 }

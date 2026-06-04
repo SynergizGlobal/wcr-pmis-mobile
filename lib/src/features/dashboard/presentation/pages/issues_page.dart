@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:wcr_pmis_mobile/src/core/widgets/app_dialog.dart';
+import 'package:wcr_pmis_mobile/src/core/widgets/app_table_pagination_footer.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/data/datasources/dashboard_remote_data_source.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/add_issue_form_page.dart';
 
@@ -402,111 +403,20 @@ class _IssuesPageState extends State<IssuesPage> {
     );
   }
 
-  Widget _paginationBar({
-    required int total,
-    required int start,
-    required int end,
-    required int pageCount,
-  }) {
-    final ColorScheme cs = Theme.of(context).colorScheme;
-    final TextTheme tt = Theme.of(context).textTheme;
-    final String summary = total == 0
-        ? 'Showing 0 to 0 of 0 entries'
-        : 'Showing ${start + 1} to $end of $total entries';
-    final int currentPage = total == 0 ? 0 : (_currentPage + 1);
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: <Widget>[
-        Text(
-          summary,
-          style: tt.bodySmall?.copyWith(
-            color: cs.onSurfaceVariant.withValues(alpha: 0.85),
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        const SizedBox(height: 4),
-        LayoutBuilder(
-          builder: (BuildContext context, BoxConstraints constraints) {
-            final bool compact = constraints.maxWidth < 430;
-            final double buttonWidth = compact ? 92 : 100;
-            final double gap = compact ? 8 : 10;
-            final double pillHorizontalPadding = compact ? 12 : 18;
-            final TextStyle? pageStyle = tt.bodySmall?.copyWith(
-              color: cs.primary,
-              fontWeight: FontWeight.w700,
-            );
-            return Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                ConstrainedBox(
-                  constraints: BoxConstraints(minWidth: buttonWidth, maxWidth: buttonWidth + 14),
-                  child: OutlinedButton.icon(
-                    onPressed:
-                        _currentPage > 0 ? () => setState(() => _currentPage--) : null,
-                    icon: const Icon(Icons.chevron_left_rounded),
-                    label: const Text('Prev'),
-                    style: OutlinedButton.styleFrom(
-                      minimumSize: Size(buttonWidth, 42),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                    ),
-                  ),
-                ),
-                SizedBox(width: gap),
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: pillHorizontalPadding, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: cs.primaryContainer.withValues(alpha: 0.45),
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                  child: Text('Page $currentPage of $pageCount', style: pageStyle),
-                ),
-                SizedBox(width: gap),
-                ConstrainedBox(
-                  constraints: BoxConstraints(minWidth: buttonWidth, maxWidth: buttonWidth + 14),
-                  child: OutlinedButton.icon(
-                    onPressed: end < total ? () => setState(() => _currentPage++) : null,
-                    iconAlignment: IconAlignment.end,
-                    icon: const Icon(Icons.chevron_right_rounded),
-                    label: const Text('Next'),
-                    style: OutlinedButton.styleFrom(
-                      minimumSize: Size(buttonWidth,42),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                    ),
-                  ),
-                ),
-              ],
-            );
-          },
-        ),
-      ],
-    );
-  }
-
   Widget _stickyFooter({
     required int total,
     required int start,
     required int end,
   }) {
     final int pageCount = total == 0 ? 1 : (total / _pageSize).ceil();
-    return SafeArea(
-      top: false,
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
-          border: Border(
-            top: BorderSide(
-              color: Theme.of(context).colorScheme.outlineVariant.withValues(alpha: 0.6),
-            ),
-          ),
-        ),
-        child: _paginationBar(
-          total: total,
-          start: start,
-          end: end,
-          pageCount: pageCount,
-        ),
-      ),
+    return AppTablePaginationFooter(
+      total: total,
+      startIndex: start,
+      endIndex: end,
+      currentPage: _currentPage,
+      pageCount: pageCount,
+      onPrevious: _currentPage > 0 ? () => setState(() => _currentPage--) : null,
+      onNext: end < total ? () => setState(() => _currentPage++) : null,
     );
   }
 

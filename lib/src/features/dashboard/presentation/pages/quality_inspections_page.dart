@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:wcr_pmis_mobile/src/core/widgets/app_dialog.dart';
+import 'package:wcr_pmis_mobile/src/core/widgets/app_table_pagination_footer.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/data/datasources/dashboard_remote_data_source.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/add_quality_inspection_form_page.dart';
 
@@ -786,65 +787,14 @@ class _QualityInspectionsPageState extends State<QualityInspectionsPage> {
     }
 
     final int pageCount = total == 0 ? 1 : (total / _pageSize).ceil();
-    final String summary = total == 0
-        ? 'Showing 0 to 0 of 0 entries'
-        : 'Showing ${start + 1} to $end of $total entries';
-    final int currentPage = total == 0 ? 0 : (_currentPage + 1);
-    final ColorScheme cs = Theme.of(context).colorScheme;
-    final TextTheme tt = Theme.of(context).textTheme;
-
-    return SafeArea(
-      top: false,
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
-        decoration: BoxDecoration(
-          color: cs.surface,
-          border: Border(
-            top: BorderSide(
-              color: cs.outlineVariant.withValues(alpha: 0.6),
-            ),
-          ),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            Text(
-              summary,
-              style: tt.bodySmall?.copyWith(fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 6),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                OutlinedButton.icon(
-                  onPressed: _currentPage > 0
-                      ? () => setState(() => _currentPage--)
-                      : null,
-                  icon: const Icon(Icons.chevron_left_rounded),
-                  label: const Text('Prev'),
-                ),
-                const SizedBox(width: 12),
-                Text(
-                  'Page $currentPage of $pageCount',
-                  style: tt.bodySmall?.copyWith(
-                    color: cs.primary,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                OutlinedButton.icon(
-                  onPressed: end < total
-                      ? () => setState(() => _currentPage++)
-                      : null,
-                  icon: const Icon(Icons.chevron_right_rounded),
-                  label: const Text('Next'),
-                  iconAlignment: IconAlignment.end,
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
+    return AppTablePaginationFooter(
+      total: total,
+      startIndex: start,
+      endIndex: end,
+      currentPage: _currentPage,
+      pageCount: pageCount,
+      onPrevious: _currentPage > 0 ? () => setState(() => _currentPage--) : null,
+      onNext: end < total ? () => setState(() => _currentPage++) : null,
     );
   }
 
