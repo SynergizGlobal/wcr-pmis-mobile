@@ -136,6 +136,37 @@ class DashboardRemoteDataSource {
     return _extractRowList(response.data);
   }
 
+  Future<List<Map<String, dynamic>>> fetchSitePhotos({
+    required String projectId,
+  }) async {
+    final Response<dynamic> response = await _dio.get<dynamic>(
+      '/execution/site-photos-display',
+      queryParameters: <String, String>{'projectId': projectId},
+      options: _requestOptions,
+    );
+    return _extractRowList(response.data);
+  }
+
+  Future<Uint8List> fetchStructurePhotoBytes(String fileName) async {
+    final String trimmed = fileName.trim();
+    if (trimmed.isEmpty) {
+      throw ArgumentError('Photo file name is required.');
+    }
+    final Response<List<int>> response = await _dio.get<List<int>>(
+      '/STRUCTURE_FILES/${Uri.encodeComponent(trimmed)}',
+      options: Options(
+        responseType: ResponseType.bytes,
+        receiveTimeout: _dashboardReceiveTimeout,
+        connectTimeout: _dashboardConnectTimeout,
+      ),
+    );
+    final List<int>? bytes = response.data;
+    if (bytes == null || bytes.isEmpty) {
+      throw StateError('Empty photo response for $trimmed');
+    }
+    return Uint8List.fromList(bytes);
+  }
+
   List<Map<String, dynamic>> _extractRowList(dynamic data) {
     if (data is List<dynamic>) {
       return data.whereType<Map>().map(_mapRow).toList();
