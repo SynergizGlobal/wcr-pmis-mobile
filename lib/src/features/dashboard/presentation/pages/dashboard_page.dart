@@ -16,6 +16,8 @@ import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/projec
 import 'package:wcr_pmis_mobile/src/features/rfi/presentation/pages/rfi_dashboard_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/new_activities_update_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/domain/utils/quality_inspection_user_access.dart';
+import 'package:wcr_pmis_mobile/src/features/dashboard/domain/utils/update_form_mobile_access.dart';
+import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/dms_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/quality_inspections_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/utility_shifting_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/providers/home_dashboard_provider.dart';
@@ -796,23 +798,10 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
   }
 
   bool _isEnabledUpdateForm(UpdateFormItem item) {
-    if (_isProjectsUpdateForm(item)) {
-      return true;
-    }
-    if (_isExecutionMonitoringUpdateForm(item)) {
-      return true;
-    }
-    final String key = _normalizeFormKey(item.formName);
-    if (key.contains('issue')) {
-      return true;
-    }
-    if (key.contains('utility') && key.contains('shifting')) {
-      return true;
-    }
-    if (key.contains('quality') && key.contains('inspection')) {
-      return ref.watch(qualityInspectionAccessProvider).canAccessModule;
-    }
-    return false;
+    return UpdateFormMobileAccess.isMobileReady(
+      item,
+      qualityInspectionAccess: ref.watch(qualityInspectionAccessProvider),
+    );
   }
 
   bool _isProjectsUpdateForm(UpdateFormItem item) {
@@ -820,12 +809,6 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     return key.contains('project') &&
         !key.contains('quality') &&
         !key.contains('inspection');
-  }
-
-  bool _isExecutionMonitoringUpdateForm(UpdateFormItem item) {
-    final String key = _normalizeFormKey(item.formName);
-    return key.contains('execution') &&
-        (key.contains('monitoring') || key.contains('monitering'));
   }
 
   List<_DashboardCardSpec> _collectUpdateFormCards(List<UpdateFormItem> forms) {
@@ -910,6 +893,15 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         return;
       }
       context.pushNamed(NewActivitiesUpdatePage.routeName);
+      return;
+    }
+    if (urlKey.contains('dms') ||
+        combinedKey.contains('dms') ||
+        combinedKey.contains('document management')) {
+      if (!mounted) {
+        return;
+      }
+      context.pushNamed(DmsPage.routeName);
       return;
     }
     await AppDialog.show(

@@ -20,6 +20,7 @@ import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/new_ac
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/add_quality_inspection_form_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/domain/utils/quality_inspection_user_access.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/quality_inspections_page.dart';
+import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/dms_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/utility_shifting_page.dart';
 import 'package:wcr_pmis_mobile/src/features/profile/presentation/pages/profile_page.dart';
 import 'package:wcr_pmis_mobile/src/features/settings/presentation/pages/settings_page.dart';
@@ -85,6 +86,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         return LoginPage.routePath;
       }
       if (!loggedIn && loc == QualityInspectionsPage.routePath) {
+        return LoginPage.routePath;
+      }
+      if (!loggedIn && loc == DmsPage.routePath) {
         return LoginPage.routePath;
       }
       if (!loggedIn && loc == AddQualityInspectionFormPage.routePath) {
@@ -231,6 +235,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             QualityInspectionsPage(
               dataSource: ref.read(dashboardRemoteDataSourceProvider),
             ),
+      ),
+      GoRoute(
+        path: DmsPage.routePath,
+        name: DmsPage.routeName,
+        builder: (BuildContext context, GoRouterState state) =>
+            DmsPage(dataSource: ref.read(dashboardRemoteDataSourceProvider)),
       ),
       GoRoute(
         path: AddQualityInspectionFormPage.routePath,

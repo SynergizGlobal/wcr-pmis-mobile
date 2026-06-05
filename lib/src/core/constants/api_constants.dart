@@ -1,7 +1,7 @@
 class ApiConstants {
   const ApiConstants._();
 
-  static const bool useQaServer = false;
+  static const bool useQaServer = true;
 
   static const String wcrQaBaseUrl =
       'https://pmis-wcrindianrailways.org/wcrpmis_qa/';

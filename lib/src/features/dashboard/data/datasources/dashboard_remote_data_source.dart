@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
@@ -611,6 +612,222 @@ class DashboardRemoteDataSource {
       ),
     );
     return _normalizeResponse(response.data);
+  }
+
+  Future<Map<String, dynamic>> fetchCorrespondenceFilterData({
+    int draw = 1,
+    int start = 0,
+    int length = 10,
+    Map<String, dynamic> columnFilters = const <String, dynamic>{
+      '-1': <String>['send', 'Send'],
+    },
+  }) async {
+    final Response<dynamic> response = await _dio.post<dynamic>(
+      '/api/correspondence/filter-data',
+      data: <String, dynamic>{
+        'draw': draw,
+        'start': start,
+        'length': length,
+        'columnFilters': columnFilters,
+      },
+      options: _requestOptions,
+    );
+    return _normalizeResponse(response.data);
+  }
+
+  Future<List<Map<String, dynamic>>> fetchDmsProjectNames() async {
+    final response = await _dio.get<dynamic>(
+      '/projects/get-project-name',
+      queryParameters: <String, String>{
+        '_t': DateTime.now().millisecondsSinceEpoch.toString(),
+      },
+      options: _requestOptions,
+    );
+    return _parseListOfMaps(response.data);
+  }
+
+  Future<List<Map<String, dynamic>>> fetchDmsContractNames() async {
+    final response = await _dio.get<dynamic>(
+      '/contract/get-contract-name',
+      queryParameters: <String, String>{
+        '_t': DateTime.now().millisecondsSinceEpoch.toString(),
+      },
+      options: _requestOptions,
+    );
+    return _parseListOfMaps(response.data);
+  }
+
+  Future<List<Map<String, dynamic>>> fetchDmsDepartments() async {
+    final response = await _dio.get<dynamic>(
+      '/api/departments/get',
+      queryParameters: <String, String>{
+        '_t': DateTime.now().millisecondsSinceEpoch.toString(),
+      },
+      options: _requestOptions,
+    );
+    return _parseListOfMaps(response.data);
+  }
+
+  Future<List<Map<String, dynamic>>> fetchDmsStatuses() async {
+    final response = await _dio.get<dynamic>(
+      '/api/statuses/get',
+      queryParameters: <String, String>{
+        '_t': DateTime.now().millisecondsSinceEpoch.toString(),
+      },
+      options: _requestOptions,
+    );
+    return _parseListOfMaps(response.data);
+  }
+
+  Future<List<Map<String, dynamic>>> searchDmsUsers({String query = ''}) async {
+    final response = await _dio.get<dynamic>(
+      '/users/search',
+      queryParameters: <String, String>{
+        'query': query,
+        '_t': DateTime.now().millisecondsSinceEpoch.toString(),
+      },
+      options: _requestOptions,
+    );
+    return _parseListOfMaps(response.data);
+  }
+
+  Future<Map<String, dynamic>> uploadCorrespondenceLetter({
+    required Map<String, dynamic> dto,
+    Uint8List? documentBytes,
+    String? documentFileName,
+  }) async {
+    final FormData formData = FormData();
+    formData.files.add(
+      MapEntry<String, MultipartFile>(
+        'dto',
+        MultipartFile.fromString(
+          jsonEncode(dto),
+          filename: 'blob',
+          contentType: DioMediaType.parse('application/json'),
+        ),
+      ),
+    );
+    if (documentBytes != null &&
+        documentFileName != null &&
+        documentFileName.isNotEmpty) {
+      formData.files.add(
+        MapEntry<String, MultipartFile>(
+          'document',
+          MultipartFile.fromBytes(
+            documentBytes,
+            filename: documentFileName,
+          ),
+        ),
+      );
+    }
+    final Response<dynamic> response = await _dio.post<dynamic>(
+      '/api/correspondence/uploadLetter',
+      data: formData,
+      options: Options(
+        receiveTimeout: _dashboardReceiveTimeout,
+        connectTimeout: _dashboardConnectTimeout,
+        contentType: null,
+      ),
+    );
+    return _normalizeResponse(response.data);
+  }
+
+  Future<Map<String, dynamic>> fetchDocumentsFilterData({
+    int draw = 1,
+    int start = 0,
+    int length = 10,
+    Map<String, dynamic> columnFilters = const <String, dynamic>{},
+  }) async {
+    final Response<dynamic> response = await _dio.post<dynamic>(
+      '/api/documents/filter-data',
+      data: <String, dynamic>{
+        'draw': draw,
+        'start': start,
+        'length': length,
+        'columnFilters': columnFilters,
+      },
+      options: _requestOptions,
+    );
+    return _normalizeResponse(response.data);
+  }
+
+  Future<List<Map<String, dynamic>>> fetchDmsFolders() async {
+    final Response<dynamic> response = await _dio.get<dynamic>(
+      '/api/folders/get',
+      queryParameters: <String, String>{
+        '_t': DateTime.now().millisecondsSinceEpoch.toString(),
+      },
+      options: _requestOptions,
+    );
+    return _parseListOfMaps(response.data);
+  }
+
+  Future<Map<String, dynamic>> createDmsFolder({
+    required String name,
+    int? parentId,
+  }) async {
+    final Response<dynamic> response = await _dio.post<dynamic>(
+      '/api/folders/create',
+      data: <String, dynamic>{
+        'name': name,
+        if (parentId != null) 'parentId': parentId,
+      },
+      options: _requestOptions,
+    );
+    return _normalizeResponse(response.data);
+  }
+
+  Future<Map<String, dynamic>> uploadDmsDocument({
+    required Map<String, dynamic> dto,
+    required Uint8List fileBytes,
+    required String fileName,
+  }) async {
+    final FormData formData = FormData();
+    formData.files.add(
+      MapEntry<String, MultipartFile>(
+        'dto',
+        MultipartFile.fromString(
+          jsonEncode(dto),
+          filename: 'blob',
+          contentType: DioMediaType.parse('application/json'),
+        ),
+      ),
+    );
+    formData.files.add(
+      MapEntry<String, MultipartFile>(
+        'file',
+        MultipartFile.fromBytes(
+          fileBytes,
+          filename: fileName,
+        ),
+      ),
+    );
+    final Response<dynamic> response = await _dio.post<dynamic>(
+      '/api/documents/upload',
+      data: formData,
+      options: Options(
+        receiveTimeout: _dashboardReceiveTimeout,
+        connectTimeout: _dashboardConnectTimeout,
+        contentType: null,
+      ),
+    );
+    return _normalizeResponse(response.data);
+  }
+
+  List<Map<String, dynamic>> _parseListOfMaps(dynamic data) {
+    if (data is! List) {
+      return const <Map<String, dynamic>>[];
+    }
+    return data
+        .whereType<Map>()
+        .map(
+          (Map<dynamic, dynamic> item) => Map<String, dynamic>.from(
+            item.map(
+              (dynamic key, dynamic value) => MapEntry(key.toString(), value),
+            ),
+          ),
+        )
+        .toList();
   }
 
   Future<Map<String, dynamic>> fetchUtilityShiftingList({
