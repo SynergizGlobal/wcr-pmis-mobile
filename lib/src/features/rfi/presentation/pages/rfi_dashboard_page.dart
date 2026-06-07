@@ -1,16 +1,19 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:wcr_pmis_mobile/src/core/auth/wcr_unauthorized.dart';
 import 'package:wcr_pmis_mobile/src/features/auth/domain/entities/auth_session.dart';
 import 'package:wcr_pmis_mobile/src/features/auth/presentation/controllers/auth_controller.dart';
+import 'package:wcr_pmis_mobile/src/features/auth/presentation/pages/login_page.dart';
+import 'package:wcr_pmis_mobile/src/features/rfi/core/utils/rfi_dio_error_message.dart';
 import 'package:wcr_pmis_mobile/src/features/rfi/domain/rfi_list_kind.dart';
 import 'package:wcr_pmis_mobile/src/features/rfi/domain/utils/rfi_user_role.dart';
+import 'package:wcr_pmis_mobile/src/features/rfi/presentation/pages/create_rfi_page.dart';
 import 'package:wcr_pmis_mobile/src/features/rfi/presentation/pages/rfi_home_tab.dart';
 import 'package:wcr_pmis_mobile/src/features/rfi/presentation/pages/rfi_list_page.dart';
 import 'package:wcr_pmis_mobile/src/features/rfi/presentation/providers/rfi_providers.dart';
 import 'package:wcr_pmis_mobile/src/features/rfi/presentation/widgets/rfi_bottom_navigation_bar.dart';
-import 'package:wcr_pmis_mobile/src/features/rfi/presentation/pages/create_rfi_page.dart';
 
 enum _RfiShellSection { home, create, more }
 
@@ -257,14 +260,30 @@ class _RfiDashboardPageState extends ConsumerState<RfiDashboardPage> {
         ),
         error: (Object error, StackTrace stack) {
           if (isWcrUnauthorizedError(error)) {
-            return const Center(child: CircularProgressIndicator());
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: RfiHomeError(
+                  title: 'Session expired',
+                  message: sessionExpiredLoginMessage,
+                  onRetry: () {
+                    if (context.mounted) {
+                      context.go(LoginPage.routePath);
+                    }
+                  },
+                ),
+              ),
+            );
           }
+          final String message = error is DioException
+              ? rfiDioErrorMessage(error)
+              : error.toString();
           return Center(
             child: Padding(
               padding: const EdgeInsets.all(24),
               child: RfiHomeError(
                 title: 'Could not connect to RFI.',
-                message: error.toString(),
+                message: message,
                 onRetry: _refreshAll,
               ),
             ),

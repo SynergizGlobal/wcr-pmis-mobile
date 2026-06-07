@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pretty_dio_logger/pretty_dio_logger.dart';
+import 'package:wcr_pmis_mobile/src/core/config/environment.dart';
 import 'package:wcr_pmis_mobile/src/core/constants/api_constants.dart';
 import 'package:wcr_pmis_mobile/src/core/network/auth_interceptor.dart';
 import 'package:wcr_pmis_mobile/src/core/network/dio_client.dart';
@@ -18,7 +19,7 @@ final rfiDioProvider = Provider<Dio>((ref) {
 
   final Dio dio = Dio(
     BaseOptions(
-      baseUrl: ApiConstants.rfiBaseUrl,
+      baseUrl: Environment.rfiBaseUrl,
       connectTimeout: ApiConstants.connectTimeout,
       receiveTimeout: ApiConstants.receiveTimeout,
       sendTimeout: ApiConstants.connectTimeout,

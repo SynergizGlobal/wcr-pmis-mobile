@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:cookie_jar/cookie_jar.dart';
 import 'package:dio_cookie_manager/dio_cookie_manager.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:wcr_pmis_mobile/src/core/constants/api_constants.dart';
+import 'package:wcr_pmis_mobile/src/core/config/environment.dart';
 
 class SessionCookieManager {
   SessionCookieManager._(this.cookieJar, this.persistDirPath);
@@ -24,11 +24,11 @@ class SessionCookieManager {
   }
 
   Future<void> clearSessionCookies() async {
-    await cookieJar.delete(ApiConstants.wcrOriginUri);
-    await cookieJar.delete(ApiConstants.rfiOriginUri);
+    await cookieJar.delete(Environment.wcrOriginUri);
+    await cookieJar.delete(Environment.rfiOriginUri);
   }
 
   Future<List<Cookie>> currentCookiesForBase() async {
-    return cookieJar.loadForRequest(ApiConstants.wcrOriginUri);
+    return cookieJar.loadForRequest(Environment.wcrOriginUri);
   }
 }

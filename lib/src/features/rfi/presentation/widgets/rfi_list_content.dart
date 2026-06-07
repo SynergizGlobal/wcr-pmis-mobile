@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:wcr_pmis_mobile/src/features/auth/presentation/controllers/auth_controller.dart';
@@ -126,23 +128,28 @@ class _RfiListContentState extends ConsumerState<RfiListContent> {
                 },
                 child: LayoutBuilder(
                   builder: (BuildContext context, BoxConstraints constraints) {
-                    return SingleChildScrollView(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      scrollDirection: Axis.horizontal,
-                      child: ConstrainedBox(
-                        constraints: BoxConstraints(
-                          minWidth: constraints.maxWidth,
-                          minHeight: constraints.maxHeight,
-                        ),
-                        child: Padding(
-                          padding: widget.padding.copyWith(bottom: 8),
-                          child: Card(
-                            clipBehavior: Clip.antiAlias,
-                            child: _RfiDataTable(
-                              columns: columns,
-                              items: pageItems,
-                              role: role,
-                              onRefresh: _refreshList,
+                    final double tableWidth = columns.fold<double>(
+                          0,
+                          (double sum, RfiTableColumn c) => sum + c.width,
+                        ) +
+                        RfiListTableConfig.actionWidth;
+                    return SizedBox(
+                      height: constraints.maxHeight,
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: SizedBox(
+                          width: math.max(constraints.maxWidth, tableWidth),
+                          child: Padding(
+                            padding: widget.padding.copyWith(bottom: 8),
+                            child: Card(
+                              clipBehavior: Clip.antiAlias,
+                              margin: EdgeInsets.zero,
+                              child: _RfiDataTable(
+                                columns: columns,
+                                items: pageItems,
+                                role: role,
+                                onRefresh: _refreshList,
+                              ),
                             ),
                           ),
                         ),
@@ -188,7 +195,11 @@ class _RfiDataTable extends StatelessWidget {
     if (items.isEmpty) {
       return SizedBox(
         height: 200,
-        width: 400,
+        width: columns.fold<double>(
+              0,
+              (double sum, RfiTableColumn c) => sum + c.width,
+            ) +
+            RfiListTableConfig.actionWidth,
         child: Center(
           child: Text(
             'No RFIs match your filters.',
@@ -201,6 +212,7 @@ class _RfiDataTable extends StatelessWidget {
     }
 
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
         Container(
           color: RfiTheme.tableHeaderBackground(scheme),
@@ -213,32 +225,41 @@ class _RfiDataTable extends StatelessWidget {
             ],
           ),
         ),
-        for (int index = 0; index < items.length; index++)
-          Container(
-            color: RfiTheme.tableRowBackground(scheme, even: index.isEven),
-            child: Row(
-              children: <Widget>[
-                for (final RfiTableColumn column in columns)
-                  _dataCellText(
-                    context,
-                    column.value(items[index]),
-                    column.width,
-                  ),
-                _dataCellWidget(
-                  context,
-                  RfiActionMenu(
-                    actions: RfiListActions.build(
-                      context: context,
-                      item: items[index],
-                      role: role,
-                      onRefresh: onRefresh,
+        Expanded(
+          child: ListView.builder(
+            padding: EdgeInsets.zero,
+            physics: const AlwaysScrollableScrollPhysics(),
+            itemCount: items.length,
+            itemBuilder: (BuildContext context, int index) {
+              return Container(
+                color: RfiTheme.tableRowBackground(scheme, even: index.isEven),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    for (final RfiTableColumn column in columns)
+                      _dataCellText(
+                        context,
+                        column.value(items[index]),
+                        column.width,
+                      ),
+                    _dataCellWidget(
+                      context,
+                      RfiActionMenu(
+                        actions: RfiListActions.build(
+                          context: context,
+                          item: items[index],
+                          role: role,
+                          onRefresh: onRefresh,
+                        ),
+                      ),
+                      RfiListTableConfig.actionWidth,
                     ),
-                  ),
-                  RfiListTableConfig.actionWidth,
+                  ],
                 ),
-              ],
-            ),
+              );
+            },
           ),
+        ),
       ],
     );
   }

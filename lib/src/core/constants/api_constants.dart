@@ -1,8 +1,6 @@
 class ApiConstants {
   const ApiConstants._();
 
-  static const bool useQaServer = true;
-
   static const String wcrQaBaseUrl =
       'https://pmis-wcrindianrailways.org/wcrpmis_qa/';
 
@@ -21,18 +19,6 @@ class ApiConstants {
   static const String rfiSsoLoginPath = '/api/auth/login';
   static const String rfiDashboardPath = 'dashboard';
 
-  static String get wcrBaseUrl {
-    const String fromEnv = String.fromEnvironment('BASE_URL');
-    if (fromEnv.isNotEmpty) {
-      return fromEnv;
-    }
-    return useQaServer ? wcrQaBaseUrl : wcrProdBaseUrl;
-  }
-
-  static String get baseUrl => wcrBaseUrl;
-
-  static String get rfiBaseUrl => useQaServer ? rfiQaBaseUrl : rfiProdBaseUrl;
-
   static Uri originUriFor(String baseUrl) {
     final Uri parsed = Uri.parse(baseUrl);
     return Uri(
@@ -42,10 +28,6 @@ class ApiConstants {
     );
   }
 
-  static Uri get wcrOriginUri => originUriFor(wcrBaseUrl);
-
-  static Uri get rfiOriginUri => originUriFor(rfiBaseUrl);
-
   static const Duration connectTimeout = Duration(seconds: 20);
-  static const Duration receiveTimeout = Duration(seconds: 60);
+  static const Duration receiveTimeout = Duration(seconds: 45);
 }

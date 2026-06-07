@@ -1,20 +1,21 @@
+# IMPACT PMIS by Synergiz
 
+**IMPACT PMIS** (Intelligent Management of Projects And Construction Tracking) is a Flutter mobile app for Android and iOS. It provides project dashboards, update forms, document management, quality inspection, and RFI workflows for infrastructure and construction teams.
 
-## Firebase Crashlytics
+- **Publisher:** Synergiz Global Services Private Limited  
+- **Package / bundle ID:** `com.synergiz.wcr.pmis`  
+- **Support:** synergizglobalservicespvtltd@gmail.com  
+- **Privacy policy:** https://pmis-wcrindianrailways.org/wcrpmis/impact-pmis-privacy-policy.html
 
-Integrated for Android and iOS. Run **`flutterfire configure`** once before release builds — see [docs/FIREBASE_CRASHLYTICS_SETUP.md](docs/FIREBASE_CRASHLYTICS_SETUP.md).
+## Copyright
 
-## Environment
+Copyright © 2026 **Synergiz Global Services Private Limited**. All rights reserved.
 
-Default (in `lib/src/core/constants/api_constants.dart`):
+IMPACT PMIS, the IMPACT PMIS logo, and related product names are trademarks or registered trademarks of Synergiz Global Services Private Limited.
 
-| Environment | PMIS base | RFI base |
-|-------------|-----------|----------|
-| **QA** (`useQaServer = true`) | `https://pmis-wcrindianrailways.org/wcrpmis_qa/` | `https://pmis-wcrindianrailways.org/rfiSystem_qa/` |
-| Production (`useQaServer = false`) | `https://pmis-wcrindianrailways.org/wcrpmis/` | `https://pmis-wcrindianrailways.org/rfiSystem/` |
+This software and its source code are proprietary. Unauthorized copying, modification, distribution, or use of this application or any portion of it, outside of agreements with Synergiz Global Services Private Limited, is strictly prohibited.
 
-Override PMIS base URL only:
+For licensing, deployment, or commercial use enquiries, contact:
 
-```bash
-flutter run --dart-define=BASE_URL=https://pmis-wcrindianrailways.org/wcrpmis_qa/
-```
+**Synergiz Global Services Private Limited**  
+Email: synergizglobalservicespvtltd@gmail.com
