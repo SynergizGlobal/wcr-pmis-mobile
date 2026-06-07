@@ -10,7 +10,7 @@ class UpdateFormMobileAccess {
     '38', // Projects
     '6', // Issues
     '18', // Execution & Monitoring
-    '1391', // DMS
+    // '1391', // DMS — hidden until mobile DMS is complete
     '1240', // Utility Shifting
     '1394', // Quality Inspection
   };
@@ -40,7 +40,6 @@ class UpdateFormMobileAccess {
     final String urlKey = _normalize(
       '${item.webFormUrl ?? ''} ${item.mobileFormUrl ?? ''}',
     );
-    final String combined = '$nameKey $urlKey';
 
     if (nameKey.contains('project') &&
         !nameKey.contains('quality') &&
@@ -62,11 +61,12 @@ class UpdateFormMobileAccess {
         urlKey.contains('qualityinspection')) {
       return qualityInspectionAccess.canAccessModule;
     }
-    if (nameKey.contains('dms') ||
-        combined.contains('document management') ||
-        urlKey.contains('dms')) {
-      return true;
-    }
+    // DMS — hidden until mobile DMS is complete
+    // if (nameKey.contains('dms') ||
+    //     '$nameKey $urlKey'.contains('document management') ||
+    //     urlKey.contains('dms')) {
+    //   return true;
+    // }
     return false;
   }
 }
