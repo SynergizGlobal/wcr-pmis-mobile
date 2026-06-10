@@ -1,4 +1,4 @@
-// Firebase configuration for IMPACT PMIS (project: syntrack-pmis-wcr).
+// Firebase configuration for IMPACT-WCR (project: syntrack-pmis-wcr).
 // Platform files: android/app/google-services.json, ios/Runner/GoogleService-Info.plist
 
 import 'package:firebase_core/firebase_core.dart' show FirebaseOptions;
@@ -12,7 +12,7 @@ class DefaultFirebaseOptions {
   static FirebaseOptions get currentPlatform {
     if (kIsWeb) {
       throw UnsupportedError(
-        'IMPACT PMIS does not support web.',
+        'IMPACT-WCR does not support web.',
       );
     }
     switch (defaultTargetPlatform) {
@@ -22,12 +22,12 @@ class DefaultFirebaseOptions {
         return ios;
       case TargetPlatform.macOS:
         throw UnsupportedError(
-          'macOS is not configured for IMPACT PMIS.',
+          'macOS is not configured for IMPACT-WCR.',
         );
       case TargetPlatform.windows:
       case TargetPlatform.linux:
         throw UnsupportedError(
-          'Desktop platforms are not configured for IMPACT PMIS.',
+          'Desktop platforms are not configured for IMPACT-WCR.',
         );
       default:
         throw UnsupportedError(

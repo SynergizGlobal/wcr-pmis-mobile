@@ -19,15 +19,15 @@ class LegalConstants {
   static const String iosBundleId = 'com.synergiz.wcr.pmis';
 
   /// Google Play / App Store listing title.
-  static const String storeListingName = 'IMPACT PMIS by Synergiz';
+  static const String storeListingName = 'IMPACT-WCR by Synergiz';
 
   /// Name shown under the app icon on the device.
-  static const String onDeviceAppName = 'IMPACT PMIS';
+  static const String onDeviceAppName = 'IMPACT-WCR';
 
   /// Store listing short / full description tagline.
   static const String storeTagline =
-      'Intelligent Management of Projects And Construction Tracking';
+      'WCR Project Management & Construction Tracking';
 
   /// App Store subtitle (max 30 characters).
-  static const String appStoreSubtitle = 'Projects & construction PMIS';
+  static const String appStoreSubtitle = 'WCR railway project PMIS';
 }

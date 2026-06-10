@@ -256,7 +256,7 @@ class SettingsPage extends ConsumerWidget {
     await SharePlus.instance.share(
       ShareParams(
         text:
-            'Try IMPACT PMIS by Synergiz — ${LegalConstants.storeTagline}',
+            'Try ${LegalConstants.storeListingName} — ${LegalConstants.storeTagline}',
       ),
     );
   }

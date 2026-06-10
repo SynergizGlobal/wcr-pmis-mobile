@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:wcr_pmis_mobile/src/app/config/app_config.dart';
 import 'package:wcr_pmis_mobile/src/app/theme/app_theme.dart';
+import 'package:wcr_pmis_mobile/src/core/constants/legal_constants.dart';
 import 'package:wcr_pmis_mobile/src/core/widgets/app_action_card.dart';
 import 'package:wcr_pmis_mobile/src/core/widgets/app_dialog.dart';
 import 'package:wcr_pmis_mobile/src/features/auth/domain/entities/auth_session.dart';
@@ -1132,7 +1133,11 @@ class HomeSectionScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListView(
       children: <Widget>[
-        _sectionCard(context, title: 'IMPACT PMIS', subtitle: message),
+        _sectionCard(
+          context,
+          title: LegalConstants.onDeviceAppName,
+          subtitle: message,
+        ),
         const SizedBox(height: 12),
         if (session != null)
           _sectionCard(

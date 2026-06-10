@@ -7,7 +7,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>IMPACT PMIS</string>
+	<string>IMPACT-WCR</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -31,7 +31,7 @@
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Location is used to record the inspection site address for RFI while you use the app.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>Location is used only while you use inspection features to record the site address. IMPACT PMIS does not track location in the background.</string>
+	<string>Location is used only while you use inspection features to record the site address. IMPACT-WCR does not track location in the background.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Photo library access is used to attach images to RFI inspections.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
