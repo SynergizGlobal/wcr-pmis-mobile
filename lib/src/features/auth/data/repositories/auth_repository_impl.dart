@@ -12,6 +12,25 @@ class AuthRepositoryImpl implements AuthRepository {
 
   final AuthRemoteDataSource _remoteDataSource;
 
+  Failure _failureFromDio(DioException error, String fallbackMessage) {
+    final Object? responseData = error.response?.data;
+    String? serverMessage;
+    String? serverCode;
+    if (responseData is Map<String, dynamic>) {
+      serverCode = responseData['error']?.toString();
+      serverMessage =
+          responseData['errorMessage']?.toString() ??
+          responseData['message']?.toString();
+    }
+    final String message =
+        serverMessage ?? error.message ?? fallbackMessage;
+    return Failure(message, code: serverCode);
+  }
+
+  static const Failure _unknownFailure = Failure(
+    'Something went wrong. Please try again.',
+  );
+
   @override
   Future<Result<AuthSession>> login({
     required String userId,
@@ -24,24 +43,67 @@ class AuthRepositoryImpl implements AuthRepository {
       );
       return Right<Failure, AuthSession>(session);
     } on DioException catch (error) {
-      final responseData = error.response?.data;
-      String? serverMessage;
-      String? serverCode;
-      if (responseData is Map<String, dynamic>) {
-        serverCode = responseData['error']?.toString();
-        serverMessage =
-            responseData['errorMessage']?.toString() ??
-            responseData['message']?.toString();
-      }
-      final message =
-          serverMessage ??
-          error.message ??
-          'Unable to login, please try again.';
-      return Left<Failure, AuthSession>(Failure(message, code: serverCode));
-    } catch (_) {
-      return const Left<Failure, AuthSession>(
-        Failure('Something went wrong. Please try again.'),
+      return Left<Failure, AuthSession>(
+        _failureFromDio(error, 'Unable to login, please try again.'),
       );
+    } catch (_) {
+      return const Left<Failure, AuthSession>(_unknownFailure);
+    }
+  }
+
+  @override
+  Future<Result<void>> sendForgotPasswordOtp({required String emailId}) async {
+    try {
+      await _remoteDataSource.sendForgotPasswordOtp(emailId: emailId);
+      return const Right<Failure, void>(null);
+    } on DioException catch (error) {
+      return Left<Failure, void>(
+        _failureFromDio(error, 'Unable to send OTP. Please try again.'),
+      );
+    } catch (_) {
+      return const Left<Failure, void>(_unknownFailure);
+    }
+  }
+
+  @override
+  Future<Result<void>> verifyForgotPasswordOtp({
+    required String emailId,
+    required String otp,
+  }) async {
+    try {
+      await _remoteDataSource.verifyForgotPasswordOtp(
+        emailId: emailId,
+        otp: otp,
+      );
+      return const Right<Failure, void>(null);
+    } on DioException catch (error) {
+      return Left<Failure, void>(
+        _failureFromDio(error, 'Invalid OTP. Please try again.'),
+      );
+    } catch (_) {
+      return const Left<Failure, void>(_unknownFailure);
+    }
+  }
+
+  @override
+  Future<Result<void>> resetForgotPassword({
+    required String emailId,
+    required String newPassword,
+    required String confirmPassword,
+  }) async {
+    try {
+      await _remoteDataSource.resetForgotPassword(
+        emailId: emailId,
+        newPassword: newPassword,
+        confirmPassword: confirmPassword,
+      );
+      return const Right<Failure, void>(null);
+    } on DioException catch (error) {
+      return Left<Failure, void>(
+        _failureFromDio(error, 'Unable to reset password. Please try again.'),
+      );
+    } catch (_) {
+      return const Left<Failure, void>(_unknownFailure);
     }
   }
 }

@@ -6,4 +6,17 @@ abstract class AuthRepository {
     required String userId,
     required String password,
   });
+
+  Future<Result<void>> sendForgotPasswordOtp({required String emailId});
+
+  Future<Result<void>> verifyForgotPasswordOtp({
+    required String emailId,
+    required String otp,
+  });
+
+  Future<Result<void>> resetForgotPassword({
+    required String emailId,
+    required String newPassword,
+    required String confirmPassword,
+  });
 }

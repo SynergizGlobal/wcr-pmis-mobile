@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:wcr_pmis_mobile/src/app/config/app_config_provider.dart';
 import 'package:wcr_pmis_mobile/src/app/theme/app_theme.dart';
 import 'package:wcr_pmis_mobile/src/core/result/failure.dart';
@@ -7,6 +8,7 @@ import 'package:wcr_pmis_mobile/src/core/widgets/app_dialog.dart';
 import 'package:wcr_pmis_mobile/src/features/auth/data/datasources/auth_local_data_source.dart';
 import 'package:wcr_pmis_mobile/src/features/auth/domain/entities/auth_session.dart';
 import 'package:wcr_pmis_mobile/src/features/auth/presentation/controllers/auth_controller.dart';
+import 'package:wcr_pmis_mobile/src/features/auth/presentation/pages/forgot_password_page.dart';
 import 'package:wcr_pmis_mobile/src/features/auth/presentation/providers/login_notice_provider.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
@@ -344,13 +346,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                             alignment: Alignment.centerRight,
                             child: TextButton(
                               onPressed: () {
-                                AppDialog.show(
-                                  context: context,
-                                  title: 'Information',
-                                  message:
-                                      'Forgot password flow will be connected shortly.',
-                                  type: AppDialogType.info,
-                                );
+                                context.push(ForgotPasswordPage.routePath);
                               },
                               child: Text(
                                 'Forgot password?',

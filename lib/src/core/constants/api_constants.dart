@@ -15,6 +15,9 @@ class ApiConstants {
 
   static const String wcrHomePath = 'home';
   static const String wcrLoginPath = 'login';
+  static const String forgotSendOtpPath = '/api/forgot/send-otp';
+  static const String forgotVerifyOtpPath = '/api/forgot/verify-otp';
+  static const String forgotResetPasswordPath = '/api/forgot/reset-password';
   static const String wcrRfiRedirectPath = 'rfi/redirect';
   static const String rfiSsoLoginPath = '/api/auth/login';
   static const String rfiDashboardPath = 'dashboard';
