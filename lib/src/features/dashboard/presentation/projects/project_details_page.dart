@@ -4,8 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:wcr_pmis_mobile/src/core/widgets/app_select_sheet_field.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/domain/entities/home_dashboard_data.dart';
-import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/project_summary_page.dart';
-import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/providers/project_details_provider.dart';
+import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/projects/project_summary_page.dart';
+import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/projects/providers/project_details_provider.dart';
 
 class ProjectDetailsPage extends ConsumerStatefulWidget {
   const ProjectDetailsPage({super.key, required this.projectTypeName});

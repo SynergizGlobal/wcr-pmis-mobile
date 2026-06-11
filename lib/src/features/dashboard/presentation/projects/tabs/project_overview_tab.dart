@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/domain/utils/project_progress_chart_builder.dart';
-import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/providers/project_progress_provider.dart';
-import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/widgets/progress_segment_style.dart';
-import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/widgets/progress_strip_chart.dart';
+import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/projects/providers/project_progress_provider.dart';
+import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/projects/widgets/progress_segment_style.dart';
+import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/projects/widgets/progress_strip_chart.dart';
 
 class ProjectOverviewTab extends ConsumerWidget {
   const ProjectOverviewTab({

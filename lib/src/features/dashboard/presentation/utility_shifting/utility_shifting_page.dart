@@ -9,7 +9,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:wcr_pmis_mobile/src/core/widgets/app_dialog.dart';
 import 'package:wcr_pmis_mobile/src/core/widgets/app_table_pagination_footer.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/data/datasources/dashboard_remote_data_source.dart';
-import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/add_utility_shifting_form_page.dart';
+import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/utility_shifting/add_utility_shifting_form_page.dart';
 
 class UtilityShiftingPage extends StatefulWidget {
   const UtilityShiftingPage({super.key, required this.dataSource});

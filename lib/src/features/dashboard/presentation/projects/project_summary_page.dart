@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/daily_progress_tab.dart';
-import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/project_overview_tab.dart';
-import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/site_photos_tab.dart';
+import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/projects/tabs/daily_progress_tab.dart';
+import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/projects/tabs/project_overview_tab.dart';
+import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/projects/tabs/site_photos_tab.dart';
 
 class ProjectSummaryArgs {
   const ProjectSummaryArgs({

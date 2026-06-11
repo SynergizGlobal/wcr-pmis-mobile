@@ -3,10 +3,10 @@ import 'package:intl/intl.dart';
 import 'package:wcr_pmis_mobile/src/core/widgets/app_dialog.dart';
 import 'package:wcr_pmis_mobile/src/core/widgets/app_table_pagination_footer.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/data/datasources/dashboard_remote_data_source.dart';
-import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/dms_documents_tab.dart';
-import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/dms_filter_form_tab.dart';
-import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/dms_folders_tab.dart';
-import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/pages/dms_upload_letter_dialog.dart';
+import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/dms/tabs/dms_documents_tab.dart';
+import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/dms/tabs/dms_filter_form_tab.dart';
+import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/dms/tabs/dms_folders_tab.dart';
+import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/dms/widgets/dms_upload_letter_dialog.dart';
 
 class DmsPage extends StatefulWidget {
   const DmsPage({super.key, required this.dataSource});

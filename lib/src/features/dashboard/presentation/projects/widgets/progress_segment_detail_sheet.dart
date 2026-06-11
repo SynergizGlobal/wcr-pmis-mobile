@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/domain/entities/progress_segment.dart';
-import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/widgets/progress_segment_style.dart';
+import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/projects/widgets/progress_segment_style.dart';
 
 Future<void> showProgressSegmentDetailSheet({
   required BuildContext context,

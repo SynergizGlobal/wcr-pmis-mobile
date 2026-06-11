@@ -3,7 +3,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/domain/entities/site_photo_row.dart';
-import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/providers/site_photos_provider.dart';
+import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/projects/providers/site_photos_provider.dart';
 
 Future<void> showSitePhotosPreviewDialog({
   required BuildContext context,

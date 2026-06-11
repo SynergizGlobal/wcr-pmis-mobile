@@ -15,7 +15,7 @@ import 'package:wcr_pmis_mobile/src/core/widgets/app_select_sheet_field.dart';
 import 'package:wcr_pmis_mobile/src/core/widgets/app_table_pagination_footer.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/domain/entities/daily_progress.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/domain/utils/daily_progress_mapper.dart';
-import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/providers/daily_progress_provider.dart';
+import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/projects/providers/daily_progress_provider.dart';
 
 class DailyProgressTab extends ConsumerStatefulWidget {
   const DailyProgressTab({

@@ -3,8 +3,8 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/domain/entities/progress_segment.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/domain/utils/project_progress_chart_builder.dart';
-import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/widgets/progress_segment_detail_sheet.dart';
-import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/widgets/progress_segment_style.dart';
+import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/projects/widgets/progress_segment_detail_sheet.dart';
+import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/projects/widgets/progress_segment_style.dart';
 
 class ProgressStripChart extends StatelessWidget {
   const ProgressStripChart({
