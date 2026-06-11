@@ -164,7 +164,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
 
   String _titleForSection(_HomeSection section) {
     return switch (section) {
-      _HomeSection.home => 'Western Central Railways',
+      _HomeSection.home => 'West Central Railway',
       _HomeSection.updateForms => 'Update Forms',
       _HomeSection.reports => 'AI Reports',
       _HomeSection.documents => 'Documents',

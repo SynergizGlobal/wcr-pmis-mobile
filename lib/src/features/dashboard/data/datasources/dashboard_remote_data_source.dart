@@ -668,6 +668,22 @@ class DashboardRemoteDataSource {
     return _parseListOfMaps(response.data);
   }
 
+  Future<Map<String, dynamic>> createDmsDepartment({required String name}) async {
+    final Response<dynamic> response = await _dio.post<dynamic>(
+      '/api/departments',
+      data: <String, dynamic>{'name': name},
+      options: _requestOptions,
+    );
+    return _normalizeResponse(response.data);
+  }
+
+  Future<void> deleteDmsDepartment(int id) async {
+    await _dio.delete<dynamic>(
+      '/api/departments/$id',
+      options: _requestOptions,
+    );
+  }
+
   Future<List<Map<String, dynamic>>> fetchDmsStatuses() async {
     final response = await _dio.get<dynamic>(
       '/api/statuses/get',
@@ -677,6 +693,22 @@ class DashboardRemoteDataSource {
       options: _requestOptions,
     );
     return _parseListOfMaps(response.data);
+  }
+
+  Future<Map<String, dynamic>> createDmsStatus({required String name}) async {
+    final Response<dynamic> response = await _dio.post<dynamic>(
+      '/api/statuses/create',
+      data: <String, dynamic>{'name': name},
+      options: _requestOptions,
+    );
+    return _normalizeResponse(response.data);
+  }
+
+  Future<void> deleteDmsStatus(int id) async {
+    await _dio.delete<dynamic>(
+      '/api/statuses/$id',
+      options: _requestOptions,
+    );
   }
 
   Future<List<Map<String, dynamic>>> searchDmsUsers({String query = ''}) async {
@@ -762,6 +794,73 @@ class DashboardRemoteDataSource {
     return _parseListOfMaps(response.data);
   }
 
+  Future<List<String>> fetchDmsContractsByProject(String projectName) async {
+    final Response<dynamic> response = await _dio.get<dynamic>(
+      '/api/documents/contracts-by-project',
+      queryParameters: <String, String>{
+        'projectName': projectName,
+        '_t': DateTime.now().millisecondsSinceEpoch.toString(),
+      },
+      options: _requestOptions,
+    );
+    final dynamic data = response.data;
+    if (data is! List) {
+      return const <String>[];
+    }
+    return data
+        .map((dynamic item) => item?.toString().trim() ?? '')
+        .where((String name) => name.isNotEmpty)
+        .toList();
+  }
+
+  Future<List<Map<String, dynamic>>> fetchDmsRootFiles({
+    List<String> projects = const <String>[],
+    List<String> contracts = const <String>[],
+  }) async {
+    final Response<dynamic> response = await _dio.post<dynamic>(
+      '/api/documents/root-files',
+      data: <String, dynamic>{
+        'projects': projects,
+        'contracts': contracts,
+      },
+      options: _requestOptions,
+    );
+    return _parseListOfMaps(response.data);
+  }
+
+  Future<List<Map<String, dynamic>>> fetchDmsSubfolderFiles(
+    int folderId, {
+    List<String> projects = const <String>[],
+    List<String> contracts = const <String>[],
+  }) async {
+    final Response<dynamic> response = await _dio.post<dynamic>(
+      '/api/subfolders/files/$folderId',
+      data: <String, dynamic>{
+        'projects': projects,
+        'contracts': contracts,
+      },
+      options: _requestOptions,
+    );
+    return _parseListOfMaps(response.data);
+  }
+
+  Future<List<Map<String, dynamic>>> fetchCorrespondenceFolderFiles({
+    required String type,
+    List<String> projects = const <String>[],
+    List<String> contracts = const <String>[],
+  }) async {
+    final Response<dynamic> response = await _dio.post<dynamic>(
+      '/api/correspondence/getFolderFiles',
+      queryParameters: <String, String>{'type': type},
+      data: <String, dynamic>{
+        'projects': projects,
+        'contracts': contracts,
+      },
+      options: _requestOptions,
+    );
+    return _parseListOfMaps(response.data);
+  }
+
   Future<Map<String, dynamic>> createDmsFolder({
     required String name,
     int? parentId,
@@ -770,11 +869,18 @@ class DashboardRemoteDataSource {
       '/api/folders/create',
       data: <String, dynamic>{
         'name': name,
-        if (parentId != null) 'parentId': parentId,
+        'parentId': parentId,
       },
       options: _requestOptions,
     );
     return _normalizeResponse(response.data);
+  }
+
+  Future<void> deleteDmsFolder(int id) async {
+    await _dio.delete<dynamic>(
+      '/api/folders/delete-folder/$id',
+      options: _requestOptions,
+    );
   }
 
   Future<Map<String, dynamic>> uploadDmsDocument({

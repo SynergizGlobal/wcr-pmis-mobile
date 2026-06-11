@@ -63,18 +63,18 @@ class _DmsDocumentsTabState extends State<DmsDocumentsTab> {
     });
     try {
       final int start = _currentPage * _pageSize;
-      final Map<String, dynamic> response =
-          await widget.dataSource.fetchDocumentsFilterData(
-        start: start,
-        length: _pageSize,
-      );
+      final Map<String, dynamic> response = await widget.dataSource
+          .fetchDocumentsFilterData(start: start, length: _pageSize);
       if (!mounted) {
         return;
       }
       final List<Map<String, dynamic>> rows = _parseRows(response);
       setState(() {
         _rows = rows;
-        _recordsTotal = _parseInt(response['recordsTotal'], fallback: rows.length);
+        _recordsTotal = _parseInt(
+          response['recordsTotal'],
+          fallback: rows.length,
+        );
         _loading = false;
       });
     } catch (error) {
@@ -278,6 +278,7 @@ class _DmsDocumentsTabState extends State<DmsDocumentsTab> {
             },
           ),
         ),
+        const SizedBox(height: 12),
         Expanded(
           child: LayoutBuilder(
             builder: (BuildContext context, BoxConstraints constraints) {
@@ -294,9 +295,8 @@ class _DmsDocumentsTabState extends State<DmsDocumentsTab> {
                         Text(
                           _loadError!,
                           textAlign: TextAlign.center,
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: cs.onSurfaceVariant,
-                          ),
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(color: cs.onSurfaceVariant),
                         ),
                         const SizedBox(height: 12),
                         FilledButton(
@@ -312,9 +312,9 @@ class _DmsDocumentsTabState extends State<DmsDocumentsTab> {
                 return Center(
                   child: Text(
                     'No documents found.',
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: cs.onSurfaceVariant,
-                    ),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodyLarge?.copyWith(color: cs.onSurfaceVariant),
                   ),
                 );
               }
@@ -403,8 +403,7 @@ class _DmsDocumentsTabState extends State<DmsDocumentsTab> {
 
   Color _tableRowBackground(ColorScheme cs, int index) {
     if (index.isEven) {
-      final double stripeAlpha =
-          cs.brightness == Brightness.dark ? 0.14 : 0.08;
+      final double stripeAlpha = cs.brightness == Brightness.dark ? 0.14 : 0.08;
       return cs.primary.withValues(alpha: stripeAlpha);
     }
     return cs.surface;
