@@ -48,10 +48,14 @@ class SettingsPage extends ConsumerWidget {
             icon: Icons.support_agent_rounded,
             onTap: () => _contactUs(context),
           ),
-          AppActionCard(
-            title: 'Share app',
-            icon: Icons.ios_share_rounded,
-            onTap: () => _shareApp(context),
+          Builder(
+            builder: (BuildContext shareContext) {
+              return AppActionCard(
+                title: 'Share app',
+                icon: Icons.ios_share_rounded,
+                onTap: () => _shareApp(shareContext),
+              );
+            },
           ),
         ],
       ),
@@ -197,18 +201,8 @@ class SettingsPage extends ConsumerWidget {
 
   Future<void> _rateApp(BuildContext context) async {
     final InAppReview review = InAppReview.instance;
-    if (await review.isAvailable()) {
-      await review.requestReview();
-      return;
-    }
-    if (!context.mounted) {
-      return;
-    }
-    await AppDialog.show(
-      context: context,
-      title: 'Info',
-      message: 'Rating is not available on this device now.',
-      type: AppDialogType.info,
+    await review.openStoreListing(
+      appStoreId: LegalConstants.iosAppStoreId,
     );
   }
 
@@ -234,8 +228,12 @@ class SettingsPage extends ConsumerWidget {
   }
 
   Future<void> _contactUs(BuildContext context) async {
-    final Uri mail = Uri.parse(
-      'mailto:pmis.support@wcr.gov.in?subject=IMPACT%20PMIS%20Support',
+    final Uri mail = Uri(
+      scheme: 'mailto',
+      path: LegalConstants.supportEmail,
+      queryParameters: <String, String>{
+        'subject': '${LegalConstants.onDeviceAppName} Support',
+      },
     );
     final bool launched = await launchUrl(mail);
     if (launched) {
@@ -247,7 +245,8 @@ class SettingsPage extends ConsumerWidget {
     await AppDialog.show(
       context: context,
       title: 'Info',
-      message: 'Could not open mail app. Please contact support manually.',
+      message:
+          'Could not open mail app. Please contact:\n${LegalConstants.supportEmail}',
       type: AppDialogType.info,
     );
   }
@@ -256,8 +255,27 @@ class SettingsPage extends ConsumerWidget {
     await SharePlus.instance.share(
       ShareParams(
         text:
-            'Try ${LegalConstants.storeListingName} — ${LegalConstants.storeTagline}',
+            'Try ${LegalConstants.storeListingName} — ${LegalConstants.storeTagline}\n\n'
+            '${LegalConstants.platformStoreUrl}',
+        sharePositionOrigin: _sharePositionOrigin(context),
       ),
+    );
+  }
+
+  Rect _sharePositionOrigin(BuildContext context) {
+    final RenderObject? renderObject = context.findRenderObject();
+    if (renderObject is RenderBox && renderObject.hasSize) {
+      final Offset origin = renderObject.localToGlobal(Offset.zero);
+      final Size size = renderObject.size;
+      if (size.width > 0 && size.height > 0) {
+        return origin & size;
+      }
+    }
+    final Size screen = MediaQuery.sizeOf(context);
+    return Rect.fromCenter(
+      center: Offset(screen.width / 2, screen.height * 0.85),
+      width: 2,
+      height: 2,
     );
   }
 }
