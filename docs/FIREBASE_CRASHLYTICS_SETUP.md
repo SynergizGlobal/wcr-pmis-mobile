@@ -84,3 +84,31 @@ FirebaseCrashlytics.instance.crash();
 - `lib/src/app/bootstrap/bootstrap.dart` – called at app startup
 
 Until `flutterfire configure` is run, the app starts normally but Crashlytics is skipped (debug log only).
+
+## 8. Remote Config — in-app update prompts
+
+After login, the dashboard checks Firebase Remote Config and compares versions with `package_info_plus`.
+
+| Key | Type | Purpose |
+|-----|------|---------|
+| `update_check_enabled` | Boolean | Master switch (`false` disables all prompts) |
+| `min_version` | String | Force update below this version (both platforms) |
+| `latest_version` | String | Optional update below this version |
+| `min_version_android` / `min_version_ios` | String | Platform override (optional) |
+| `latest_version_android` / `latest_version_ios` | String | Platform override (optional) |
+| `optional_update_interval_hours` | Number | Hours before optional dialog shows again after **Later** (default `24`) |
+| `force_update_message` | String | Force-update copy |
+| `optional_update_message` | String | Optional-update copy |
+| `android_store_url` | String | Override Play Store URL (optional) |
+| `ios_store_url` | String | Override App Store URL (optional) |
+| `ios_app_store_id` | String | Numeric App Store ID for iOS link |
+
+**Defaults in app:** `min_version` / `latest_version` = `0.0.0` (no prompts until you set values in Firebase Console).
+
+**Example (force 1.0.1+, optional nudge for 1.0.2):**
+
+- `min_version` = `1.0.1`
+- `latest_version` = `1.0.2`
+- `ios_app_store_id` = your App Store numeric ID
+
+Code: `lib/src/core/app_update/` and `lib/src/core/firebase/remote_config_initializer.dart`.

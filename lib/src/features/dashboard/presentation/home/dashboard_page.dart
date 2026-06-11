@@ -3,6 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:wcr_pmis_mobile/src/app/config/app_config.dart';
 import 'package:wcr_pmis_mobile/src/app/theme/app_theme.dart';
+import 'package:wcr_pmis_mobile/src/core/app_update/app_update_config.dart';
+import 'package:wcr_pmis_mobile/src/core/app_update/app_update_prompt.dart';
+import 'package:wcr_pmis_mobile/src/core/app_update/app_update_provider.dart';
+import 'package:wcr_pmis_mobile/src/core/app_update/app_update_service.dart';
 import 'package:wcr_pmis_mobile/src/core/constants/legal_constants.dart';
 import 'package:wcr_pmis_mobile/src/core/widgets/app_action_card.dart';
 import 'package:wcr_pmis_mobile/src/core/widgets/app_dialog.dart';
@@ -65,6 +69,41 @@ class DashboardPage extends ConsumerStatefulWidget {
 class _DashboardPageState extends ConsumerState<DashboardPage> {
   int _selectedIndex = 0;
   _HomeSection _section = _HomeSection.home;
+  AppUpdateConfig? _forceUpdateConfig;
+  bool _updateCheckStarted = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _checkForAppUpdate());
+  }
+
+  Future<void> _checkForAppUpdate() async {
+    if (_updateCheckStarted) {
+      return;
+    }
+    _updateCheckStarted = true;
+    try {
+      final AppUpdateService service = ref.read(appUpdateServiceProvider);
+      final AppUpdateConfig config = await service.evaluate();
+      if (!mounted) {
+        return;
+      }
+      if (config.isForce) {
+        setState(() => _forceUpdateConfig = config);
+        return;
+      }
+      if (config.promptType == AppUpdatePromptType.optional) {
+        await AppUpdatePrompt.showOptional(
+          context: context,
+          config: config,
+          service: service,
+        );
+      }
+    } catch (_) {
+      // Fail open: never block the dashboard when update checks fail.
+    }
+  }
 
   void _onBottomSelected(int index) {
     if (index == 2) {
@@ -176,6 +215,11 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
 
   @override
   Widget build(BuildContext context) {
+    final AppUpdateConfig? forceUpdate = _forceUpdateConfig;
+    if (forceUpdate != null) {
+      return AppUpdatePrompt.forceUpdateScreen(config: forceUpdate);
+    }
+
     final AuthSession? session = ref.watch(authControllerProvider).valueOrNull;
     final AsyncValue<HomeDashboardData> homeDataAsync = ref.watch(
       homeDashboardProvider,

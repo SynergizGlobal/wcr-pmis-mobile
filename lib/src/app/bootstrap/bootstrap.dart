@@ -5,12 +5,14 @@ import 'package:wcr_pmis_mobile/src/app/app.dart';
 import 'package:wcr_pmis_mobile/src/app/config/app_config.dart';
 import 'package:wcr_pmis_mobile/src/app/config/app_config_provider.dart';
 import 'package:wcr_pmis_mobile/src/core/firebase/firebase_initializer.dart';
+import 'package:wcr_pmis_mobile/src/core/firebase/remote_config_initializer.dart';
 import 'package:wcr_pmis_mobile/src/features/rfi/core/providers/shared_prefs_provider.dart';
 
 Future<void> bootstrap(AppConfig config) async {
   await runAppWithCrashlyticsZone(() async {
     WidgetsFlutterBinding.ensureInitialized();
     await initializeFirebaseCrashlytics();
+    await RemoteConfigInitializer.initialize();
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     runApp(
       ProviderScope(
