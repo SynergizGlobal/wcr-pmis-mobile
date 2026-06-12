@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import 'package:wcr_pmis_mobile/src/core/widgets/app_compact_form_field.dart';
 import 'package:wcr_pmis_mobile/src/core/widgets/app_date_form_field.dart';
 import 'package:wcr_pmis_mobile/src/core/widgets/app_dialog.dart';
+import 'package:wcr_pmis_mobile/src/core/widgets/app_form_field_style.dart';
 import 'package:wcr_pmis_mobile/src/core/widgets/app_select_sheet_field.dart';
 import 'package:wcr_pmis_mobile/src/core/widgets/app_text_form_field.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/data/datasources/dashboard_remote_data_source.dart';
@@ -47,6 +48,10 @@ class _TestParameterRow {
     required this.acceptanceCriteria,
     required this.uom,
     required this.frequency,
+    required this.categoryId,
+    required this.categoryLabel,
+    required this.subCategoryId,
+    required this.subCategoryLabel,
     this.qualityNcrId,
   });
 
@@ -55,6 +60,10 @@ class _TestParameterRow {
   final String acceptanceCriteria;
   final String uom;
   final String frequency;
+  final String categoryId;
+  final String categoryLabel;
+  final String subCategoryId;
+  final String subCategoryLabel;
   final String? qualityNcrId;
   final TextEditingController resultCtrl = TextEditingController();
   final TextEditingController revisedResultCtrl = TextEditingController();
@@ -107,8 +116,8 @@ class _AddQualityInspectionFormPageState
   _QiOption? _structure;
   _QiOption? _item;
   _QiOption? _inspectionType;
-  _QiOption? _category;
-  _QiOption? _subCategory;
+  List<_QiOption> _selectedCategories = <_QiOption>[];
+  List<_QiOption> _selectedSubCategories = <_QiOption>[];
 
   DateTime? _targetDate;
   bool? _isCorrectionRequired;
@@ -174,8 +183,8 @@ class _AddQualityInspectionFormPageState
       _structure != null &&
       _item != null &&
       _inspectionType != null &&
-      _category != null &&
-      _subCategory != null;
+      _selectedCategories.isNotEmpty &&
+      _selectedSubCategories.isNotEmpty;
 
   bool get _hasRequiredParameters {
     if (_parametersLoading || _parameterRows.isEmpty) {
@@ -465,7 +474,13 @@ class _AddQualityInspectionFormPageState
       if (id.isEmpty || name.isEmpty) {
         continue;
       }
-      out.add(_QiOption(id: id, label: name, raw: map));
+      out.add(
+        _QiOption(
+          id: id,
+          label: _formatIdNameLabel(id, name),
+          raw: map,
+        ),
+      );
     }
     return out;
   }
@@ -625,7 +640,41 @@ class _AddQualityInspectionFormPageState
     return out;
   }
 
-  List<_QiOption> _parseSubCategories(Map<String, dynamic> response) {
+  String _subCategorySelectionKey(_QiOption sub) {
+    final String parentId = _str(sub.raw?['parent_category_id_fk']);
+    if (parentId.isEmpty) {
+      return sub.id;
+    }
+    return '$parentId|${sub.id}';
+  }
+
+  String _subCategoryDisplayLabel(_QiOption sub) {
+    final String parentLabel = _str(sub.raw?['parent_category_label']);
+    if (parentLabel.isNotEmpty) {
+      return '$parentLabel - ${sub.label}';
+    }
+    return sub.label;
+  }
+
+  List<({ _QiOption category, List<_QiOption> subs })> get _subCategoryGroups {
+    final List<({ _QiOption category, List<_QiOption> subs })> groups =
+        <({ _QiOption category, List<_QiOption> subs })>[];
+    for (final _QiOption category in _selectedCategories) {
+      final List<_QiOption> subs = _subCategories
+          .where(( _QiOption sub) => _subBelongsToCategory(sub, category))
+          .toList();
+      if (subs.isNotEmpty) {
+        groups.add((category: category, subs: subs));
+      }
+    }
+    return groups;
+  }
+
+  List<_QiOption> _parseSubCategories(
+    Map<String, dynamic> response, {
+    String? parentCategoryId,
+    String? parentCategoryLabel,
+  }) {
     final List<_QiOption> out = <_QiOption>[];
     for (final dynamic row in _dataList(response)) {
       if (row is! Map) {
@@ -639,9 +688,109 @@ class _AddQualityInspectionFormPageState
       if (id.isEmpty || name.isEmpty) {
         continue;
       }
+      if (parentCategoryId != null && parentCategoryId.isNotEmpty) {
+        map['parent_category_id_fk'] = parentCategoryId;
+      }
+      if (parentCategoryLabel != null && parentCategoryLabel.isNotEmpty) {
+        map['parent_category_label'] = parentCategoryLabel;
+      }
       out.add(_QiOption(id: id, label: name, raw: map));
     }
     return out;
+  }
+
+  List<String> _parseIdList(dynamic value) {
+    if (value == null) {
+      return const <String>[];
+    }
+    if (value is List) {
+      return value
+          .map((dynamic item) => _str(item))
+          .where((String id) => id.isNotEmpty)
+          .toList();
+    }
+    final String text = _str(value);
+    if (text.isEmpty) {
+      return const <String>[];
+    }
+    if (text.contains(',')) {
+      return text
+          .split(',')
+          .map((String part) => part.trim())
+          .where((String id) => id.isNotEmpty)
+          .toList();
+    }
+    return <String>[text];
+  }
+
+  List<_QiOption> _optionsForIds(
+    List<_QiOption> pool,
+    List<String> ids,
+    List<String> fallbackLabels,
+  ) {
+    final List<_QiOption> out = <_QiOption>[];
+    for (int i = 0; i < ids.length; i++) {
+      final String id = ids[i];
+      _QiOption? match;
+      for (final _QiOption option in pool) {
+        if (option.id == id) {
+          match = option;
+          break;
+        }
+      }
+      if (match != null) {
+        out.add(match);
+        continue;
+      }
+      final String label =
+          i < fallbackLabels.length ? fallbackLabels[i] : id;
+      out.add(_QiOption(id: id, label: label.isEmpty ? id : label));
+    }
+    return out;
+  }
+
+  bool _subBelongsToCategory(_QiOption sub, _QiOption category) {
+    final String parentId = _str(sub.raw?['parent_category_id_fk']);
+    if (parentId.isEmpty) {
+      return true;
+    }
+    return parentId == category.id;
+  }
+
+  Iterable<({ _QiOption category, _QiOption subCategory })>
+  _selectedCategorySubCategoryPairs() sync* {
+    for (final _QiOption category in _selectedCategories) {
+      for (final _QiOption subCategory in _selectedSubCategories) {
+        if (_subBelongsToCategory(subCategory, category)) {
+          yield (category: category, subCategory: subCategory);
+        }
+      }
+    }
+  }
+
+  List<({String key, String title, List<_TestParameterRow> rows})>
+  get _parameterGroups {
+    final List<
+        ({String key, String title, List<_TestParameterRow> rows})> groups =
+        <({String key, String title, List<_TestParameterRow> rows})>[];
+    final Map<String, List<_TestParameterRow>> grouped =
+        <String, List<_TestParameterRow>>{};
+    for (final _TestParameterRow row in _parameterRows) {
+      final String key = '${row.categoryId}|${row.subCategoryId}';
+      grouped.putIfAbsent(key, () => <_TestParameterRow>[]).add(row);
+    }
+    for (final MapEntry<String, List<_TestParameterRow>> entry
+        in grouped.entries) {
+      final _TestParameterRow first = entry.value.first;
+      groups.add(
+        (
+          key: entry.key,
+          title: '${first.categoryLabel} - ${first.subCategoryLabel}',
+          rows: entry.value,
+        ),
+      );
+    }
+    return groups;
   }
 
   void _clearParameterRows() {
@@ -822,13 +971,52 @@ class _AddQualityInspectionFormPageState
     });
   }
 
-  Future<void> _reloadSubCategories(String categoryId) async {
-    final Map<String, dynamic> response = await widget.dataSource
-        .fetchQualityInspectionDropdownSubCategories(categoryIdFk: categoryId);
+  Future<void> _reloadSubCategoriesForSelectedCategories() async {
+    if (_selectedCategories.isEmpty) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _subCategories = <_QiOption>[];
+        _selectedSubCategories = <_QiOption>[];
+      });
+      return;
+    }
+    final List<_QiOption> merged = <_QiOption>[];
+    final Set<String> seen = <String>{};
+    for (final _QiOption category in _selectedCategories) {
+      final Map<String, dynamic> response = await widget.dataSource
+          .fetchQualityInspectionDropdownSubCategories(
+            categoryIdFk: category.id,
+          );
+      for (final _QiOption option in _parseSubCategories(
+        response,
+        parentCategoryId: category.id,
+        parentCategoryLabel: category.label,
+      )) {
+        final String key = '${category.id}|${option.id}';
+        if (seen.add(key)) {
+          merged.add(option);
+        }
+      }
+    }
     if (!mounted) {
       return;
     }
-    setState(() => _subCategories = _parseSubCategories(response));
+    setState(() {
+      _subCategories = merged;
+      _selectedSubCategories = _selectedSubCategories
+          .where(
+            ( _QiOption sub) => _selectedCategories.any(
+              ( _QiOption cat) => merged.any(
+                ( _QiOption candidate) =>
+                    candidate.id == sub.id &&
+                    _subBelongsToCategory(candidate, cat),
+              ),
+            ),
+          )
+          .toList();
+    });
   }
 
   void _applyNcrRows(List<dynamic> rows) {
@@ -845,6 +1033,18 @@ class _AddQualityInspectionFormPageState
         acceptanceCriteria: _str(map['acceptance_criteria']),
         uom: _str(map['unit_of_measure']),
         frequency: _str(map['frequency']),
+        categoryId: _str(
+          map['category_id_fk'] ??
+              map['insp_category_id'] ??
+              map['category_id'],
+        ),
+        categoryLabel: _str(map['category']),
+        subCategoryId: _str(
+          map['sub_category_id_fk'] ??
+              map['insp_sub_category_id'] ??
+              map['sub_category_id'],
+        ),
+        subCategoryLabel: _str(map['sub_category']),
         qualityNcrId: _str(map['quality_ncr_id']).isEmpty
             ? null
             : _str(map['quality_ncr_id']),
@@ -1018,26 +1218,55 @@ class _AddQualityInspectionFormPageState
         _str(data['type_id_fk']),
         _str(data['inspection_type']),
       );
-      _category = _optionOrFallback(
+      _selectedCategories = _optionsForIds(
         _categories,
-        _str(data['category_id_fk']),
-        _str(data['category']),
+        _parseIdList(data['category_id_fk']),
+        _parseIdList(data['category']),
       );
-
-      if (_category != null) {
-        await _reloadSubCategories(_category!.id);
+      if (_selectedCategories.isEmpty) {
+        final String singleCategoryId = _str(data['category_id_fk']);
+        final String singleCategoryName = _str(data['category']);
+        if (singleCategoryId.isNotEmpty) {
+          _selectedCategories = <_QiOption>[
+            _optionOrFallback(
+              _categories,
+              singleCategoryId,
+              singleCategoryName,
+            ),
+          ];
+        }
       }
 
-      _subCategory = _optionOrFallback(
+      if (_selectedCategories.isNotEmpty) {
+        await _reloadSubCategoriesForSelectedCategories();
+      }
+
+      _selectedSubCategories = _optionsForIds(
         _subCategories,
-        _str(data['sub_category_id_fk']),
-        _str(data['sub_category']),
+        _parseIdList(data['sub_category_id_fk']),
+        _parseIdList(data['sub_category']),
       );
+      if (_selectedSubCategories.isEmpty) {
+        final String singleSubId = _str(data['sub_category_id_fk']);
+        final String singleSubName = _str(data['sub_category']);
+        if (singleSubId.isNotEmpty) {
+          _selectedSubCategories = <_QiOption>[
+            _optionOrFallback(_subCategories, singleSubId, singleSubName),
+          ];
+        }
+      }
 
       final dynamic ncrRows = data['ncrRows'];
       if (ncrRows is List && ncrRows.isNotEmpty) {
         _applyNcrRows(ncrRows);
-      } else if (_item != null && _category != null && _subCategory != null) {
+        _hydrateSelectionsFromParameterRows();
+        if (_selectedCategories.isNotEmpty) {
+          await _reloadSubCategoriesForSelectedCategories();
+          _hydrateSelectionsFromParameterRows();
+        }
+      } else if (_item != null &&
+          _selectedCategories.isNotEmpty &&
+          _selectedSubCategories.isNotEmpty) {
         await _loadTestParameters();
       }
 
@@ -1104,19 +1333,51 @@ class _AddQualityInspectionFormPageState
     }
   }
 
-  Future<void> _onCategoryChanged(_QiOption? value) async {
+  void _hydrateSelectionsFromParameterRows() {
+    if (_parameterRows.isEmpty) {
+      return;
+    }
+    final Set<String> categoryIds = <String>{};
+    final Set<String> subCategoryIds = <String>{};
+    for (final _TestParameterRow row in _parameterRows) {
+      if (row.categoryId.isNotEmpty) {
+        categoryIds.add(row.categoryId);
+      }
+      if (row.subCategoryId.isNotEmpty) {
+        subCategoryIds.add(row.subCategoryId);
+      }
+    }
+    if (categoryIds.isNotEmpty && _selectedCategories.isEmpty) {
+      _selectedCategories = _optionsForIds(
+        _categories,
+        categoryIds.toList(),
+        _parameterRows.map(( _TestParameterRow r) => r.categoryLabel).toList(),
+      );
+    }
+    if (subCategoryIds.isNotEmpty && _selectedSubCategories.isEmpty) {
+      _selectedSubCategories = _optionsForIds(
+        _subCategories,
+        subCategoryIds.toList(),
+        _parameterRows
+            .map(( _TestParameterRow r) => r.subCategoryLabel)
+            .toList(),
+      );
+    }
+  }
+
+  Future<void> _onCategoriesChanged(List<_QiOption> values) async {
     setState(() {
-      _category = value;
-      _subCategory = null;
+      _selectedCategories = values;
+      _selectedSubCategories = <_QiOption>[];
       _subCategories = <_QiOption>[];
       _clearParameterRows();
     });
-    if (value == null) {
+    if (values.isEmpty) {
       return;
     }
     setState(() => _cascadeBusy = true);
     try {
-      await _reloadSubCategories(value.id);
+      await _reloadSubCategoriesForSelectedCategories();
     } finally {
       if (mounted) {
         setState(() => _cascadeBusy = false);
@@ -1124,8 +1385,21 @@ class _AddQualityInspectionFormPageState
     }
   }
 
+  Future<void> _onSubCategoriesChanged(List<_QiOption> values) async {
+    setState(() => _selectedSubCategories = values);
+    await _loadTestParameters();
+  }
+
   Future<void> _loadTestParameters() async {
-    if (_item == null || _category == null || _subCategory == null) {
+    if (_item == null ||
+        _selectedCategories.isEmpty ||
+        _selectedSubCategories.isEmpty) {
+      setState(_clearParameterRows);
+      return;
+    }
+    final List<({ _QiOption category, _QiOption subCategory })> pairs =
+        _selectedCategorySubCategoryPairs().toList();
+    if (pairs.isEmpty) {
       setState(_clearParameterRows);
       return;
     }
@@ -1134,34 +1408,40 @@ class _AddQualityInspectionFormPageState
       _clearParameterRows();
     });
     try {
-      final Map<String, dynamic> response = await widget.dataSource
-          .fetchQualityInspectionTestParameters(
-            itemIdFk: _item!.id,
-            categoryIdFk: _category!.id,
-            subCategoryIdFk: _subCategory!.id,
+      final List<_TestParameterRow> rows = <_TestParameterRow>[];
+      for (final ({ _QiOption category, _QiOption subCategory }) pair in pairs) {
+        final Map<String, dynamic> response = await widget.dataSource
+            .fetchQualityInspectionTestParameters(
+              itemIdFk: _item!.id,
+              categoryIdFk: pair.category.id,
+              subCategoryIdFk: pair.subCategory.id,
+            );
+        for (final dynamic row in _dataList(response)) {
+          if (row is! Map) {
+            continue;
+          }
+          final Map<String, dynamic> map = Map<String, dynamic>.from(
+            row.map((dynamic k, dynamic v) => MapEntry(k.toString(), v)),
           );
+          rows.add(
+            _TestParameterRow(
+              parameterId: _str(
+                map['parameter_id'] ?? map['insp_test_parameter_id'],
+              ),
+              parameter: _str(map['test_description']),
+              acceptanceCriteria: _str(map['acceptance_criteria']),
+              uom: _str(map['unit_of_measure']),
+              frequency: _str(map['frequency']),
+              categoryId: pair.category.id,
+              categoryLabel: pair.category.label,
+              subCategoryId: pair.subCategory.id,
+              subCategoryLabel: pair.subCategory.label,
+            ),
+          );
+        }
+      }
       if (!mounted) {
         return;
-      }
-      final List<_TestParameterRow> rows = <_TestParameterRow>[];
-      for (final dynamic row in _dataList(response)) {
-        if (row is! Map) {
-          continue;
-        }
-        final Map<String, dynamic> map = Map<String, dynamic>.from(
-          row.map((dynamic k, dynamic v) => MapEntry(k.toString(), v)),
-        );
-        rows.add(
-          _TestParameterRow(
-            parameterId: _str(
-              map['parameter_id'] ?? map['insp_test_parameter_id'],
-            ),
-            parameter: _str(map['test_description']),
-            acceptanceCriteria: _str(map['acceptance_criteria']),
-            uom: _str(map['unit_of_measure']),
-            frequency: _str(map['frequency']),
-          ),
-        );
       }
       setState(() {
         _parameterRows = rows;
@@ -1181,11 +1461,6 @@ class _AddQualityInspectionFormPageState
         type: AppDialogType.error,
       );
     }
-  }
-
-  void _onSubCategoryChanged(_QiOption? value) {
-    setState(() => _subCategory = value);
-    _loadTestParameters();
   }
 
   void _onItemChanged(_QiOption? value) {
@@ -1341,11 +1616,11 @@ class _AddQualityInspectionFormPageState
     if (_inspectionType == null) {
       return 'Please select inspection type.';
     }
-    if (_category == null) {
-      return 'Please select category.';
+    if (_selectedCategories.isEmpty) {
+      return 'Please select at least one category.';
     }
-    if (_subCategory == null) {
-      return 'Please select sub-category.';
+    if (_selectedSubCategories.isEmpty) {
+      return 'Please select at least one sub-category.';
     }
     if (_locationCtrl.text.trim().isEmpty) {
       return 'Please enter location.';
@@ -1619,8 +1894,12 @@ class _AddQualityInspectionFormPageState
     addField('item_name', _itemFieldValue('item_name'));
     addField('item_code', _itemFieldValue('item_code'));
     addField('type_id_fk', _inspectionType?.id ?? '');
-    addField('category_id_fk', _category?.id ?? '');
-    addField('sub_category_id_fk', _subCategory?.id ?? '');
+    for (final _QiOption category in _selectedCategories) {
+      addField('category_id_fk', category.id);
+    }
+    for (final _QiOption subCategory in _selectedSubCategories) {
+      addField('sub_category_id_fk', subCategory.id);
+    }
     addField('location', _locationCtrl.text.trim());
     addField('lot_no', _lotBatchCtrl.text.trim());
     addField('is_correction_required', _isCorrectionRequiredValue());
@@ -1901,27 +2180,21 @@ class _AddQualityInspectionFormPageState
                                     setState(() => _inspectionType = v),
                               ),
                               const SizedBox(height: 10),
-                              _requiredSelect(
+                              _requiredMultiSelect(
                                 label: 'Category',
                                 items: _categories,
-                                value: _category,
+                                selected: _selectedCategories,
                                 enabled:
                                     _canEditInspectionMetadata && !_cascadeBusy,
-                                onChanged: ( _QiOption v) => _onCategoryChanged(v),
+                                placeholder: 'Select categories',
+                                onChanged: _onCategoriesChanged,
                               ),
                               const SizedBox(height: 10),
-                              _requiredSelect(
-                                label: 'Sub-Category',
-                                items: _subCategories,
-                                value: _subCategory,
+                              _requiredGroupedSubCategoryMultiSelect(
                                 enabled:
                                     _canEditInspectionMetadata &&
-                                    _category != null &&
+                                    _selectedCategories.isNotEmpty &&
                                     !_cascadeBusy,
-                                placeholder: _category == null
-                                    ? 'Select category first'
-                                    : 'Select',
-                                onChanged: ( _QiOption v) => _onSubCategoryChanged(v),
                               ),
                               const SizedBox(height: 10),
                               AppTextFormField(
@@ -2086,6 +2359,390 @@ class _AddQualityInspectionFormPageState
           ],
         ),
       ),
+    );
+  }
+
+  Widget _requiredGroupedSubCategoryMultiSelect({
+    required bool enabled,
+  }) {
+    final ColorScheme colorScheme = Theme.of(context).colorScheme;
+    final List<({ _QiOption category, List<_QiOption> subs })> groups =
+        _subCategoryGroups;
+    final String placeholder = _selectedCategories.isEmpty
+        ? 'Select category first'
+        : 'Select sub-categories';
+    final String summary = _selectedSubCategories.isEmpty
+        ? placeholder
+        : _selectedSubCategories
+            .map(_subCategoryDisplayLabel)
+            .join(', ');
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        Text(
+          'Sub-Category *',
+          style: Theme.of(context).textTheme.labelLarge,
+        ),
+        const SizedBox(height: 6),
+        InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: !enabled || groups.isEmpty
+              ? null
+              : () async {
+                  final Set<String> tempSelected = _selectedSubCategories
+                      .map(_subCategorySelectionKey)
+                      .toSet();
+                  final List<_QiOption>? picked =
+                      await showModalBottomSheet<List<_QiOption>>(
+                    context: context,
+                    isScrollControlled: true,
+                    useSafeArea: true,
+                    showDragHandle: true,
+                    builder: (BuildContext context) {
+                      return StatefulBuilder(
+                        builder: (
+                          BuildContext context,
+                          StateSetter setSheetState,
+                        ) {
+                          return Padding(
+                            padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: <Widget>[
+                                Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: Text(
+                                    'Select Sub-Category',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleMedium
+                                        ?.copyWith(fontWeight: FontWeight.w700),
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Flexible(
+                                  child: ListView(
+                                    shrinkWrap: true,
+                                    children: groups.expand((
+                                      ({ _QiOption category, List<_QiOption> subs }) group,
+                                    ) {
+                                      return <Widget>[
+                                        Padding(
+                                          padding: const EdgeInsets.fromLTRB(
+                                            4,
+                                            10,
+                                            4,
+                                            4,
+                                          ),
+                                          child: Text(
+                                            group.category.label.toUpperCase(),
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .labelMedium
+                                                ?.copyWith(
+                                                  color: colorScheme
+                                                      .onSurfaceVariant,
+                                                  fontWeight: FontWeight.w700,
+                                                  letterSpacing: 0.4,
+                                                ),
+                                          ),
+                                        ),
+                                        ...group.subs.map((
+                                          _QiOption sub,
+                                        ) {
+                                          final String key =
+                                              _subCategorySelectionKey(sub);
+                                          return CheckboxListTile(
+                                            value: tempSelected.contains(key),
+                                            title: Text(sub.label),
+                                            controlAffinity:
+                                                ListTileControlAffinity.leading,
+                                            onChanged: (bool? checked) {
+                                              setSheetState(() {
+                                                if (checked ?? false) {
+                                                  tempSelected.add(key);
+                                                } else {
+                                                  tempSelected.remove(key);
+                                                }
+                                              });
+                                            },
+                                          );
+                                        }),
+                                      ];
+                                    }).toList(),
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Row(
+                                  children: <Widget>[
+                                    Expanded(
+                                      child: OutlinedButton(
+                                        onPressed: () =>
+                                            Navigator.of(context).pop(),
+                                        child: const Text('Cancel'),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: FilledButton(
+                                        onPressed: () {
+                                          final List<_QiOption> result =
+                                              <_QiOption>[];
+                                          for (final String key
+                                              in tempSelected) {
+                                            for (final _QiOption sub
+                                                in _subCategories) {
+                                              if (_subCategorySelectionKey(
+                                                    sub,
+                                                  ) ==
+                                                  key) {
+                                                result.add(sub);
+                                                break;
+                                              }
+                                            }
+                                          }
+                                          Navigator.of(context).pop(result);
+                                        },
+                                        child: const Text('Apply'),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  );
+                  if (picked != null) {
+                    await _onSubCategoriesChanged(picked);
+                  }
+                },
+          child: InputDecorator(
+            decoration: AppFormFieldStyle.decoration(
+              context,
+              hintText: placeholder,
+              filled: _selectedSubCategories.isNotEmpty,
+            ),
+            child: Text(
+              summary,
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: _selectedSubCategories.isEmpty
+                    ? colorScheme.onSurfaceVariant
+                    : colorScheme.onSurface,
+              ),
+            ),
+          ),
+        ),
+        if (_selectedSubCategories.isNotEmpty) ...<Widget>[
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: _selectedSubCategories
+                .map(
+                  ( _QiOption option) => Chip(
+                    label: Text(_subCategoryDisplayLabel(option)),
+                    visualDensity: VisualDensity.compact,
+                    deleteIcon: enabled
+                        ? const Icon(Icons.close_rounded, size: 16)
+                        : null,
+                    onDeleted: !enabled
+                        ? null
+                        : () async {
+                            final List<_QiOption> next =
+                                List<_QiOption>.from(_selectedSubCategories)
+                                  ..removeWhere(
+                                    ( _QiOption o) =>
+                                        _subCategorySelectionKey(o) ==
+                                        _subCategorySelectionKey(option),
+                                  );
+                            await _onSubCategoriesChanged(next);
+                          },
+                  ),
+                )
+                .toList(),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _requiredMultiSelect({
+    required String label,
+    required List<_QiOption> items,
+    required List<_QiOption> selected,
+    required Future<void> Function(List<_QiOption>) onChanged,
+    bool enabled = true,
+    String placeholder = 'Select',
+  }) {
+    final ColorScheme colorScheme = Theme.of(context).colorScheme;
+    final String summary = selected.isEmpty
+        ? placeholder
+        : selected.map(( _QiOption o) => o.label).join(', ');
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        Text(
+          '$label *',
+          style: Theme.of(context).textTheme.labelLarge,
+        ),
+        const SizedBox(height: 6),
+        InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: !enabled
+              ? null
+              : () async {
+                  final List<_QiOption>? picked =
+                      await showModalBottomSheet<List<_QiOption>>(
+                    context: context,
+                    isScrollControlled: true,
+                    useSafeArea: true,
+                    showDragHandle: true,
+                    builder: (BuildContext context) {
+                      final Set<String> tempSelected = selected
+                          .map(( _QiOption o) => o.id)
+                          .toSet();
+                      return StatefulBuilder(
+                        builder: (
+                          BuildContext context,
+                          StateSetter setSheetState,
+                        ) {
+                          return Padding(
+                            padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: <Widget>[
+                                Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: Text(
+                                    'Select $label',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleMedium
+                                        ?.copyWith(fontWeight: FontWeight.w700),
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Flexible(
+                                  child: ListView.builder(
+                                    shrinkWrap: true,
+                                    itemCount: items.length,
+                                    itemBuilder: (
+                                      BuildContext context,
+                                      int index,
+                                    ) {
+                                      final _QiOption item = items[index];
+                                      return CheckboxListTile(
+                                        value: tempSelected.contains(item.id),
+                                        title: Text(item.label),
+                                        controlAffinity:
+                                            ListTileControlAffinity.leading,
+                                        onChanged: (bool? checked) {
+                                          setSheetState(() {
+                                            if (checked ?? false) {
+                                              tempSelected.add(item.id);
+                                            } else {
+                                              tempSelected.remove(item.id);
+                                            }
+                                          });
+                                        },
+                                      );
+                                    },
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Row(
+                                  children: <Widget>[
+                                    Expanded(
+                                      child: OutlinedButton(
+                                        onPressed: () =>
+                                            Navigator.of(context).pop(),
+                                        child: const Text('Cancel'),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: FilledButton(
+                                        onPressed: () {
+                                          final List<_QiOption> result =
+                                              items
+                                                  .where(
+                                                    ( _QiOption item) =>
+                                                        tempSelected
+                                                            .contains(item.id),
+                                                  )
+                                                  .toList();
+                                          Navigator.of(context).pop(result);
+                                        },
+                                        child: const Text('Apply'),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  );
+                  if (picked != null) {
+                    await onChanged(picked);
+                  }
+                },
+          child: InputDecorator(
+            decoration: AppFormFieldStyle.decoration(
+              context,
+              hintText: placeholder,
+              filled: selected.isNotEmpty,
+            ),
+            child: Text(
+              summary,
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: selected.isEmpty
+                    ? colorScheme.onSurfaceVariant
+                    : colorScheme.onSurface,
+              ),
+            ),
+          ),
+        ),
+        if (selected.isNotEmpty) ...<Widget>[
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: selected
+                .map(
+                  ( _QiOption option) => Chip(
+                    label: Text(option.label),
+                    visualDensity: VisualDensity.compact,
+                    deleteIcon: enabled
+                        ? const Icon(Icons.close_rounded, size: 16)
+                        : null,
+                    onDeleted: !enabled
+                        ? null
+                        : () async {
+                            final List<_QiOption> next =
+                                List<_QiOption>.from(selected)
+                                  ..removeWhere(
+                                    ( _QiOption o) => o.id == option.id,
+                                  );
+                            await onChanged(next);
+                          },
+                  ),
+                )
+                .toList(),
+          ),
+        ],
+      ],
     );
   }
 
@@ -2279,7 +2936,9 @@ class _AddQualityInspectionFormPageState
 
   Widget _parametersSection() {
     final ColorScheme cs = Theme.of(context).colorScheme;
-    final bool canLoad = _item != null && _category != null && _subCategory != null;
+    final bool canLoad = _item != null &&
+        _selectedCategories.isNotEmpty &&
+        _selectedSubCategories.isNotEmpty;
 
     return Card(
       margin: EdgeInsets.zero,
@@ -2342,6 +3001,10 @@ class _AddQualityInspectionFormPageState
     final List<String> headers = _parameterHeaders;
     final ColorScheme cs = Theme.of(context).colorScheme;
     final bool canEditResults = _canEditCreateFields;
+    final double tableWidth = headers.fold<double>(
+      0,
+      (double sum, String header) => sum + _paramColWidth(header),
+    );
 
     return LayoutBuilder(
       builder: (BuildContext context, BoxConstraints constraints) {
@@ -2381,78 +3044,125 @@ class _AddQualityInspectionFormPageState
                         .toList(),
                   ),
                 ),
-                ..._parameterRows.asMap().entries.map((MapEntry<int, _TestParameterRow> e) {
-                  final int index = e.key;
-                  final _TestParameterRow row = e.value;
-                  final Color bg = index.isEven
-                      ? cs.primary.withValues(alpha: 0.06)
-                      : cs.surface;
-                  return Container(
-                    color: bg,
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[
-                        _paramCell(row.parameter, _paramColWidth('Parameters')),
-                        _paramCell(
-                          row.acceptanceCriteria,
-                          _paramColWidth('Acceptance Criteria'),
-                        ),
-                        _paramCell(row.uom, _paramColWidth('UOM')),
-                        _paramCell(row.frequency, _paramColWidth('Frequency')),
-                        SizedBox(
-                          width: _paramColWidth('Result'),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 6),
-                            child: AppCompactTextFormField(
-                              controller: row.resultCtrl,
-                              enabled: canEditResults,
+                ..._parameterGroups.expand(
+                  (
+                    ({
+                      String key,
+                      String title,
+                      List<_TestParameterRow> rows,
+                    }) group,
+                  ) {
+                    final List<Widget> widgets = <Widget>[
+                      SizedBox(
+                        width: tableWidth,
+                        child: Container(
+                          color: cs.primary,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 10,
+                          ),
+                          child: Text(
+                            group.title,
+                            style: TextStyle(
+                              color: cs.onPrimary,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 13,
                             ),
                           ),
                         ),
-                        _paramPassFailCell(row),
-                        if (_showNcrColumn) _paramNcrCell(row),
-                        if (_showReinspectionColumns) ...<Widget>[
-                          SizedBox(
-                            width: _paramColWidth('Revised Result'),
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 6),
-                              child: AppCompactTextFormField(
-                                controller: row.revisedResultCtrl,
-                                enabled: false,
+                      ),
+                    ];
+                    for (int index = 0; index < group.rows.length; index++) {
+                      final _TestParameterRow row = group.rows[index];
+                      final Color bg = index.isEven
+                          ? cs.primary.withValues(alpha: 0.06)
+                          : cs.surface;
+                      widgets.add(
+                        Container(
+                          color: bg,
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: <Widget>[
+                              _paramCell(
+                                row.parameter,
+                                _paramColWidth('Parameters'),
                               ),
-                            ),
-                          ),
-                          _paramRevisedPassFailCell(row),
-                        ],
-                        if (_canEditCreateFields)
-                          SizedBox(
-                            width: _paramColWidth('Attachment'),
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 6),
-                              child: Column(
-                                children: <Widget>[
-                                  IconButton.filled(
-                                    tooltip: 'Attach file',
-                                    onPressed: () => _pickAttachment(row),
-                                    icon: const Icon(Icons.attach_file_rounded),
+                              _paramCell(
+                                row.acceptanceCriteria,
+                                _paramColWidth('Acceptance Criteria'),
+                              ),
+                              _paramCell(row.uom, _paramColWidth('UOM')),
+                              _paramCell(
+                                row.frequency,
+                                _paramColWidth('Frequency'),
+                              ),
+                              SizedBox(
+                                width: _paramColWidth('Result'),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 6,
                                   ),
-                                  if (row.attachmentName != null)
-                                    Text(
-                                      row.attachmentName!,
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
-                                      style:
-                                          Theme.of(context).textTheme.labelSmall,
-                                    ),
-                                ],
+                                  child: AppCompactTextFormField(
+                                    controller: row.resultCtrl,
+                                    enabled: canEditResults,
+                                  ),
+                                ),
                               ),
-                            ),
+                              _paramPassFailCell(row),
+                              if (_showNcrColumn) _paramNcrCell(row),
+                              if (_showReinspectionColumns) ...<Widget>[
+                                SizedBox(
+                                  width: _paramColWidth('Revised Result'),
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 6,
+                                    ),
+                                    child: AppCompactTextFormField(
+                                      controller: row.revisedResultCtrl,
+                                      enabled: false,
+                                    ),
+                                  ),
+                                ),
+                                _paramRevisedPassFailCell(row),
+                              ],
+                              if (_canEditCreateFields)
+                                SizedBox(
+                                  width: _paramColWidth('Attachment'),
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 6,
+                                    ),
+                                    child: Column(
+                                      children: <Widget>[
+                                        IconButton.filled(
+                                          tooltip: 'Attach file',
+                                          onPressed: () => _pickAttachment(row),
+                                          icon: const Icon(
+                                            Icons.attach_file_rounded,
+                                          ),
+                                        ),
+                                        if (row.attachmentName != null)
+                                          Text(
+                                            row.attachmentName!,
+                                            maxLines: 2,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .labelSmall,
+                                          ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                            ],
                           ),
-                      ],
-                    ),
-                  );
-                }),
+                        ),
+                      );
+                    }
+                    return widgets;
+                  },
+                ),
               ],
             ),
           ),

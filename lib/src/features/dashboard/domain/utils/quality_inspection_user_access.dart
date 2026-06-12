@@ -5,6 +5,9 @@ import 'package:wcr_pmis_mobile/src/features/auth/presentation/controllers/auth_
 /// Quality Inspection permissions by [AuthSession.userTypeFk] and
 /// [AuthSession.userRoleNameFk] (IT Admin overrides with full access).
 ///
+/// [QualityInspectionUserGroup.viewOnly] — HOD and Management: open any stage,
+/// read-only (no create, edit, or submit).
+///
 /// Workflow steps (matches API [inspection_step] after transitions):
 /// 1 — create, 2 — raise NCR, 3 — contractor rectification (Rectification Pending),
 /// 4 — engineer closure (Rectification Submitted), 5 — passed (view only).
@@ -12,6 +15,7 @@ enum QualityInspectionUserGroup {
   itAdmin,
   inspector,
   contractor,
+  viewOnly,
   restricted,
 }
 
@@ -31,6 +35,11 @@ class QualityInspectionUserAccess {
     if (_restrictedTypes.contains(userType)) {
       return const QualityInspectionUserAccess(
         QualityInspectionUserGroup.restricted,
+      );
+    }
+    if (_viewOnlyTypes.contains(userType)) {
+      return const QualityInspectionUserAccess(
+        QualityInspectionUserGroup.viewOnly,
       );
     }
     if (_contractorTypes.contains(userType)) {
@@ -58,12 +67,19 @@ class QualityInspectionUserAccess {
     'Officer (Jr./Sr. Scale)',
   };
 
+  static const Set<String> _viewOnlyTypes = <String>{
+    'HOD',
+    'Management',
+  };
+
   static const Set<String> _restrictedTypes = <String>{
     'Finance',
     'Office Executives',
   };
 
   bool get isItAdmin => group == QualityInspectionUserGroup.itAdmin;
+
+  bool get isViewOnly => group == QualityInspectionUserGroup.viewOnly;
 
   bool get canAccessModule => group != QualityInspectionUserGroup.restricted;
 
@@ -87,6 +103,9 @@ class QualityInspectionUserAccess {
   bool get canReinspect => canCloseInspection;
 
   bool canWorkOnWorkflowStep(int step) {
+    if (isViewOnly) {
+      return false;
+    }
     if (step < 1 || step > 5) {
       return false;
     }
@@ -114,6 +133,9 @@ class QualityInspectionUserAccess {
   bool canViewInspection(int step) {
     if (!canAccessModule) {
       return false;
+    }
+    if (isViewOnly && step >= 1 && step <= 5) {
+      return true;
     }
     if (canWorkOnWorkflowStep(step)) {
       return true;
