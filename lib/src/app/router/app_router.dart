@@ -23,8 +23,10 @@ import 'package:wcr_pmis_mobile/src/features/dashboard/domain/utils/quality_insp
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/quality_inspections/quality_inspections_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/dms/dms_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/utility_shifting/utility_shifting_page.dart';
+import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/structures/structure_form_list_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/structures/structure_form_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/structures/structures_page.dart';
+import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/structures/update_structure_work_form_page.dart';
 import 'package:wcr_pmis_mobile/src/features/profile/presentation/pages/profile_page.dart';
 import 'package:wcr_pmis_mobile/src/features/settings/presentation/pages/settings_page.dart';
 
@@ -104,6 +106,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         return LoginPage.routePath;
       }
       if (!loggedIn && loc == StructureFormPage.editRoutePath) {
+        return LoginPage.routePath;
+      }
+      if (!loggedIn && loc == StructureFormListPage.routePath) {
+        return LoginPage.routePath;
+      }
+      if (!loggedIn && loc == UpdateStructureWorkFormPage.routePath) {
         return LoginPage.routePath;
       }
       if (loggedIn &&
@@ -282,6 +290,26 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             StructuresPage(
               dataSource: ref.read(dashboardRemoteDataSourceProvider),
             ),
+      ),
+      GoRoute(
+        path: StructureFormListPage.routePath,
+        name: StructureFormListPage.routeName,
+        builder: (BuildContext context, GoRouterState state) =>
+            StructureFormListPage(
+              dataSource: ref.read(dashboardRemoteDataSourceProvider),
+            ),
+      ),
+      GoRoute(
+        path: UpdateStructureWorkFormPage.routePath,
+        name: UpdateStructureWorkFormPage.routeName,
+        builder: (BuildContext context, GoRouterState state) {
+          final String? structureId =
+              state.uri.queryParameters['structure_id']?.trim();
+          return UpdateStructureWorkFormPage(
+            dataSource: ref.read(dashboardRemoteDataSourceProvider),
+            structureId: structureId ?? '',
+          );
+        },
       ),
       GoRoute(
         path: StructureFormPage.addRoutePath,

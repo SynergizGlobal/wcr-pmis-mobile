@@ -25,6 +25,7 @@ import 'package:wcr_pmis_mobile/src/features/dashboard/domain/utils/update_form_
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/dms/dms_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/quality_inspections/quality_inspections_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/utility_shifting/utility_shifting_page.dart';
+import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/structures/structure_form_list_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/structures/structures_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/home/providers/home_dashboard_provider.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/home/providers/update_forms_provider.dart';
@@ -958,12 +959,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
       if (!mounted) {
         return;
       }
-      await AppDialog.show(
-        context: context,
-        title: 'Structure Form',
-        message: 'Structure Form will be connected in the next update.',
-        type: AppDialogType.info,
-      );
+      context.pushNamed(StructureFormListPage.routeName);
       return;
     }
     if (urlKey == 'structure' || combinedKey.contains('add structure')) {

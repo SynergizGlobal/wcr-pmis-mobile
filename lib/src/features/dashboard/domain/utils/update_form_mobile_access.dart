@@ -18,7 +18,8 @@ class UpdateFormMobileAccess {
 
   /// Stable [UpdateFormSubItem.formId] values with native mobile screens.
   static const Set<String> mobileReadySubFormIds = <String>{
-    '50', // Structure (list + add/update flows)
+    '50', // Add Structure (list + add/update flows)
+    '52', // Structure Form (contract-wise structure works list)
   };
 
   static String _normalize(String value) {

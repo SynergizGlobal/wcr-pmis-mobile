@@ -5,6 +5,16 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:wcr_pmis_mobile/src/core/network/dio_client.dart';
 
+class StructureFormListResponse {
+  const StructureFormListResponse({
+    required this.rows,
+    required this.totalRecords,
+  });
+
+  final List<Map<String, dynamic>> rows;
+  final int totalRecords;
+}
+
 class DashboardRemoteDataSource {
   const DashboardRemoteDataSource(this._dio);
 
@@ -191,6 +201,143 @@ class DashboardRemoteDataSource {
         'type': type,
       },
       options: _requestOptions,
+    );
+    return _normalizeResponse(response.data);
+  }
+
+  Future<List<Map<String, dynamic>>> fetchStructureFormContractFilter({
+    String structureTypeFk = '',
+    String workStatusFk = '',
+  }) async {
+    final response = await _dio.get<dynamic>(
+      '/ajax/getContractsFilterListInStructure',
+      queryParameters: <String, String>{
+        'structure_type_fk': structureTypeFk,
+        'work_status_fk': workStatusFk,
+      },
+      options: _requestOptions,
+    );
+    return _parseListOfMaps(response.data);
+  }
+
+  Future<List<Map<String, dynamic>>> fetchStructureFormStructureTypeFilter({
+    String contractIdFk = '',
+    String workStatusFk = '',
+  }) async {
+    final response = await _dio.get<dynamic>(
+      '/ajax/getStructureTypeListForFilter',
+      queryParameters: <String, String>{
+        'contract_id_fk': contractIdFk,
+        'work_status_fk': workStatusFk,
+      },
+      options: _requestOptions,
+    );
+    return _parseListOfMaps(response.data);
+  }
+
+  Future<List<Map<String, dynamic>>> fetchStructureFormWorkStatusFilter({
+    String contractIdFk = '',
+    String structureTypeFk = '',
+  }) async {
+    final response = await _dio.get<dynamic>(
+      '/ajax/getWorkStatusListInStructure',
+      queryParameters: <String, String>{
+        'contract_id_fk': contractIdFk,
+        'structure_type_fk': structureTypeFk,
+      },
+      options: _requestOptions,
+    );
+    return _parseListOfMaps(response.data);
+  }
+
+  Future<StructureFormListResponse> fetchStructureFormList({
+    int start = 0,
+    int length = 10,
+    String search = '',
+    String? contractIdFk,
+    String? structureTypeFk,
+    String? workStatusFk,
+  }) async {
+    final Map<String, dynamic> queryParameters = <String, dynamic>{
+      'iDisplayStart': start,
+      'iDisplayLength': length,
+      'sSearch': search,
+    };
+    if (contractIdFk != null && contractIdFk.isNotEmpty) {
+      queryParameters['contract_id_fk'] = contractIdFk;
+    }
+    if (structureTypeFk != null && structureTypeFk.isNotEmpty) {
+      queryParameters['structure_type_fk'] = structureTypeFk;
+    }
+    if (workStatusFk != null && workStatusFk.isNotEmpty) {
+      queryParameters['work_status_fk'] = workStatusFk;
+    }
+    final Response<dynamic> response = await _dio.get<dynamic>(
+      '/ajax/getStructuresList',
+      queryParameters: queryParameters,
+      options: _requestOptions,
+    );
+    final Map<String, dynamic> payload = _unwrapDataTablesMap(response.data);
+    final List<Map<String, dynamic>> rows = _extractAaDataRows(payload);
+    final int totalRecords = _extractDataTablesTotal(payload, rows.length);
+    return StructureFormListResponse(
+      rows: rows,
+      totalRecords: totalRecords,
+    );
+  }
+
+  Future<Map<String, dynamic>> fetchStructureWorkForm({
+    required String structureId,
+  }) async {
+    final Response<dynamic> response = await _dio.get<dynamic>(
+      '/get-structure-form',
+      queryParameters: <String, String>{
+        'structure_id': structureId,
+      },
+      options: _requestOptions,
+    );
+    return _normalizeResponse(response.data);
+  }
+
+  Future<List<Map<String, dynamic>>> fetchContractsListForStructureFormProject({
+    required String projectIdFk,
+  }) async {
+    final Response<dynamic> response = await _dio.get<dynamic>(
+      '/ajax/getContractsListForStructureFrom',
+      queryParameters: <String, String>{
+        'project_id_fk': projectIdFk,
+      },
+      options: _requestOptions,
+    );
+    return _parseListOfMaps(response.data);
+  }
+
+  Future<Map<String, dynamic>> submitUpdateStructureWorkForm({
+    required List<MapEntry<String, String>> fields,
+    List<({Uint8List bytes, String fileName})> structureFiles =
+        const <({Uint8List bytes, String fileName})>[],
+  }) async {
+    final FormData formData = FormData();
+    formData.fields.addAll(fields);
+    for (final ({Uint8List bytes, String fileName}) file in structureFiles) {
+      formData.files.add(
+        MapEntry<String, MultipartFile>(
+          'structureFiles',
+          MultipartFile.fromBytes(
+            file.bytes,
+            filename: file.fileName,
+          ),
+        ),
+      );
+    }
+    final Response<dynamic> response = await _dio.post<dynamic>(
+      '/update-structure-form',
+      data: formData,
+      options: Options(
+        receiveTimeout: _dashboardReceiveTimeout,
+        connectTimeout: _dashboardConnectTimeout,
+        contentType: null,
+      ),
     );
     return _normalizeResponse(response.data);
   }
@@ -1392,6 +1539,100 @@ class DashboardRemoteDataSource {
       'status_fk': valueOrEmpty(status),
       'hod': valueOrEmpty(hod),
     };
+  }
+
+  dynamic _coerceJsonValue(dynamic data) {
+    if (data is String) {
+      final String trimmed = data.trim();
+      if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+        try {
+          return jsonDecode(trimmed);
+        } catch (_) {
+          return data;
+        }
+      }
+    }
+    return data;
+  }
+
+  bool _hasDataTablesFields(Map<String, dynamic> map) {
+    return map.containsKey('aaData') ||
+        map.containsKey('iTotalDisplayRecords') ||
+        map.containsKey('iTotalRecords');
+  }
+
+  Map<String, dynamic> _unwrapDataTablesMap(dynamic data) {
+    final dynamic decoded = _coerceJsonValue(data);
+    if (decoded is! Map) {
+      return <String, dynamic>{};
+    }
+    final Map<String, dynamic> map = _normalizeResponse(decoded);
+    if (_hasDataTablesFields(map)) {
+      return map;
+    }
+    for (final String key in <String>['data', 'result', 'payload']) {
+      final dynamic nested = map[key];
+      if (nested is Map) {
+        final Map<String, dynamic> nestedMap = _normalizeResponse(nested);
+        if (_hasDataTablesFields(nestedMap)) {
+          return nestedMap;
+        }
+      }
+    }
+    return map;
+  }
+
+  List<Map<String, dynamic>> _extractAaDataRows(Map<String, dynamic> map) {
+    dynamic raw = map['aaData'] ?? map['rows'];
+    if (raw is! List) {
+      final dynamic nested = map['data'];
+      if (nested is List) {
+        raw = nested;
+      } else if (nested is Map) {
+        raw = nested['aaData'] ?? nested['rows'];
+      }
+    }
+    if (raw is! List) {
+      return const <Map<String, dynamic>>[];
+    }
+    final List<Map<String, dynamic>> rows = <Map<String, dynamic>>[];
+    for (final dynamic item in raw) {
+      if (item is Map) {
+        rows.add(_mapRow(item));
+        continue;
+      }
+      if (item is List) {
+        rows.add(_mapDataTablesArrayRow(item));
+      }
+    }
+    return rows;
+  }
+
+  Map<String, dynamic> _mapDataTablesArrayRow(List<dynamic> columns) {
+    const List<String> keys = <String>[
+      'project_id_fk',
+      'structure_type_fk',
+      'structure',
+      'contract_short_name',
+      'work_status_fk',
+      'structure_id',
+    ];
+    final Map<String, dynamic> row = <String, dynamic>{};
+    for (int index = 0; index < columns.length && index < keys.length; index++) {
+      row[keys[index]] = columns[index];
+    }
+    return row;
+  }
+
+  int _extractDataTablesTotal(Map<String, dynamic> map, int fallback) {
+    final dynamic value = map['iTotalDisplayRecords'] ??
+        map['iTotalRecords'] ??
+        map['recordsFiltered'] ??
+        map['recordsTotal'];
+    if (value is int) {
+      return value;
+    }
+    return int.tryParse(value?.toString() ?? '') ?? fallback;
   }
 
   List<Map<String, dynamic>> _normalizeListResponse(dynamic data) {
