@@ -25,6 +25,7 @@ import 'package:wcr_pmis_mobile/src/features/dashboard/domain/utils/update_form_
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/dms/dms_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/quality_inspections/quality_inspections_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/utility_shifting/utility_shifting_page.dart';
+import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/structures/structures_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/home/providers/home_dashboard_provider.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/home/providers/update_forms_provider.dart';
 import 'package:wcr_pmis_mobile/src/features/profile/presentation/pages/profile_page.dart';
@@ -769,7 +770,9 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
   }
 
   Future<void> _onUpdateFormTap(UpdateFormItem form) async {
-    final List<UpdateFormSubItem> subMenus = form.orderedSubMenus;
+    final List<UpdateFormSubItem> subMenus = form.orderedSubMenus
+        .where(UpdateFormMobileAccess.isSubMenuMobileReady)
+        .toList();
 
     if (_isProjectsUpdateForm(form)) {
       if (subMenus.isEmpty) {
@@ -947,6 +950,27 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         return;
       }
       context.pushNamed(DmsPage.routeName);
+      return;
+    }
+    if (urlKey.contains('structure-form') ||
+        urlKey.contains('structureform') ||
+        combinedKey.contains('update structure')) {
+      if (!mounted) {
+        return;
+      }
+      await AppDialog.show(
+        context: context,
+        title: 'Structure Form',
+        message: 'Structure Form will be connected in the next update.',
+        type: AppDialogType.info,
+      );
+      return;
+    }
+    if (urlKey == 'structure' || combinedKey.contains('add structure')) {
+      if (!mounted) {
+        return;
+      }
+      context.pushNamed(StructuresPage.routeName);
       return;
     }
     await AppDialog.show(

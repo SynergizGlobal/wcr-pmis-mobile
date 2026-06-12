@@ -113,6 +113,88 @@ class DashboardRemoteDataSource {
     return _normalizeResponse(response.data);
   }
 
+  Future<List<Map<String, dynamic>>> fetchProjectsDropdown() async {
+    final response = await _dio.get<dynamic>(
+      '/projects/api/getProjects',
+      options: _requestOptions,
+    );
+    return _normalizeListResponse(response.data);
+  }
+
+  Future<List<Map<String, dynamic>>> fetchAllProjectStructureSummaries() async {
+    final response = await _dio.get<dynamic>(
+      '/structures/allProjectSummaries',
+      options: _requestOptions,
+    );
+    return _normalizeListResponse(response.data);
+  }
+
+  Future<List<String>> fetchStructureTypes() async {
+    final response = await _dio.get<dynamic>(
+      '/structures/types',
+      options: _requestOptions,
+    );
+    final dynamic raw = response.data;
+    if (raw is List) {
+      return raw.map((dynamic item) => item.toString()).toList();
+    }
+    return _normalizeListResponse(raw).map((Map<String, dynamic> row) {
+      return row.values.first?.toString() ?? '';
+    }).where((String value) => value.isNotEmpty).toList();
+  }
+
+  Future<Map<String, dynamic>> fetchProjectStructureChainage(
+    String projectId,
+  ) async {
+    final response = await _dio.get<dynamic>(
+      '/structures/project-chainage/${Uri.encodeComponent(projectId)}',
+      options: _requestOptions,
+    );
+    return _normalizeResponse(response.data);
+  }
+
+  Future<Map<String, dynamic>> fetchStructuresForProject(String projectId) async {
+    final response = await _dio.get<dynamic>(
+      '/structures/full/${Uri.encodeComponent(projectId)}',
+      options: _requestOptions,
+    );
+    return _normalizeResponse(response.data);
+  }
+
+  Future<Map<String, dynamic>> saveOrUpdateStructures(
+    Map<String, dynamic> payload,
+  ) async {
+    final response = await _dio.post<dynamic>(
+      '/structures/saveOrUpdate',
+      data: payload,
+      options: _requestOptions,
+    );
+    return _normalizeResponse(response.data);
+  }
+
+  Future<Map<String, dynamic>> deleteStructureRow(String structureId) async {
+    final response = await _dio.delete<dynamic>(
+      '/structures/${Uri.encodeComponent(structureId)}',
+      options: _requestOptions,
+    );
+    return _normalizeResponse(response.data);
+  }
+
+  Future<Map<String, dynamic>> deleteStructureType({
+    required String projectId,
+    required String type,
+  }) async {
+    final response = await _dio.delete<dynamic>(
+      '/structures/type',
+      queryParameters: <String, String>{
+        'projectId': projectId,
+        'type': type,
+      },
+      options: _requestOptions,
+    );
+    return _normalizeResponse(response.data);
+  }
+
   Future<Map<String, dynamic>> fetchAiReport(String query) async {
     final response = await _dio.post<dynamic>(
       '/api/ai/report',
@@ -1310,6 +1392,29 @@ class DashboardRemoteDataSource {
       'status_fk': valueOrEmpty(status),
       'hod': valueOrEmpty(hod),
     };
+  }
+
+  List<Map<String, dynamic>> _normalizeListResponse(dynamic data) {
+    if (data is List) {
+      return data
+          .whereType<Map>()
+          .map(
+            (Map<dynamic, dynamic> row) => Map<String, dynamic>.from(
+              row.map(
+                (dynamic key, dynamic value) => MapEntry(key.toString(), value),
+              ),
+            ),
+          )
+          .toList();
+    }
+    if (data is Map) {
+      final Map<String, dynamic> map = _normalizeResponse(data);
+      final dynamic nested = map['data'] ?? map['result'] ?? map['rows'];
+      if (nested is List) {
+        return _normalizeListResponse(nested);
+      }
+    }
+    return <Map<String, dynamic>>[];
   }
 
   Map<String, dynamic> _normalizeResponse(dynamic data) {

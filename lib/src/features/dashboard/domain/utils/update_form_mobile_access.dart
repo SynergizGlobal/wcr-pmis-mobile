@@ -8,11 +8,17 @@ class UpdateFormMobileAccess {
   /// Stable [UpdateFormItem.formId] values from getUpdateForms API.
   static const Set<String> mobileReadyFormIds = <String>{
     '38', // Projects
+    '9', // Works
     '6', // Issues
     '18', // Execution & Monitoring
     '1391', // DMS
     '1240', // Utility Shifting
     '1394', // Quality Inspection
+  };
+
+  /// Stable [UpdateFormSubItem.formId] values with native mobile screens.
+  static const Set<String> mobileReadySubFormIds = <String>{
+    '50', // Structure (list + add/update flows)
   };
 
   static String _normalize(String value) {
@@ -64,6 +70,34 @@ class UpdateFormMobileAccess {
     if (nameKey.contains('dms') ||
         '$nameKey $urlKey'.contains('document management') ||
         urlKey.contains('dms')) {
+      return true;
+    }
+    if (nameKey.contains('works') || urlKey.contains('works')) {
+      return true;
+    }
+    if (nameKey.contains('structure') || urlKey.contains('structure')) {
+      return true;
+    }
+    return false;
+  }
+
+  static bool isSubMenuMobileReady(UpdateFormSubItem item) {
+    final String formId = item.formId.trim();
+    if (mobileReadySubFormIds.contains(formId)) {
+      return true;
+    }
+
+    final String nameKey = _normalize(item.formName);
+    final String urlKey = _normalize(
+      '${item.webFormUrl ?? ''} ${item.mobileFormUrl ?? ''}',
+    );
+    if (nameKey.contains('add structure') || urlKey == 'structure') {
+      return true;
+    }
+    // Shown in menu; navigation handled separately (not implemented yet).
+    if (nameKey.contains('update structure') ||
+        urlKey.contains('structure-form') ||
+        urlKey.contains('structureform')) {
       return true;
     }
     return false;
