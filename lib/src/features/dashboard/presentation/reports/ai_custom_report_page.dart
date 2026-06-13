@@ -32,13 +32,19 @@ class _AiCustomReportPageState extends State<AiCustomReportPage> {
     'completed': 'Completed',
     'scope': 'Scope',
     'progress': 'Progress',
+    'financial_progress': 'Financial Progress',
+    'physical_progress': 'Physical Progress',
     'status': 'Status',
   };
+
+  static const Color _progressBarFill = Color(0xFFF2A641);
+  static const Color _progressBarTrack = Color(0xFFE4E4E4);
 
   final TextEditingController _queryController = TextEditingController();
   final TextEditingController _searchController = TextEditingController();
   bool _loading = false;
   List<Map<String, dynamic>> _rows = <Map<String, dynamic>>[];
+  List<String> _responseColumnOrder = <String>[];
   String _search = '';
   String? _groupBy;
   String? _orderBy;
@@ -320,6 +326,105 @@ class _AiCustomReportPageState extends State<AiCustomReportPage> {
     );
   }
 
+  Widget _dataCell(String columnKey, dynamic value) {
+    if (_isProgressColumn(columnKey)) {
+      return _progressCell(columnKey, value);
+    }
+    return _cellWithWidth(columnKey, _displayValue(value, columnKey));
+  }
+
+  Widget _progressCell(String columnKey, dynamic value) {
+    final double percent = _parseProgressPercent(value);
+    final String label = _formatProgressLabel(percent);
+    final double fillFactor = (percent / 100).clamp(0.0, 1.0);
+
+    return SizedBox(
+      width: _columnWidth(columnKey),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Text(
+              label,
+              style: const TextStyle(
+                fontWeight: FontWeight.w700,
+                fontSize: 14,
+              ),
+            ),
+            const SizedBox(height: 8),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(6),
+              child: SizedBox(
+                height: 8,
+                width: double.infinity,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: <Widget>[
+                    const ColoredBox(color: _progressBarTrack),
+                    FractionallySizedBox(
+                      alignment: Alignment.centerLeft,
+                      widthFactor: fillFactor,
+                      child: const DecoratedBox(
+                        decoration: BoxDecoration(
+                          color: _progressBarFill,
+                          borderRadius: BorderRadius.horizontal(
+                            left: Radius.circular(6),
+                            right: Radius.circular(6),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  bool _isProgressColumn(String key) {
+    return key == 'financial_progress' ||
+        key == 'physical_progress' ||
+        key == 'progress';
+  }
+
+  double _parseProgressPercent(dynamic value) {
+    if (value == null) {
+      return 0;
+    }
+    if (value is num) {
+      final double parsed = value.toDouble();
+      if (parsed >= 0 && parsed <= 1) {
+        return parsed * 100;
+      }
+      return parsed.clamp(0, 100);
+    }
+    final String text = value.toString().trim();
+    if (text.isEmpty || text.toLowerCase() == 'null') {
+      return 0;
+    }
+    final String normalized = text.replaceAll('%', '').trim();
+    final double? parsed = double.tryParse(normalized);
+    if (parsed == null) {
+      return 0;
+    }
+    if (parsed >= 0 && parsed <= 1) {
+      return parsed * 100;
+    }
+    return parsed.clamp(0, 100);
+  }
+
+  String _formatProgressLabel(double percent) {
+    if (percent == percent.roundToDouble()) {
+      return '${percent.toStringAsFixed(0)}%';
+    }
+    return '${percent.toStringAsFixed(1)}%';
+  }
+
   Widget _simpleDropdown({
     required List<String> options,
     required String? value,
@@ -478,26 +583,22 @@ class _AiCustomReportPageState extends State<AiCustomReportPage> {
       final List<dynamic> data = response['data'] as List<dynamic>? ?? <dynamic>[];
       final List<Map<String, dynamic>> rows = data
           .whereType<Map>()
-          .map(
-            (Map row) => row.map(
-              (dynamic key, dynamic value) => MapEntry(key.toString(), value),
-            ),
-          )
+          .map(_orderedRow)
           .toList();
       if (!mounted) {
         return;
       }
       setState(() {
         _rows = rows;
+        _responseColumnOrder = _extractColumnOrder(rows);
         _resetTableControls(preserveRows: true, preserveVisibleColumns: false);
-        final List<String> active = _resolveActiveColumns(rows);
         _visibleColumns
           ..clear()
-          ..addAll(active);
-        if (_groupBy != null && !active.contains(_groupBy)) {
+          ..addAll(_responseColumnOrder);
+        if (_groupBy != null && !_responseColumnOrder.contains(_groupBy)) {
           _groupBy = null;
         }
-        if (_orderBy != null && !active.contains(_orderBy)) {
+        if (_orderBy != null && !_responseColumnOrder.contains(_orderBy)) {
           _orderBy = null;
         }
       });
@@ -757,17 +858,43 @@ class _AiCustomReportPageState extends State<AiCustomReportPage> {
     }
     if (!preserveRows) {
       _rows = <Map<String, dynamic>>[];
+      _responseColumnOrder = <String>[];
     }
+  }
+
+  Map<String, dynamic> _orderedRow(Map<dynamic, dynamic> row) {
+    return Map<String, dynamic>.fromEntries(
+      row.entries.map(
+        (MapEntry<dynamic, dynamic> entry) =>
+            MapEntry(entry.key.toString(), entry.value),
+      ),
+    );
+  }
+
+  List<String> _extractColumnOrder(List<Map<String, dynamic>> rows) {
+    if (rows.isEmpty) {
+      return _columnTitles.keys.toList();
+    }
+    final List<String> order = <String>[];
+    final Set<String> seen = <String>{};
+    for (final Map<String, dynamic> row in rows) {
+      for (final String key in row.keys) {
+        if (seen.add(key)) {
+          order.add(key);
+        }
+      }
+    }
+    return order;
   }
 
   String _displayValue(dynamic value, String key) {
     if (value == null) {
       return '-';
     }
+    if (_isProgressColumn(key)) {
+      return _formatProgressLabel(_parseProgressPercent(value));
+    }
     if (value is num) {
-      if (key == 'progress') {
-        return value.toStringAsFixed(2);
-      }
       return value.toString();
     }
     final String text = value.toString().trim();
@@ -788,18 +915,10 @@ class _AiCustomReportPageState extends State<AiCustomReportPage> {
     if (rows.isEmpty) {
       return _columnTitles.keys.toList();
     }
-    final Set<String> discovered = <String>{};
-    for (final Map<String, dynamic> row in rows) {
-      discovered.addAll(row.keys);
+    if (_responseColumnOrder.isNotEmpty) {
+      return _responseColumnOrder;
     }
-    final List<String> known = _columnTitles.keys
-        .where(discovered.contains)
-        .toList();
-    final List<String> unknown = discovered
-        .where((String key) => !_columnTitles.containsKey(key))
-        .toList()
-      ..sort();
-    return <String>[...known, ...unknown];
+    return _extractColumnOrder(rows);
   }
 
   String _columnLabel(String key) => _columnTitles[key] ?? key.replaceAll('_', ' ');
@@ -808,6 +927,7 @@ class _AiCustomReportPageState extends State<AiCustomReportPage> {
     return switch (key) {
       'project_name' => 330,
       'activity_name' => 180,
+      'financial_progress' || 'physical_progress' || 'progress' => 150,
       _ => 130,
     };
   }
@@ -851,15 +971,11 @@ class _AiCustomReportPageState extends State<AiCustomReportPage> {
           color: i.isEven
               ? Colors.transparent
               : Theme.of(context).colorScheme.primary.withValues(alpha: 0.07),
-          padding: const EdgeInsets.symmetric(vertical: 8),
+          padding: const EdgeInsets.symmetric(vertical: 10),
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: columns
-                .map(
-                  (String col) => _cellWithWidth(
-                    col,
-                    _displayValue(row[col], col),
-                  ),
-                )
+                .map((String col) => _dataCell(col, row[col]))
                 .toList(),
           ),
         ),
