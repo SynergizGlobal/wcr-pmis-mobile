@@ -342,6 +342,172 @@ class DashboardRemoteDataSource {
     return _normalizeResponse(response.data);
   }
 
+  Future<List<Map<String, dynamic>>> fetchContractorsList() async {
+    final Response<dynamic> response = await _dio.get<dynamic>(
+      '/contractors',
+      options: _requestOptions,
+    );
+    return _normalizeListResponse(response.data);
+  }
+
+  Future<Map<String, dynamic>> addContractor(
+    Map<String, dynamic> payload,
+  ) async {
+    final Response<dynamic> response = await _dio.post<dynamic>(
+      '/contractors',
+      data: payload,
+      options: _requestOptions,
+    );
+    return _normalizeResponse(response.data);
+  }
+
+  Future<Map<String, dynamic>> updateContractor({
+    required String contractorId,
+    required Map<String, dynamic> payload,
+  }) async {
+    final Response<dynamic> response = await _dio.put<dynamic>(
+      '/contractors/${Uri.encodeComponent(contractorId)}',
+      data: payload,
+      options: _requestOptions,
+    );
+    return _normalizeResponse(response.data);
+  }
+
+  Future<List<Map<String, dynamic>>> fetchContractsList({
+    String? designation,
+    String? dyHodDesignation,
+    String? contractorIdFk,
+    String? contractStatus,
+    String? contractStatusFk,
+  }) async {
+    final Response<dynamic> response = await _dio.post<dynamic>(
+      '/contract/ajax/getContracts',
+      data: _contractFilterPayload(
+        designation: designation,
+        dyHodDesignation: dyHodDesignation,
+        contractorIdFk: contractorIdFk,
+        contractStatus: contractStatus,
+        contractStatusFk: contractStatusFk,
+      ),
+      options: Options(
+        receiveTimeout: _dashboardReceiveTimeout,
+        connectTimeout: _dashboardConnectTimeout,
+        contentType: Headers.formUrlEncodedContentType,
+      ),
+    );
+    return _normalizeListResponse(response.data);
+  }
+
+  Future<List<Map<String, dynamic>>> fetchContractHodFilter({
+    String? designation,
+    String? dyHodDesignation,
+    String? contractorIdFk,
+    String? contractStatus,
+    String? contractStatusFk,
+  }) async {
+    final Response<dynamic> response = await _dio.get<dynamic>(
+      '/contract/ajax/getDesignationsFilterListInContract',
+      queryParameters: _contractFilterQueryParams(
+        designation: designation,
+        dyHodDesignation: dyHodDesignation,
+        contractorIdFk: contractorIdFk,
+        contractStatus: contractStatus,
+        contractStatusFk: contractStatusFk,
+        includeDesignation: false,
+      ),
+      options: _requestOptions,
+    );
+    return _normalizeListResponse(response.data);
+  }
+
+  Future<List<Map<String, dynamic>>> fetchContractDyHodFilter({
+    String? designation,
+    String? dyHodDesignation,
+    String? contractorIdFk,
+    String? contractStatus,
+    String? contractStatusFk,
+  }) async {
+    final Response<dynamic> response = await _dio.get<dynamic>(
+      '/contract/ajax/getDyHODDesignationsFilterListInContract',
+      queryParameters: _contractFilterQueryParams(
+        designation: designation,
+        dyHodDesignation: dyHodDesignation,
+        contractorIdFk: contractorIdFk,
+        contractStatus: contractStatus,
+        contractStatusFk: contractStatusFk,
+        includeDyHodDesignation: false,
+      ),
+      options: _requestOptions,
+    );
+    return _normalizeListResponse(response.data);
+  }
+
+  Future<List<Map<String, dynamic>>> fetchContractContractorsFilter({
+    String? designation,
+    String? dyHodDesignation,
+    String? contractorIdFk,
+    String? contractStatus,
+    String? contractStatusFk,
+  }) async {
+    final Response<dynamic> response = await _dio.get<dynamic>(
+      '/contract/ajax/getContractorsFilterListInContract',
+      queryParameters: _contractFilterQueryParams(
+        designation: designation,
+        dyHodDesignation: dyHodDesignation,
+        contractorIdFk: contractorIdFk,
+        contractStatus: contractStatus,
+        contractStatusFk: contractStatusFk,
+        includeContractorIdFk: false,
+      ),
+      options: _requestOptions,
+    );
+    return _normalizeListResponse(response.data);
+  }
+
+  Future<List<Map<String, dynamic>>> fetchContractStatusFilter({
+    String? designation,
+    String? dyHodDesignation,
+    String? contractorIdFk,
+    String? contractStatus,
+    String? contractStatusFk,
+  }) async {
+    final Response<dynamic> response = await _dio.get<dynamic>(
+      '/contract/ajax/getContractStatusFilterListInContract',
+      queryParameters: _contractFilterQueryParams(
+        designation: designation,
+        dyHodDesignation: dyHodDesignation,
+        contractorIdFk: contractorIdFk,
+        contractStatus: contractStatus,
+        contractStatusFk: contractStatusFk,
+        includeContractStatus: false,
+      ),
+      options: _requestOptions,
+    );
+    return _normalizeListResponse(response.data);
+  }
+
+  Future<List<Map<String, dynamic>>> fetchContractWorkStatusFilter({
+    String? designation,
+    String? dyHodDesignation,
+    String? contractorIdFk,
+    String? contractStatus,
+    String? contractStatusFk,
+  }) async {
+    final Response<dynamic> response = await _dio.get<dynamic>(
+      '/contract/ajax/getStatusFilterListInContract',
+      queryParameters: _contractFilterQueryParams(
+        designation: designation,
+        dyHodDesignation: dyHodDesignation,
+        contractorIdFk: contractorIdFk,
+        contractStatus: contractStatus,
+        contractStatusFk: contractStatusFk,
+        includeContractStatusFk: false,
+      ),
+      options: _requestOptions,
+    );
+    return _normalizeListResponse(response.data);
+  }
+
   Future<Map<String, dynamic>> fetchAiReport(String query) async {
     final response = await _dio.post<dynamic>(
       '/api/ai/report',
@@ -1538,6 +1704,54 @@ class DashboardRemoteDataSource {
       'category_fk': valueOrEmpty(category),
       'status_fk': valueOrEmpty(status),
       'hod': valueOrEmpty(hod),
+    };
+  }
+
+  Map<String, String> _contractFilterPayload({
+    String? designation,
+    String? dyHodDesignation,
+    String? contractorIdFk,
+    String? contractStatus,
+    String? contractStatusFk,
+  }) {
+    String valueOrEmpty(String? value) => value?.trim().isNotEmpty == true
+        ? value!.trim()
+        : '';
+    return <String, String>{
+      'designation': valueOrEmpty(designation),
+      'dy_hod_designation': valueOrEmpty(dyHodDesignation),
+      'contractor_id_fk': valueOrEmpty(contractorIdFk),
+      'contract_status': valueOrEmpty(contractStatus),
+      'contract_status_fk': valueOrEmpty(contractStatusFk),
+    };
+  }
+
+  Map<String, String> _contractFilterQueryParams({
+    String? designation,
+    String? dyHodDesignation,
+    String? contractorIdFk,
+    String? contractStatus,
+    String? contractStatusFk,
+    bool includeDesignation = true,
+    bool includeDyHodDesignation = true,
+    bool includeContractorIdFk = true,
+    bool includeContractStatus = true,
+    bool includeContractStatusFk = true,
+  }) {
+    String valueOrEmpty(String? value) => value?.trim().isNotEmpty == true
+        ? value!.trim()
+        : '';
+    return <String, String>{
+      if (includeDesignation)
+        'designation': valueOrEmpty(designation),
+      if (includeDyHodDesignation)
+        'dy_hod_designation': valueOrEmpty(dyHodDesignation),
+      if (includeContractorIdFk)
+        'contractor_id_fk': valueOrEmpty(contractorIdFk),
+      if (includeContractStatus)
+        'contract_status': valueOrEmpty(contractStatus),
+      if (includeContractStatusFk)
+        'contract_status_fk': valueOrEmpty(contractStatusFk),
     };
   }
 

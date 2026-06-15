@@ -10,6 +10,9 @@ import 'package:wcr_pmis_mobile/src/features/dashboard/data/datasources/dashboar
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/issues/add_issue_form_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/projects/add_project_form_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/projects/add_project_page.dart';
+import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/contracts/contracts_page.dart';
+import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/contractors/contractor_form_page.dart';
+import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/contractors/contractors_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/utility_shifting/add_utility_shifting_form_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/reports/ai_custom_report_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/home/dashboard_page.dart';
@@ -112,6 +115,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         return LoginPage.routePath;
       }
       if (!loggedIn && loc == UpdateStructureWorkFormPage.routePath) {
+        return LoginPage.routePath;
+      }
+      if (!loggedIn && loc == ContractorsPage.routePath) {
+        return LoginPage.routePath;
+      }
+      if (!loggedIn && loc == ContractorFormPage.routePath) {
         return LoginPage.routePath;
       }
       if (loggedIn &&
@@ -308,6 +317,37 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           return UpdateStructureWorkFormPage(
             dataSource: ref.read(dashboardRemoteDataSourceProvider),
             structureId: structureId ?? '',
+          );
+        },
+      ),
+      GoRoute(
+        path: ContractsPage.routePath,
+        name: ContractsPage.routeName,
+        builder: (BuildContext context, GoRouterState state) =>
+            ContractsPage(
+              dataSource: ref.read(dashboardRemoteDataSourceProvider),
+            ),
+      ),
+      GoRoute(
+        path: ContractorsPage.routePath,
+        name: ContractorsPage.routeName,
+        builder: (BuildContext context, GoRouterState state) =>
+            ContractorsPage(
+              dataSource: ref.read(dashboardRemoteDataSourceProvider),
+            ),
+      ),
+      GoRoute(
+        path: ContractorFormPage.routePath,
+        name: ContractorFormPage.routeName,
+        builder: (BuildContext context, GoRouterState state) {
+          final String? contractorId =
+              state.uri.queryParameters['contractor_id']?.trim();
+          return ContractorFormPage(
+            dataSource: ref.read(dashboardRemoteDataSourceProvider),
+            contractorId:
+                contractorId != null && contractorId.isNotEmpty
+                    ? contractorId
+                    : null,
           );
         },
       ),

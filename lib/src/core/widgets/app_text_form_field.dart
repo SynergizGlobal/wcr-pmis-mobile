@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:wcr_pmis_mobile/src/core/widgets/app_form_field_style.dart';
 
 class AppTextFormField extends StatefulWidget {
@@ -16,6 +17,8 @@ class AppTextFormField extends StatefulWidget {
     this.focusNode,
     this.prefixIcon,
     this.maxLength,
+    this.inputFormatters,
+    this.textCapitalization = TextCapitalization.none,
   });
 
   final String label;
@@ -30,6 +33,8 @@ class AppTextFormField extends StatefulWidget {
   final FocusNode? focusNode;
   final Widget? prefixIcon;
   final int? maxLength;
+  final List<TextInputFormatter>? inputFormatters;
+  final TextCapitalization textCapitalization;
 
   @override
   State<AppTextFormField> createState() => _AppTextFormFieldState();
@@ -98,6 +103,8 @@ class _AppTextFormFieldState extends State<AppTextFormField> {
           maxLines: widget.maxLines,
           maxLength: widget.maxLength,
           keyboardType: widget.keyboardType,
+          inputFormatters: widget.inputFormatters,
+          textCapitalization: widget.textCapitalization,
           onChanged: widget.onChanged,
           style: AppFormFieldStyle.valueStyle(context, filled: filled),
           buildCounter: widget.maxLength == null

@@ -22,6 +22,8 @@ import 'package:wcr_pmis_mobile/src/features/rfi/presentation/pages/rfi_dashboar
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/activities/new_activities_update_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/domain/utils/quality_inspection_user_access.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/domain/utils/update_form_mobile_access.dart';
+import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/contracts/contracts_page.dart';
+import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/contractors/contractors_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/dms/dms_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/quality_inspections/quality_inspections_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/utility_shifting/utility_shifting_page.dart';
@@ -967,6 +969,21 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         return;
       }
       context.pushNamed(StructuresPage.routeName);
+      return;
+    }
+    if (urlKey == 'contractor' || combinedKey.contains('contractor')) {
+      if (!mounted) {
+        return;
+      }
+      context.pushNamed(ContractorsPage.routeName);
+      return;
+    }
+    if (urlKey == 'contract' ||
+        (combinedKey.contains('contract') && !combinedKey.contains('contractor'))) {
+      if (!mounted) {
+        return;
+      }
+      context.pushNamed(ContractsPage.routeName);
       return;
     }
     await AppDialog.show(

@@ -14,12 +14,15 @@ class UpdateFormMobileAccess {
     '1391', // DMS
     '1240', // Utility Shifting
     '1394', // Quality Inspection
+    '10', // Contracts/Tenders
   };
 
   /// Stable [UpdateFormSubItem.formId] values with native mobile screens.
   static const Set<String> mobileReadySubFormIds = <String>{
     '50', // Add Structure (list + add/update flows)
     '52', // Structure Form (contract-wise structure works list)
+    '3', // Contract
+    '11', // Contractor
   };
 
   static String _normalize(String value) {
@@ -79,6 +82,11 @@ class UpdateFormMobileAccess {
     if (nameKey.contains('structure') || urlKey.contains('structure')) {
       return true;
     }
+    if ((nameKey.contains('contract') && nameKey.contains('tender')) ||
+        urlKey.contains('contract') ||
+        urlKey.contains('tender')) {
+      return true;
+    }
     return false;
   }
 
@@ -95,10 +103,17 @@ class UpdateFormMobileAccess {
     if (nameKey.contains('add structure') || urlKey == 'structure') {
       return true;
     }
-    // Shown in menu; navigation handled separately (not implemented yet).
     if (nameKey.contains('update structure') ||
         urlKey.contains('structure-form') ||
         urlKey.contains('structureform')) {
+      return true;
+    }
+    if (nameKey.contains('contractor') || urlKey.contains('contractor')) {
+      return true;
+    }
+    if (formId == '3' ||
+        (urlKey == 'contract' && !urlKey.contains('contractor')) ||
+        (nameKey == 'contract' && !nameKey.contains('contractor'))) {
       return true;
     }
     return false;
