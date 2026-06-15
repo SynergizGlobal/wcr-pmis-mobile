@@ -130,14 +130,18 @@ class _RfiListContentState extends ConsumerState<RfiListContent> {
                           (double sum, RfiTableColumn c) => sum + c.width,
                         ) +
                         RfiListTableConfig.actionWidth;
+                    final EdgeInsets tablePadding =
+                        widget.padding.copyWith(bottom: 8);
+                    final double minScrollWidth =
+                        tableWidth + tablePadding.horizontal;
                     return SizedBox(
                       height: constraints.maxHeight,
                       child: SingleChildScrollView(
                         scrollDirection: Axis.horizontal,
                         child: SizedBox(
-                          width: math.max(constraints.maxWidth, tableWidth),
+                          width: math.max(constraints.maxWidth, minScrollWidth),
                           child: Padding(
-                            padding: widget.padding.copyWith(bottom: 8),
+                            padding: tablePadding,
                             child: Card(
                               clipBehavior: Clip.antiAlias,
                               margin: EdgeInsets.zero,
@@ -276,7 +280,13 @@ class _RfiDataTable extends StatelessWidget {
       width: width,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-        child: Text(text, textAlign: TextAlign.center, style: style),
+        child: Text(
+          text,
+          textAlign: TextAlign.center,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: style,
+        ),
       ),
     );
   }
