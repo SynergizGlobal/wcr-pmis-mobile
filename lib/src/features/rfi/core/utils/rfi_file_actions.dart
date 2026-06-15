@@ -10,6 +10,7 @@ import '../widgets/global_alert_dialog.dart';
 import '../widgets/rfi_remote_media_preview.dart';
 import 'rfi_file_paths.dart';
 import 'rfi_preview_fetch.dart';
+import 'package:wcr_pmis_mobile/src/core/network/user_friendly_error_message.dart';
 
 /// Play Store–safe file view/download for RFI attachments.
 ///
@@ -135,7 +136,7 @@ abstract final class RfiFileActions {
       GlobalAlertDialog.show(
         context,
         title: 'Download failed',
-        message: e.toString(),
+        message: userFriendlyErrorMessage(e),
         type: DialogType.error,
       );
     }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:wcr_pmis_mobile/src/core/network/user_friendly_error_message.dart';
 
 import '../../domain/rfi_list/rfi_list_item.dart';
 import '../../providers/rfi_list/assign_client_person_provider.dart';
@@ -38,7 +39,14 @@ class _AssignExecutiveDialogState extends ConsumerState<AssignExecutiveDialog> {
           height: 100,
           child: Center(child: CircularProgressIndicator()),
         ),
-        error: (err, stack) => Text('Error loading executives: $err'),
+        error: (Object err, StackTrace stack) => Padding(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          child: Text(
+            userFriendlyErrorMessage(err),
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Theme.of(context).colorScheme.error),
+          ),
+        ),
         data: (names) {
           if (names.isEmpty) {
             return const Text('No executives found for this contract.');
@@ -105,7 +113,7 @@ class _AssignExecutiveDialogState extends ConsumerState<AssignExecutiveDialog> {
                     GlobalAlertDialog.show(
                       context,
                       title: 'Error',
-                      message: 'Error: ${state.error}',
+                      message: userFriendlyErrorMessage(state.error!),
                       type: DialogType.error,
                     );
                   }

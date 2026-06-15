@@ -8,6 +8,7 @@ import 'package:wcr_pmis_mobile/src/core/widgets/app_dialog.dart';
 import 'package:wcr_pmis_mobile/src/core/widgets/app_select_sheet_field.dart';
 import 'package:wcr_pmis_mobile/src/core/widgets/app_text_form_field.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/data/datasources/dashboard_remote_data_source.dart';
+import 'package:wcr_pmis_mobile/src/core/network/user_friendly_error_message.dart';
 
 class DmsUploadDocumentDialog extends StatefulWidget {
   const DmsUploadDocumentDialog({super.key, required this.dataSource});
@@ -131,7 +132,7 @@ class _DmsUploadDocumentDialogState extends State<DmsUploadDocumentDialog> {
       }
       setState(() {
         _loading = false;
-        _loadError = error.toString();
+        _loadError = userFriendlyErrorMessage(error);
       });
     }
   }
@@ -302,7 +303,7 @@ class _DmsUploadDocumentDialogState extends State<DmsUploadDocumentDialog> {
       await AppDialog.show(
         context: context,
         title: 'Create folder failed',
-        message: error.toString(),
+        message: userFriendlyErrorMessage(error),
         type: AppDialogType.error,
       );
     } finally {
@@ -439,7 +440,7 @@ class _DmsUploadDocumentDialogState extends State<DmsUploadDocumentDialog> {
       await AppDialog.show(
         context: context,
         title: 'Upload failed',
-        message: error.toString(),
+        message: userFriendlyErrorMessage(error),
         type: AppDialogType.error,
       );
     } finally {

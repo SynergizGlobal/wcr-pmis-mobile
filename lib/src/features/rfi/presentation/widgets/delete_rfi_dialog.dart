@@ -6,6 +6,7 @@ import 'package:wcr_pmis_mobile/src/features/rfi/domain/entities/rfi_list_item.d
 import 'package:wcr_pmis_mobile/src/features/rfi/domain/rfi_list_kind.dart';
 import 'package:wcr_pmis_mobile/src/features/rfi/presentation/providers/rfi_providers.dart';
 import 'package:wcr_pmis_mobile/src/features/rfi/providers/inspection/inspection_provider.dart';
+import 'package:wcr_pmis_mobile/src/core/network/user_friendly_error_message.dart';
 
 class DeleteRfiDialog extends ConsumerStatefulWidget {
   const DeleteRfiDialog({
@@ -75,7 +76,7 @@ class _DeleteRfiDialogState extends ConsumerState<DeleteRfiDialog> {
       await AppDialog.show(
         context: context,
         title: 'Error',
-        message: e.toString(),
+        message: userFriendlyErrorMessage(e),
         type: AppDialogType.error,
       );
     } finally {

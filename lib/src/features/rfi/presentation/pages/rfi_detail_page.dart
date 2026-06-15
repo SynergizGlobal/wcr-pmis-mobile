@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:wcr_pmis_mobile/src/core/network/user_friendly_error_message.dart';
 import 'package:wcr_pmis_mobile/src/features/rfi/presentation/providers/rfi_providers.dart';
 
 class RfiDetailPage extends ConsumerWidget {
@@ -46,7 +47,13 @@ class RfiDetailPage extends ConsumerWidget {
                 Icon(Icons.error_outline, size: 48, color: scheme.error),
                 const SizedBox(height: 12),
                 Text(
-                  'Failed to load RFI\n$error',
+                  'Failed to load RFI',
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  userFriendlyErrorMessage(error),
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),

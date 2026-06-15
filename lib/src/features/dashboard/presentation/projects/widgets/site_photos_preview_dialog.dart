@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/domain/entities/site_photo_row.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/projects/providers/site_photos_provider.dart';
+import 'package:wcr_pmis_mobile/src/core/network/user_friendly_error_message.dart';
 
 Future<void> showSitePhotosPreviewDialog({
   required BuildContext context,
@@ -245,7 +246,7 @@ class _StructurePhotoViewer extends ConsumerWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                error.toString(),
+                userFriendlyErrorMessage(error),
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: cs.onSurfaceVariant,
                 ),

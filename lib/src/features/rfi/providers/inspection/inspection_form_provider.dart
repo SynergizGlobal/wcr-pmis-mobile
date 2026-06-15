@@ -19,6 +19,7 @@ import '../auth/auth_provider.dart';
 import '../../domain/inspection/inspection_item.dart';
 import '../../domain/inspection/enclosure_checklist.dart';
 import 'inspection_form_state.dart';
+import 'package:wcr_pmis_mobile/src/core/network/user_friendly_error_message.dart';
 
 final inspectionFormProvider = StateNotifierProvider.family<
     InspectionFormNotifier, InspectionFormState, int>((ref, rfiId) {
@@ -154,7 +155,7 @@ class InspectionFormNotifier extends StateNotifier<InspectionFormState> {
       _loadDraft();
       _checkEnclosuresChecklistAvailability(details);
     } catch (e) {
-      state = state.copyWith(isLoading: false, error: e.toString());
+      state = state.copyWith(isLoading: false, error: userFriendlyErrorMessage(e));
     }
   }
 
@@ -370,7 +371,7 @@ class InspectionFormNotifier extends StateNotifier<InspectionFormState> {
       await _init();
       state = state.copyWith(isUploadingFile: false);
     } catch (e) {
-      state = state.copyWith(isUploadingFile: false, error: e.toString());
+      state = state.copyWith(isUploadingFile: false, error: userFriendlyErrorMessage(e));
       rethrow;
     }
   }
@@ -382,7 +383,7 @@ class InspectionFormNotifier extends StateNotifier<InspectionFormState> {
       await _init(); // Refresh list after deletion
       state = state.copyWith(isUploadingFile: false);
     } catch (e) {
-      state = state.copyWith(isUploadingFile: false, error: e.toString());
+      state = state.copyWith(isUploadingFile: false, error: userFriendlyErrorMessage(e));
       rethrow;
     }
   }
@@ -402,7 +403,7 @@ class InspectionFormNotifier extends StateNotifier<InspectionFormState> {
       await _init();
       state = state.copyWith(isUploadingFile: false);
     } catch (e) {
-      state = state.copyWith(isUploadingFile: false, error: e.toString());
+      state = state.copyWith(isUploadingFile: false, error: userFriendlyErrorMessage(e));
       rethrow;
     }
   }
@@ -418,7 +419,7 @@ class InspectionFormNotifier extends StateNotifier<InspectionFormState> {
       await _init();
       state = state.copyWith(isUploadingFile: false);
     } catch (e) {
-      state = state.copyWith(isUploadingFile: false, error: e.toString());
+      state = state.copyWith(isUploadingFile: false, error: userFriendlyErrorMessage(e));
       rethrow;
     }
   }
@@ -682,7 +683,7 @@ class InspectionFormNotifier extends StateNotifier<InspectionFormState> {
       
       state = state.copyWith(isSavingChecklist: false);
     } catch (e) {
-      state = state.copyWith(isSavingChecklist: false, error: e.toString());
+      state = state.copyWith(isSavingChecklist: false, error: userFriendlyErrorMessage(e));
       rethrow;
     }
   }
@@ -867,14 +868,7 @@ class InspectionFormNotifier extends StateNotifier<InspectionFormState> {
     }
   }
 
-  String _userMessageFromException(Object e) {
-    final text = e.toString();
-    const prefix = 'Exception: ';
-    if (text.startsWith(prefix)) {
-      return text.substring(prefix.length);
-    }
-    return text;
-  }
+  String _userMessageFromException(Object e) => userFriendlyErrorMessage(e);
 
   String _userMessageFromDioException(DioException e) {
     final responseData = e.response?.data;

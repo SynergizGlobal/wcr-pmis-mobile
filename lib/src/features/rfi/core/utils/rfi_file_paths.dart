@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'package:wcr_pmis_mobile/src/features/rfi/core/utils/rfi_preview_fetch.dart';
+
 import '../../domain/inspection/inspection_item.dart';
 
 class SupportingDocumentEntry {
@@ -24,6 +26,10 @@ class SupportingDocumentEntry {
 String normalizeRfiAttachmentPath(String raw) {
   var path = raw.trim();
   if (path.isEmpty) return path;
+
+  if (RfiPreviewFetch.isServerWindowsUploadPath(path)) {
+    return RfiPreviewFetch.normalizeServerFilesystemPath(path);
+  }
 
   if (path.startsWith('[') || path.startsWith('{')) {
     final docs = extractSupportingDocuments(path);

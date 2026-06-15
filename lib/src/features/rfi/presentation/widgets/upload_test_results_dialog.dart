@@ -5,6 +5,7 @@ import '../../providers/inspection/inspection_provider.dart';
 import '../../core/widgets/app_dropdown.dart';
 import '../../core/widgets/global_alert_dialog.dart';
 import 'package:wcr_pmis_mobile/src/features/rfi/presentation/rfi_theme.dart';
+import 'package:wcr_pmis_mobile/src/core/network/user_friendly_error_message.dart';
 
 class UploadTestResultsDialog extends ConsumerStatefulWidget {
   final int rfiId;
@@ -54,7 +55,7 @@ class _UploadTestResultsDialogState extends ConsumerState<UploadTestResultsDialo
         GlobalAlertDialog.show(
           context,
           title: 'Error',
-          message: 'Error picking file: $e',
+          message: userFriendlyErrorMessage(e, fallback: 'Unable to pick file. Please try again.'),
           type: DialogType.error,
         );
       }
@@ -219,7 +220,7 @@ class _UploadTestResultsDialogState extends ConsumerState<UploadTestResultsDialo
                                     GlobalAlertDialog.show(
                                       context,
                                       title: 'Error',
-                                      message: 'Error: $e',
+                                      message: userFriendlyErrorMessage(e),
                                       type: DialogType.error,
                                     );
                                   } finally {

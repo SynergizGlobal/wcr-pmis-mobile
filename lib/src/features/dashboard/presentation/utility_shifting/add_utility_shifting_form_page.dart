@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:wcr_pmis_mobile/src/core/network/user_friendly_error_message.dart';
 import 'package:wcr_pmis_mobile/src/core/widgets/app_date_form_field.dart';
 import 'package:wcr_pmis_mobile/src/core/widgets/app_dialog.dart';
 import 'package:wcr_pmis_mobile/src/core/widgets/app_select_sheet_field.dart';
@@ -1553,7 +1554,7 @@ class _AddUtilityShiftingFormPageState
         type: AppDialogType.error,
         title: 'Unable to Load Form',
         message: _isEditMode
-            ? 'Could not load this utility shifting for edit. Please try again.\n$error'
+            ? userFriendlyErrorMessage(error)
             : 'Could not fetch Add Utility form data. Please try again.',
       );
     } finally {

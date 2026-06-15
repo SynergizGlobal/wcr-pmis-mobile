@@ -5,6 +5,7 @@ import 'package:wcr_pmis_mobile/src/core/widgets/app_select_sheet_field.dart';
 import 'package:wcr_pmis_mobile/src/core/widgets/app_table_pagination_footer.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/data/datasources/dashboard_remote_data_source.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/structures/structure_form_page.dart';
+import 'package:wcr_pmis_mobile/src/core/network/user_friendly_error_message.dart';
 
 class StructuresPage extends StatefulWidget {
   const StructuresPage({super.key, required this.dataSource});
@@ -129,7 +130,7 @@ class _StructuresPageState extends State<StructuresPage> {
       await AppDialog.show(
         context: context,
         title: 'Unable to load structures',
-        message: error.toString(),
+        message: userFriendlyErrorMessage(error),
         type: AppDialogType.error,
       );
     } finally {

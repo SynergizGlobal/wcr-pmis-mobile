@@ -16,6 +16,7 @@ import 'package:wcr_pmis_mobile/src/core/widgets/app_table_pagination_footer.dar
 import 'package:wcr_pmis_mobile/src/features/dashboard/domain/entities/daily_progress.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/domain/utils/daily_progress_mapper.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/projects/providers/daily_progress_provider.dart';
+import 'package:wcr_pmis_mobile/src/core/network/user_friendly_error_message.dart';
 
 class DailyProgressTab extends ConsumerStatefulWidget {
   const DailyProgressTab({
@@ -87,7 +88,7 @@ class _DailyProgressTabState extends ConsumerState<DailyProgressTab> {
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
               Text(
-                'Unable to load daily progress.\n$error',
+                userFriendlyErrorMessage(error),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 12),
@@ -1175,7 +1176,7 @@ class _DailyProgressTabState extends ConsumerState<DailyProgressTab> {
       await AppDialog.show(
         context: context,
         title: 'Excel Export Failed',
-        message: 'Unable to generate xlsx file.\n$error',
+        message: userFriendlyErrorMessage(error, fallback: 'Unable to generate xlsx file. Please try again.'),
         type: AppDialogType.error,
       );
     }
@@ -1366,7 +1367,7 @@ class _DailyProgressTabState extends ConsumerState<DailyProgressTab> {
       await AppDialog.show(
         context: context,
         title: 'PDF Export Failed',
-        message: 'Unable to generate PDF.\n$error',
+        message: userFriendlyErrorMessage(error, fallback: 'Unable to generate PDF. Please try again.'),
         type: AppDialogType.error,
       );
     }

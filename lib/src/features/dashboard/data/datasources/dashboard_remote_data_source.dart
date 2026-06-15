@@ -1564,6 +1564,162 @@ class DashboardRemoteDataSource {
     return _normalizeResponse(response.data);
   }
 
+  Future<List<Map<String, dynamic>>> fetchDesignContractFilter({
+    String? contractIdFk,
+    String? structureTypeFk,
+    String? drawingTypeFk,
+  }) async {
+    final Response<dynamic> response = await _dio.post<dynamic>(
+      '/design/ajax/getContractListFilterInDesign',
+      data: _designFilterPayload(
+        contractIdFk: contractIdFk,
+        structureTypeFk: structureTypeFk,
+        drawingTypeFk: drawingTypeFk,
+      ),
+      options: _requestOptions,
+    );
+    return _normalizeListResponse(response.data);
+  }
+
+  Future<List<Map<String, dynamic>>> fetchDesignStructureTypeFilter({
+    String? contractIdFk,
+    String? structureTypeFk,
+    String? drawingTypeFk,
+  }) async {
+    final Response<dynamic> response = await _dio.post<dynamic>(
+      '/design/ajax/getStructureListFilterInDesign',
+      data: _designFilterPayload(
+        contractIdFk: contractIdFk,
+        structureTypeFk: structureTypeFk,
+        drawingTypeFk: drawingTypeFk,
+      ),
+      options: _requestOptions,
+    );
+    return _normalizeListResponse(response.data);
+  }
+
+  Future<List<Map<String, dynamic>>> fetchDesignDrawingTypeFilter({
+    String? contractIdFk,
+    String? structureTypeFk,
+    String? drawingTypeFk,
+  }) async {
+    final Response<dynamic> response = await _dio.post<dynamic>(
+      '/design/ajax/getDrawingTypeListFilterInDesign',
+      data: _designFilterPayload(
+        contractIdFk: contractIdFk,
+        structureTypeFk: structureTypeFk,
+        drawingTypeFk: drawingTypeFk,
+      ),
+      options: _requestOptions,
+    );
+    return _normalizeListResponse(response.data);
+  }
+
+  Future<({List<Map<String, dynamic>> rows, int total})> fetchDesignsList({
+    int start = 0,
+    int length = 10,
+    String search = '',
+    String? contractIdFk,
+    String? structureTypeFk,
+    String? drawingTypeFk,
+  }) async {
+    final Response<dynamic> response = await _dio.post<dynamic>(
+      '/design/ajax/getDesignsList',
+      queryParameters: <String, dynamic>{
+        'iDisplayStart': start,
+        'iDisplayLength': length,
+        'sSearch': search,
+        'contract_id_fk': contractIdFk?.trim() ?? '',
+        'structure_type_fk': structureTypeFk?.trim() ?? '',
+        'drawing_type_fk': drawingTypeFk?.trim() ?? '',
+      },
+      data: const <String, dynamic>{},
+      options: _requestOptions,
+    );
+    final Map<String, dynamic> payload = _unwrapDataTablesMap(response.data);
+    final List<Map<String, dynamic>> rows = _extractAaDataRows(payload);
+    return (
+      rows: rows,
+      total: _extractDataTablesTotal(payload, rows.length),
+    );
+  }
+
+  Future<List<Map<String, dynamic>>> fetchDesignUploadsList() async {
+    final Response<dynamic> response = await _dio.post<dynamic>(
+      '/design/ajax/getDesignUploadsList',
+      data: const <String, dynamic>{},
+      options: _requestOptions,
+    );
+    return _normalizeListResponse(response.data);
+  }
+
+  Future<Uint8List> fetchDesignUploadFileBytes({
+    required String fileName,
+    String? designDataId,
+  }) async {
+    final String trimmedName = fileName.trim();
+    final String trimmedId = designDataId?.trim() ?? '';
+    final List<String> paths = <String>[
+      if (trimmedId.isNotEmpty)
+        '/design/ajax/downloadUploadedDesignData?design_data_id=${Uri.encodeComponent(trimmedId)}',
+      if (trimmedName.isNotEmpty)
+        '/DESIGN_DATA_FILES/${Uri.encodeComponent(trimmedName)}',
+      if (trimmedName.isNotEmpty)
+        '/DESIGN_UPLOAD_FILES/${Uri.encodeComponent(trimmedName)}',
+    ];
+    Object? lastError;
+    for (final String path in paths) {
+      try {
+        final Response<List<int>> response = await _dio.get<List<int>>(
+          path,
+          options: Options(
+            responseType: ResponseType.bytes,
+            receiveTimeout: _dashboardReceiveTimeout,
+            connectTimeout: _dashboardConnectTimeout,
+          ),
+        );
+        final List<int>? bytes = response.data;
+        if (bytes != null && bytes.isNotEmpty) {
+          return Uint8List.fromList(bytes);
+        }
+      } catch (error) {
+        lastError = error;
+      }
+    }
+    if (trimmedId.isNotEmpty) {
+      try {
+        final Response<List<int>> response = await _dio.post<List<int>>(
+          '/design/ajax/downloadUploadedDesignData',
+          data: <String, dynamic>{'design_data_id': trimmedId},
+          options: Options(
+            responseType: ResponseType.bytes,
+            receiveTimeout: _dashboardReceiveTimeout,
+            connectTimeout: _dashboardConnectTimeout,
+          ),
+        );
+        final List<int>? bytes = response.data;
+        if (bytes != null && bytes.isNotEmpty) {
+          return Uint8List.fromList(bytes);
+        }
+      } catch (error) {
+        lastError = error;
+      }
+    }
+    throw lastError ?? StateError('Unable to download design upload file.');
+  }
+
+  Map<String, dynamic> _designFilterPayload({
+    String? contractIdFk,
+    String? structureTypeFk,
+    String? drawingTypeFk,
+  }) {
+    return <String, dynamic>{
+      'contract_id_fk': contractIdFk?.trim() ?? '',
+      'structure_type_fk': structureTypeFk?.trim() ?? '',
+      'drawing_type_fk': drawingTypeFk?.trim() ?? '',
+    };
+  }
+
   Future<Map<String, dynamic>> fetchAddUtilityShiftingFormData() async {
     final Response<dynamic> response = await _dio.post<dynamic>(
       '/utility-shifting/ajax/form/add-utility-shifting',

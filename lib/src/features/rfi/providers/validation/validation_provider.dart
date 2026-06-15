@@ -3,6 +3,7 @@ import 'package:dio/dio.dart';
 import '../../data/validation/validation_repository.dart';
 import '../../domain/validation/validation_item.dart';
 import 'validation_state.dart';
+import 'package:wcr_pmis_mobile/src/core/network/user_friendly_error_message.dart';
 
 part 'validation_provider.g.dart';
 
@@ -30,7 +31,7 @@ class ValidationNotifier extends _$ValidationNotifier {
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
-        errorMessage: e.toString(),
+        errorMessage: userFriendlyErrorMessage(e),
       );
     }
   }
@@ -130,7 +131,7 @@ class ValidationNotifier extends _$ValidationNotifier {
           msg = e.message ?? 'Validation failed';
         }
       } else {
-        msg = e.toString();
+        msg = userFriendlyErrorMessage(e);
       }
       if (msg.startsWith('Exception: ')) {
         msg = msg.substring(11);

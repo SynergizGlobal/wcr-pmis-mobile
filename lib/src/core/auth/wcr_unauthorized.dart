@@ -14,3 +14,12 @@ bool isWcrUnauthorizedError(Object error) {
   final String message = error.message?.toLowerCase() ?? '';
   return message.contains('rfi redirect failed (401)');
 }
+
+bool isWcrSessionExpiredError(Object error) {
+  if (isWcrUnauthorizedError(error)) {
+    return true;
+  }
+  final String message = error.toString().toLowerCase();
+  return message.contains('session expired') ||
+      message.contains('please sign in again');
+}

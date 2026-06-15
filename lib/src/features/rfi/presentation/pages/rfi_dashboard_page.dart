@@ -1,12 +1,11 @@
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:wcr_pmis_mobile/src/core/auth/wcr_unauthorized.dart';
+import 'package:wcr_pmis_mobile/src/core/network/user_friendly_error_message.dart';
+import 'package:wcr_pmis_mobile/src/core/widgets/wcr_session_expired_error_listener.dart';
 import 'package:wcr_pmis_mobile/src/features/auth/domain/entities/auth_session.dart';
 import 'package:wcr_pmis_mobile/src/features/auth/presentation/controllers/auth_controller.dart';
-import 'package:wcr_pmis_mobile/src/features/auth/presentation/pages/login_page.dart';
-import 'package:wcr_pmis_mobile/src/features/rfi/core/utils/rfi_dio_error_message.dart';
 import 'package:wcr_pmis_mobile/src/features/rfi/domain/rfi_list_kind.dart';
 import 'package:wcr_pmis_mobile/src/features/rfi/domain/utils/rfi_user_role.dart';
 import 'package:wcr_pmis_mobile/src/features/rfi/presentation/pages/create_rfi_page.dart';
@@ -232,82 +231,70 @@ class _RfiDashboardPageState extends ConsumerState<RfiDashboardPage> {
     }
     final _RfiShellSection section = entries[_selectedIndex].section;
 
-    return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded),
-          tooltip: 'Back to PMIS',
-          onPressed: () {
-            if (context.canPop()) {
-              context.pop();
-            } else {
-              context.go('/');
-            }
-          },
-        ),
-        title: Text(_titleForSection(section)),
-      ),
-      body: handoff.when(
-        loading: () => const Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              CircularProgressIndicator(),
-              SizedBox(height: 16),
-              Text('Connecting to RFI…'),
-            ],
+    return WcrSessionExpiredErrorListener(
+      error: handoff.error,
+      child: Scaffold(
+        appBar: AppBar(
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_rounded),
+            tooltip: 'Back to PMIS',
+            onPressed: () {
+              if (context.canPop()) {
+                context.pop();
+              } else {
+                context.go('/');
+              }
+            },
           ),
+          title: Text(_titleForSection(section)),
         ),
-        error: (Object error, StackTrace stack) {
-          if (isWcrUnauthorizedError(error)) {
+        body: handoff.when(
+          loading: () => const Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                CircularProgressIndicator(),
+                SizedBox(height: 16),
+                Text('Connecting to RFI…'),
+              ],
+            ),
+          ),
+          error: (Object error, StackTrace stack) {
+            if (isWcrSessionExpiredError(error)) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            final String message = userFriendlyErrorMessage(error);
             return Center(
               child: Padding(
                 padding: const EdgeInsets.all(24),
                 child: RfiHomeError(
-                  title: 'Session expired',
-                  message: sessionExpiredLoginMessage,
-                  onRetry: () {
-                    if (context.mounted) {
-                      context.go(LoginPage.routePath);
-                    }
-                  },
+                  title: 'Could not connect to RFI.',
+                  message: message,
+                  onRetry: _refreshAll,
                 ),
               ),
             );
-          }
-          final String message = error is DioException
-              ? rfiDioErrorMessage(error)
-              : error.toString();
-          return Center(
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: RfiHomeError(
-                title: 'Could not connect to RFI.',
-                message: message,
-                onRetry: _refreshAll,
-              ),
+          },
+          data: (_) => AnimatedSwitcher(
+            duration: const Duration(milliseconds: 220),
+            child: _buildSectionBody(
+              key: ValueKey<String>(section.name),
+              section: section,
+              role: role,
+              session: session,
             ),
-          );
-        },
-        data: (_) => AnimatedSwitcher(
-          duration: const Duration(milliseconds: 220),
-          child: _buildSectionBody(
-            key: ValueKey<String>(section.name),
-            section: section,
-            role: role,
-            session: session,
           ),
         ),
+        bottomNavigationBar: handoff.hasValue
+            ? RfiBottomNavigationBar(
+                selectedIndex: _selectedIndex,
+                onSelected: (int index) => _onNavSelected(index, entries),
+                destinations: entries
+                    .map((_RfiNavEntry e) => e.destination)
+                    .toList(),
+              )
+            : null,
       ),
-      bottomNavigationBar: handoff.hasValue
-          ? RfiBottomNavigationBar(
-              selectedIndex: _selectedIndex,
-              onSelected: (int index) => _onNavSelected(index, entries),
-              destinations: entries
-                  .map((_RfiNavEntry e) => e.destination)
-                  .toList(),
-            )
-          : null,
     );
   }
 

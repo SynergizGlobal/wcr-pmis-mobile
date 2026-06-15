@@ -4,6 +4,7 @@ import 'package:wcr_pmis_mobile/src/core/widgets/app_table_pagination_footer.dar
 import 'package:wcr_pmis_mobile/src/features/dashboard/domain/entities/site_photo_row.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/projects/providers/site_photos_provider.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/projects/widgets/site_photos_preview_dialog.dart';
+import 'package:wcr_pmis_mobile/src/core/network/user_friendly_error_message.dart';
 
 class SitePhotosTab extends ConsumerStatefulWidget {
   const SitePhotosTab({
@@ -50,7 +51,7 @@ class _SitePhotosTabState extends ConsumerState<SitePhotosTab> {
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
               Text(
-                'Unable to load site photos.\n$error',
+                userFriendlyErrorMessage(error),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 12),

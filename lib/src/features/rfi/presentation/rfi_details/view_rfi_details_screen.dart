@@ -17,6 +17,7 @@ import '../../core/widgets/rfi_remote_media_preview.dart';
 import '../../core/providers/dio_provider.dart';
 import '../../core/widgets/global_alert_dialog.dart';
 import 'package:wcr_pmis_mobile/src/features/rfi/presentation/rfi_theme.dart';
+import 'package:wcr_pmis_mobile/src/core/network/user_friendly_error_message.dart';
 
 class ViewRfiDetailsScreen extends ConsumerStatefulWidget {
   final int rfiId;
@@ -63,7 +64,7 @@ class _ViewRfiDetailsScreenState extends ConsumerState<ViewRfiDetailsScreen> {
           onRetry: () => ref
               .read(rfiDetailsNotifierProvider.notifier)
               .fetchRfiDetails(widget.rfiId),
-          message: 'Failed to load details.',
+          message: state.errorMessage ?? 'Failed to load details.',
         ),
       );
     }
@@ -491,7 +492,7 @@ class _ViewRfiDetailsScreenState extends ConsumerState<ViewRfiDetailsScreen> {
       GlobalAlertDialog.show(
         context,
         title: 'Download failed',
-        message: 'Download failed: ${e.toString()}',
+        message: 'Download failed: ${userFriendlyErrorMessage(e)}',
         type: DialogType.error,
       );
     }

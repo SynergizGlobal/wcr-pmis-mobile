@@ -7,6 +7,7 @@ import 'package:wcr_pmis_mobile/src/core/constants/api_constants.dart';
 import 'package:wcr_pmis_mobile/src/core/network/auth_interceptor.dart';
 import 'package:wcr_pmis_mobile/src/core/network/network_connectivity.dart';
 import 'package:wcr_pmis_mobile/src/core/network/session_cookie_manager.dart';
+import 'package:wcr_pmis_mobile/src/core/network/user_friendly_error_message.dart';
 import 'package:wcr_pmis_mobile/src/features/auth/presentation/providers/auth_token_provider.dart';
 
 final sessionCookieManagerProvider = FutureProvider<SessionCookieManager>((ref) {
@@ -58,6 +59,18 @@ final dioProvider = Provider<Dio>((ref) {
   if (sessionCookieManager != null) {
     dio.interceptors.add(sessionCookieManager.asInterceptor());
   }
+
+  dio.interceptors.add(
+    InterceptorsWrapper(
+      onError: (DioException error, ErrorInterceptorHandler handler) {
+        handler.next(
+          error.copyWith(
+            message: userFriendlyErrorMessage(error),
+          ),
+        );
+      },
+    ),
+  );
 
   return dio;
 });

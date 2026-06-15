@@ -7,6 +7,7 @@ import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/structures/u
 import 'package:wcr_pmis_mobile/src/core/widgets/app_select_sheet_field.dart';
 import 'package:wcr_pmis_mobile/src/core/widgets/app_table_pagination_footer.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/data/datasources/dashboard_remote_data_source.dart';
+import 'package:wcr_pmis_mobile/src/core/network/user_friendly_error_message.dart';
 
 class StructureFormListPage extends StatefulWidget {
   const StructureFormListPage({super.key, required this.dataSource});
@@ -93,7 +94,7 @@ class _StructureFormListPageState extends State<StructureFormListPage> {
       if (!mounted) {
         return;
       }
-      setState(() => _loadError = error.toString());
+      setState(() => _loadError = userFriendlyErrorMessage(error));
     } finally {
       if (mounted) {
         setState(() => _loading = false);
@@ -186,7 +187,7 @@ class _StructureFormListPageState extends State<StructureFormListPage> {
         return;
       }
       setState(() {
-        _loadError = error.toString();
+        _loadError = userFriendlyErrorMessage(error);
         _rows = <Map<String, dynamic>>[];
         _totalRecords = 0;
       });
@@ -212,7 +213,7 @@ class _StructureFormListPageState extends State<StructureFormListPage> {
       await AppDialog.show(
         context: context,
         title: 'Unable to refresh',
-        message: error.toString(),
+        message: userFriendlyErrorMessage(error),
         type: AppDialogType.error,
       );
     } finally {

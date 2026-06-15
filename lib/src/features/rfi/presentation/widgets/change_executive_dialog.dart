@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/inspection/change_executive_provider.dart';
 import '../../providers/inspection/inspection_provider.dart';
 import '../../providers/auth/auth_provider.dart';
+import '../../core/widgets/error_state_widget.dart';
 import '../../core/widgets/global_alert_dialog.dart';
 import 'package:wcr_pmis_mobile/src/features/rfi/presentation/rfi_theme.dart';
 
@@ -102,13 +103,19 @@ class _ChangeExecutiveDialogState extends ConsumerState<ChangeExecutiveDialog>
                       child: CircularProgressIndicator(),
                     ))
                   else if (state.error != null)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 20),
-                      child: Text(
-                        state.error!,
-                        style: TextStyle(color: scheme.error),
-                        textAlign: TextAlign.center,
-                      ),
+                    ErrorStateWidget(
+                      compact: true,
+                      title: 'Unable to load executives',
+                      message: state.error!,
+                      onRetry: () {
+                        final authState = ref.read(authNotifierProvider);
+                        final userId =
+                            authState.value?['userId']?.toString() ?? '';
+                        ref.read(changeExecutiveProvider.notifier).fetchEngineerNames(
+                              userId,
+                              widget.contractId,
+                            );
+                      },
                     )
                   else
                     DropdownButtonFormField<String>(

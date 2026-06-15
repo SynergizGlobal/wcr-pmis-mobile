@@ -6,6 +6,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:wcr_pmis_mobile/src/core/network/user_friendly_error_message.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -2356,26 +2357,14 @@ class _StartInspectionOnlineScreenState
         GlobalAlertDialog.show(
           context,
           title: 'Error',
-          message: 'Error picking file: $e',
+          message: userFriendlyErrorMessage(e, fallback: 'Unable to pick file. Please try again.'),
           type: DialogType.error,
         );
       }
     }
   }
 
-  String _submitErrorMessage(Object e) {
-    if (e is DioException) {
-      final data = e.response?.data;
-      if (data is Map && data['error'] != null) return data['error'].toString();
-      if (data is Map && data['message'] != null) {
-        return data['message'].toString();
-      }
-      if (data is String && data.isNotEmpty) return data;
-      if (e.message != null && e.message!.isNotEmpty) return e.message!;
-    }
-    final raw = e.toString();
-    return raw.startsWith('Exception: ') ? raw.substring(11) : raw;
-  }
+  String _submitErrorMessage(Object e) => userFriendlyErrorMessage(e);
 
   Widget _buildEnclosuresGridTable(
     BuildContext context,
@@ -2570,7 +2559,7 @@ class _StartInspectionOnlineScreenState
         GlobalAlertDialog.show(
           context,
           title: 'Error',
-          message: 'Error picking file: $e',
+          message: userFriendlyErrorMessage(e, fallback: 'Unable to pick file. Please try again.'),
           type: DialogType.error,
         );
       }
@@ -2740,7 +2729,7 @@ class _ChecklistDialogState extends ConsumerState<_ChecklistDialog> {
                   GlobalAlertDialog.show(
                     context,
                     title: 'Error',
-                    message: 'Error: $e',
+                    message: userFriendlyErrorMessage(e),
                     type: DialogType.error,
                   );
                 }

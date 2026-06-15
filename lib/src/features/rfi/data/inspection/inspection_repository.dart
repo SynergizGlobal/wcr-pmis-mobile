@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:wcr_pmis_mobile/src/core/network/user_friendly_error_message.dart';
 import '../../core/providers/dio_provider.dart';
 import '../../domain/inspection/inspection_item.dart';
 import 'inspection_api.dart';
@@ -55,10 +56,10 @@ class InspectionRepository {
       } else {
         throw Exception('Failed to load inspection list');
       }
-    } on DioException catch (e) {
-      throw Exception(e.message ?? 'Network error occurred');
+    } on DioException {
+      rethrow;
     } catch (e) {
-      throw Exception(e.toString());
+      throw Exception(userFriendlyErrorMessage(e));
     }
   }
 
@@ -70,7 +71,7 @@ class InspectionRepository {
       }
       throw Exception('Failed to load RFI details');
     } catch (e) {
-      throw Exception('Error fetching RFI details: $e');
+      throw Exception(userFriendlyErrorMessage(e));
     }
   }
 
@@ -185,7 +186,7 @@ class InspectionRepository {
     } on DioException catch (e) {
       throw Exception(e.response?.data?.toString() ?? e.message ?? 'Network error occurred');
     } catch (e) {
-      throw Exception(e.toString());
+      throw Exception(userFriendlyErrorMessage(e));
     }
   }
 
@@ -207,7 +208,7 @@ class InspectionRepository {
     } on DioException catch (e) {
       throw Exception(e.response?.data?.toString() ?? e.message ?? 'Network error occurred');
     } catch (e) {
-      throw Exception(e.toString());
+      throw Exception(userFriendlyErrorMessage(e));
     }
   }
 
@@ -222,7 +223,7 @@ class InspectionRepository {
     } on DioException catch (e) {
       throw Exception(e.response?.data?.toString() ?? e.message ?? 'Network error occurred');
     } catch (e) {
-      throw Exception(e.toString());
+      throw Exception(userFriendlyErrorMessage(e));
     }
   }
 }

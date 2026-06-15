@@ -13,6 +13,7 @@ import 'package:wcr_pmis_mobile/src/core/widgets/app_select_sheet_field.dart';
 import 'package:wcr_pmis_mobile/src/core/widgets/app_text_form_field.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/data/datasources/dashboard_remote_data_source.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/domain/utils/quality_inspection_user_access.dart';
+import 'package:wcr_pmis_mobile/src/core/network/user_friendly_error_message.dart';
 
 class AddQualityInspectionFormPage extends ConsumerStatefulWidget {
   const AddQualityInspectionFormPage({
@@ -450,7 +451,7 @@ class _AddQualityInspectionFormPageState
       }
       setState(() {
         _loading = false;
-        _loadError = error.toString();
+        _loadError = userFriendlyErrorMessage(error);
       });
     }
   }
@@ -1117,7 +1118,7 @@ class _AddQualityInspectionFormPageState
       }
       setState(() {
         _loading = false;
-        _loadError = error.toString();
+        _loadError = userFriendlyErrorMessage(error);
       });
     }
   }
@@ -2028,7 +2029,7 @@ class _AddQualityInspectionFormPageState
       await AppDialog.show(
         context: context,
         title: asDraft ? 'Save draft failed' : 'Submit failed',
-        message: error.toString(),
+        message: userFriendlyErrorMessage(error),
         type: AppDialogType.error,
       );
     } finally {

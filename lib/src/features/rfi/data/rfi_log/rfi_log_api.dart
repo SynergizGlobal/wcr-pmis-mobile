@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:wcr_pmis_mobile/src/features/rfi/core/utils/rfi_log_pdf_paths.dart';
 
 class RfiLogApi {
   final Dio dio;
@@ -27,10 +28,29 @@ class RfiLogApi {
     required String txnId,
     required String savePath,
   }) async {
-    await dio.download(
-      "api/rfiLog/pdf/download/$rfiId/$txnId",
-      savePath,
-      options: Options(responseType: ResponseType.bytes),
+    final paths = RfiLogPdfPaths.downloadPathCandidates(
+      rfiId: rfiId,
+      txnId: txnId,
     );
+    DioException? lastError;
+    for (var i = 0; i < paths.length; i++) {
+      try {
+        await dio.download(
+          paths[i],
+          savePath,
+          options: Options(responseType: ResponseType.bytes),
+        );
+        return;
+      } on DioException catch (e) {
+        if (e.response?.statusCode == 404 && i < paths.length - 1) {
+          lastError = e;
+          continue;
+        }
+        rethrow;
+      }
+    }
+    if (lastError != null) {
+      throw lastError;
+    }
   }
 }

@@ -1,9 +1,11 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:wcr_pmis_mobile/src/core/network/user_friendly_error_message.dart';
 import '../../../core/providers/dio_provider.dart';
 import '../../../core/utils/rfi_file_paths.dart';
 import '../../../core/utils/rfi_preview_fetch.dart';
+import '../../../core/widgets/error_state_widget.dart';
 import '../../../core/widgets/rfi_remote_media_preview.dart';
 import '../../../providers/rfi_log/rfi_report_details_provider.dart';
 import '../../../domain/rfi_log/rfi_report_details.dart';
@@ -131,11 +133,12 @@ class RfiPreviewDialog extends ConsumerWidget {
                   data: (data) => _buildContent(context, ref, data),
                   loading: () =>
                       const Center(child: CircularProgressIndicator()),
-                  error: (err, stack) => Center(
-                    child: Text(
-                      'Error loading RFI details: $err',
-                      style: const TextStyle(color: Colors.red),
-                    ),
+                  error: (Object err, StackTrace stack) => ErrorStateWidget(
+                    compact: true,
+                    title: 'Unable to load preview',
+                    message: userFriendlyErrorMessage(err),
+                    onRetry: () =>
+                        ref.invalidate(rfiReportDetailsProvider(rfiId)),
                   ),
                 ),
               ),

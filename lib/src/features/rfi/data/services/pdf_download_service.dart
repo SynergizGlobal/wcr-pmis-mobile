@@ -1,11 +1,13 @@
 import 'dart:io';
 
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
 import '../../core/utils/rfi_file_actions.dart';
+import '../../core/utils/rfi_log_pdf_paths.dart';
 import '../../core/widgets/global_alert_dialog.dart';
 
 class PdfDownloadService {
@@ -24,14 +26,16 @@ class PdfDownloadService {
 
     try {
       final dir = await _downloadsDirectory();
-      final safeRfiId = rfiId.replaceAll(RegExp(r'[\\/:*?"<>|]'), '_');
+      final String normalizedRfiId = RfiLogPdfPaths.downloadRfiId(rfiId);
+      final safeRfiId = normalizedRfiId.replaceAll(RegExp(r'[\\/:*?"<>|]'), '_');
       final fileName = '${safeRfiId}_report.pdf';
       final savePath = p.join(dir.path, fileName);
 
-      await dio.download(
-        '/api/rfiLog/pdf/download/$rfiId/$txnId',
-        savePath,
-        options: Options(extra: {'silentError': true}),
+      await _downloadPdfWithFallback(
+        dio: dio,
+        rfiId: rfiId,
+        txnId: txnId,
+        savePath: savePath,
       );
 
       await _validatePdfFile(File(savePath));
@@ -59,6 +63,49 @@ class PdfDownloadService {
           type: DialogType.error,
         );
       }
+    }
+  }
+
+  /// Tries web-style id (`/` → `_`) first, then raw API id if the server 404s.
+  static Future<void> _downloadPdfWithFallback({
+    required Dio dio,
+    required String rfiId,
+    required String txnId,
+    required String savePath,
+  }) async {
+    final List<String> paths = RfiLogPdfPaths.downloadPathCandidates(
+      rfiId: rfiId,
+      txnId: txnId,
+    );
+
+    DioException? lastDioError;
+    for (var i = 0; i < paths.length; i++) {
+      final String path = paths[i];
+      try {
+        await dio.download(
+          path,
+          savePath,
+          options: Options(extra: {'silentError': true}),
+        );
+        return;
+      } on DioException catch (e) {
+        final bool isNotFound = e.response?.statusCode == 404;
+        final bool hasAnotherCandidate = i < paths.length - 1;
+        if (isNotFound && hasAnotherCandidate) {
+          if (kDebugMode) {
+            debugPrint(
+              'RFI PDF download 404 for $path — retrying with alternate rfiId format',
+            );
+          }
+          lastDioError = e;
+          continue;
+        }
+        rethrow;
+      }
+    }
+
+    if (lastDioError != null) {
+      throw lastDioError;
     }
   }
 

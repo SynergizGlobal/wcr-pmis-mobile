@@ -11,6 +11,7 @@ import 'package:wcr_pmis_mobile/src/core/widgets/app_dialog.dart';
 import 'package:wcr_pmis_mobile/src/core/widgets/app_select_sheet_field.dart';
 import 'package:wcr_pmis_mobile/src/core/widgets/app_step_header.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/data/datasources/dashboard_remote_data_source.dart';
+import 'package:wcr_pmis_mobile/src/core/network/user_friendly_error_message.dart';
 
 class AddProjectFormPage extends ConsumerStatefulWidget {
   const AddProjectFormPage({super.key, this.initialData});
@@ -151,7 +152,7 @@ class _AddProjectFormPageState extends ConsumerState<AddProjectFormPage> {
       }
       setState(() {
         _loading = false;
-        _loadError = error.toString();
+        _loadError = userFriendlyErrorMessage(error);
       });
     }
   }
@@ -786,7 +787,7 @@ class _AddProjectFormPageState extends ConsumerState<AddProjectFormPage> {
       await AppDialog.show(
         context: context,
         title: 'Save Failed',
-        message: error.toString(),
+        message: userFriendlyErrorMessage(error),
         type: AppDialogType.error,
       );
     } finally {

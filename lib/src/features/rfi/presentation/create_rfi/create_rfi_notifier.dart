@@ -573,10 +573,11 @@ class CreateRfiNotifier extends StateNotifier<CreateRfiState> {
   String? _validateEnclosures() {
     final List<String> enclosures =
         state.selectedRfiDescription?.enclosures ?? const <String>[];
-    for (final String enclosure in enclosures) {
-      if (!state.selectedEnclosures.contains(enclosure)) {
-        return 'Please select all required enclosures';
-      }
+    if (enclosures.isEmpty) {
+      return null;
+    }
+    if (state.selectedEnclosures.isEmpty) {
+      return 'Please select at least one enclosure';
     }
     return null;
   }

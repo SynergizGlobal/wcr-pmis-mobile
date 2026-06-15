@@ -13,6 +13,7 @@ import '../../core/widgets/app_dropdown.dart';
 import '../../core/widgets/error_state_widget.dart';
 import '../../core/widgets/global_alert_dialog.dart';
 import 'package:wcr_pmis_mobile/src/features/rfi/presentation/rfi_theme.dart';
+import 'package:wcr_pmis_mobile/src/core/network/user_friendly_error_message.dart';
 
 class ValidationScreen extends ConsumerWidget {
   const ValidationScreen({super.key});
@@ -107,7 +108,8 @@ class ValidationScreen extends ConsumerWidget {
                       hasScrollBody: false,
                       child: ErrorStateWidget(
                         onRetry: () => notifier.fetchValidations(),
-                        message: 'Failed to load validations. Please try again.',
+                        message: state.errorMessage ??
+                            'Failed to load validations. Please try again.',
                       ),
                     )
                   else if (state.filteredItems.isEmpty)
@@ -237,7 +239,7 @@ class ValidationScreen extends ConsumerWidget {
                                                 context,
                                                 title: 'PDF generation failed',
                                                 message:
-                                                    'Failed to generate PDF: ${e.toString()}',
+                                                    'Failed to generate PDF: ${userFriendlyErrorMessage(e)}',
                                                 type: DialogType.error,
                                               );
                                             }

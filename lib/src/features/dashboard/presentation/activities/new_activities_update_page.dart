@@ -8,6 +8,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:wcr_pmis_mobile/src/core/widgets/app_dialog.dart';
 import 'package:wcr_pmis_mobile/src/core/widgets/app_table_pagination_footer.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/data/datasources/dashboard_remote_data_source.dart';
+import 'package:wcr_pmis_mobile/src/core/network/user_friendly_error_message.dart';
 
 class NewActivitiesUpdatePage extends StatefulWidget {
   const NewActivitiesUpdatePage({super.key, required this.dataSource});
@@ -435,7 +436,7 @@ class _NewActivitiesUpdatePageState extends State<NewActivitiesUpdatePage> {
       await AppDialog.show(
         context: context,
         title: 'Unable to load update',
-        message: error.toString(),
+        message: userFriendlyErrorMessage(error),
         type: AppDialogType.error,
       );
     } finally {
@@ -946,7 +947,7 @@ class _NewActivitiesUpdatePageState extends State<NewActivitiesUpdatePage> {
       await AppDialog.show(
         context: context,
         title: 'Update failed',
-        message: error.toString(),
+        message: userFriendlyErrorMessage(error),
         type: AppDialogType.error,
       );
     } finally {
@@ -1110,7 +1111,7 @@ class _NewActivitiesUpdatePageState extends State<NewActivitiesUpdatePage> {
       await AppDialog.show(
         context: context,
         title: 'Unable to load',
-        message: error.toString(),
+        message: userFriendlyErrorMessage(error),
         type: AppDialogType.error,
       );
     } finally {
@@ -1309,7 +1310,7 @@ class _NewActivitiesUpdatePageState extends State<NewActivitiesUpdatePage> {
       await AppDialog.show(
         context: context,
         title: 'Unable to clear filters',
-        message: error.toString(),
+        message: userFriendlyErrorMessage(error),
         type: AppDialogType.error,
       );
     } finally {
@@ -1671,7 +1672,7 @@ class _NewActivitiesUpdatePageState extends State<NewActivitiesUpdatePage> {
       await AppDialog.show(
         context: context,
         title: 'Unable to load activities',
-        message: error.toString(),
+        message: userFriendlyErrorMessage(error),
         type: AppDialogType.error,
       );
     } finally {
@@ -1757,7 +1758,7 @@ class _NewActivitiesUpdatePageState extends State<NewActivitiesUpdatePage> {
       await AppDialog.show(
         context: context,
         title: 'Export failed',
-        message: error.toString(),
+        message: userFriendlyErrorMessage(error),
         type: AppDialogType.error,
       );
     } finally {
@@ -1817,7 +1818,7 @@ class _NewActivitiesUpdatePageState extends State<NewActivitiesUpdatePage> {
       await AppDialog.show(
         context: context,
         title: 'Upload failed',
-        message: error.toString(),
+        message: userFriendlyErrorMessage(error),
         type: AppDialogType.error,
       );
     } finally {

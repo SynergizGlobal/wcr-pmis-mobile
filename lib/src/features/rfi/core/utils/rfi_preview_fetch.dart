@@ -19,9 +19,38 @@ abstract final class RfiPreviewFetch {
 
   static final RegExp _windowsOrDrivePathPattern = RegExp(r'^[A-Za-z]:[/\\]');
 
+  /// Windows paths returned by the RFI API (server disk), not readable on device.
+  static bool isServerWindowsUploadPath(String path) {
+    final trimmed = path.trim();
+    if (!_windowsOrDrivePathPattern.hasMatch(trimmed)) {
+      return false;
+    }
+    final normalized = trimmed.replaceAll('\\', '/').toLowerCase();
+    return normalized.contains('/uploads/') ||
+        normalized.contains('rfi-inspections') ||
+        normalized.contains('rfi-enclosures') ||
+        normalized.contains('supporting-documents') ||
+        normalized.contains('inspection-site-documents') ||
+        normalized.contains('inspection-supporting') ||
+        normalized.contains('rfi-supporting');
+  }
+
+  static String normalizeServerFilesystemPath(String path) {
+    return path.trim().replaceAll('\\', '/');
+  }
+
   static List<String> resolveFetchCandidates(String urlOrPath) {
-    final trimmed = urlOrPath.trim();
+    var trimmed = urlOrPath.trim();
     if (trimmed.isEmpty) return [];
+
+    if (isServerWindowsUploadPath(trimmed)) {
+      trimmed = normalizeServerFilesystemPath(trimmed);
+      final String fileName = trimmed.split('/').last;
+      return <String>[
+        trimmed,
+        ..._bareFileNameCandidates(fileName),
+      ];
+    }
 
     if (isLocalDevicePath(trimmed)) {
       return [trimmed];
@@ -120,9 +149,13 @@ abstract final class RfiPreviewFetch {
   }
 
   static Future<Uint8List> fetchBytes(Dio dio, String urlOrPath) async {
-    final trimmed = urlOrPath.trim();
+    var trimmed = urlOrPath.trim();
     if (trimmed.isEmpty) {
       throw Exception('Empty file path');
+    }
+
+    if (isServerWindowsUploadPath(trimmed)) {
+      trimmed = normalizeServerFilesystemPath(trimmed);
     }
 
     if (isLocalDevicePath(trimmed)) {
@@ -255,6 +288,10 @@ abstract final class RfiPreviewFetch {
       return true;
     }
 
+    if (isServerWindowsUploadPath(trimmed)) {
+      return false;
+    }
+
     if (_windowsOrDrivePathPattern.hasMatch(trimmed)) {
       return true;
     }
@@ -263,6 +300,9 @@ abstract final class RfiPreviewFetch {
   }
 
   static bool _isAbsoluteServerPath(String path) {
+    if (isServerWindowsUploadPath(path)) {
+      return true;
+    }
     return path.startsWith('/home/ec2-user/') ||
         path.startsWith('/home/') ||
         _isServerFilesystemPath(path);
@@ -270,6 +310,7 @@ abstract final class RfiPreviewFetch {
 
   static bool _isServerFilesystemPath(String path) {
     if (isLocalDevicePath(path)) return false;
+    if (isServerWindowsUploadPath(path)) return true;
     if (path.contains(r'\') && !_windowsOrDrivePathPattern.hasMatch(path)) {
       return true;
     }
@@ -339,6 +380,7 @@ abstract final class RfiPreviewFetch {
   static bool isRemoteInspectablePath(String path) {
     final trimmed = path.trim();
     if (trimmed.isEmpty) return false;
+    if (isServerWindowsUploadPath(trimmed)) return true;
     if (isLocalDevicePath(trimmed)) return false;
     if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
       return true;

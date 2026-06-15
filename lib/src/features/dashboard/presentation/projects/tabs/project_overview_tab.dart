@@ -4,6 +4,7 @@ import 'package:wcr_pmis_mobile/src/features/dashboard/domain/utils/project_prog
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/projects/providers/project_progress_provider.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/projects/widgets/progress_segment_style.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/projects/widgets/progress_strip_chart.dart';
+import 'package:wcr_pmis_mobile/src/core/network/user_friendly_error_message.dart';
 
 class ProjectOverviewTab extends ConsumerWidget {
   const ProjectOverviewTab({
@@ -42,7 +43,7 @@ class ProjectOverviewTab extends ConsumerWidget {
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
               Text(
-                'Unable to load project overview.\n$error',
+                userFriendlyErrorMessage(error),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 12),

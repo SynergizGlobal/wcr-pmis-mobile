@@ -6,6 +6,7 @@ import 'package:wcr_pmis_mobile/src/core/widgets/app_select_sheet_field.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/domain/entities/home_dashboard_data.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/projects/project_summary_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/projects/providers/project_details_provider.dart';
+import 'package:wcr_pmis_mobile/src/core/network/user_friendly_error_message.dart';
 
 class ProjectDetailsPage extends ConsumerStatefulWidget {
   const ProjectDetailsPage({super.key, required this.projectTypeName});
@@ -109,7 +110,7 @@ class _ProjectDetailsPageState extends ConsumerState<ProjectDetailsPage>
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (Object error, StackTrace _) => Center(
               child: Text(
-                'Unable to load project details.\n$error',
+                userFriendlyErrorMessage(error),
                 textAlign: TextAlign.center,
               ),
             ),

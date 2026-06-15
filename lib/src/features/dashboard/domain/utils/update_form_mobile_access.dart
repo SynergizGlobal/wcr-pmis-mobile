@@ -15,6 +15,7 @@ class UpdateFormMobileAccess {
     '1240', // Utility Shifting
     '1394', // Quality Inspection
     '10', // Contracts/Tenders
+    '17', // Design & Drawing
   };
 
   /// Stable [UpdateFormSubItem.formId] values with native mobile screens.
@@ -85,6 +86,10 @@ class UpdateFormMobileAccess {
     if ((nameKey.contains('contract') && nameKey.contains('tender')) ||
         urlKey.contains('contract') ||
         urlKey.contains('tender')) {
+      return true;
+    }
+    if ((nameKey.contains('design') && nameKey.contains('drawing')) ||
+        urlKey.contains('design')) {
       return true;
     }
     return false;

@@ -13,6 +13,7 @@ import 'package:wcr_pmis_mobile/src/core/widgets/app_table_pagination_footer.dar
 import 'package:wcr_pmis_mobile/src/features/dashboard/data/datasources/dashboard_remote_data_source.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/projects/add_project_form_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/projects/providers/project_list_provider.dart';
+import 'package:wcr_pmis_mobile/src/core/network/user_friendly_error_message.dart';
 
 class AddProjectPage extends ConsumerStatefulWidget {
   const AddProjectPage({super.key});
@@ -73,7 +74,7 @@ class _AddProjectPageState extends ConsumerState<AddProjectPage> {
             data: (List<Map<String, dynamic>> rows) => _content(context, rows),
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (Object error, StackTrace _) =>
-                _errorView(context, error.toString()),
+                _errorView(context, userFriendlyErrorMessage(error)),
           ),
         ),
       ),
@@ -779,7 +780,7 @@ class _AddProjectPageState extends ConsumerState<AddProjectPage> {
       await AppDialog.show(
         context: context,
         title: 'Delete Failed',
-        message: error.toString(),
+        message: userFriendlyErrorMessage(error),
         type: AppDialogType.error,
       );
     }

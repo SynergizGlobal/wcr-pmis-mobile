@@ -7,6 +7,7 @@ import 'package:pdfx/pdfx.dart';
 
 import '../utils/rfi_media_utils.dart';
 import '../utils/rfi_preview_fetch.dart';
+import 'package:wcr_pmis_mobile/src/core/network/user_friendly_error_message.dart';
 
 class RfiRemoteMediaPreview extends StatefulWidget {
   const RfiRemoteMediaPreview({
@@ -99,7 +100,7 @@ class _RfiRemoteMediaPreviewState extends State<RfiRemoteMediaPreview> {
       debugPrint('RfiRemoteMediaPreview error for ${widget.source}: $e');
       if (mounted) {
         setState(() {
-          _error = e.toString();
+          _error = userFriendlyErrorMessage(e);
           _loading = false;
         });
       }

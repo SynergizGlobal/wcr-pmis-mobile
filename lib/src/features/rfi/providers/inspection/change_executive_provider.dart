@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/inspection/change_executive_repository.dart';
+import 'package:wcr_pmis_mobile/src/core/network/user_friendly_error_message.dart';
 
 class ChangeExecutiveState {
   final bool isLoading;
@@ -46,7 +47,7 @@ class ChangeExecutiveNotifier extends StateNotifier<ChangeExecutiveState> {
       final names = await _repository.getEngineerNames(userId, contractId);
       state = state.copyWith(isLoading: false, engineerNames: names);
     } catch (e) {
-      state = state.copyWith(isLoading: false, error: e.toString());
+      state = state.copyWith(isLoading: false, error: userFriendlyErrorMessage(e));
     }
   }
 
@@ -65,7 +66,7 @@ class ChangeExecutiveNotifier extends StateNotifier<ChangeExecutiveState> {
       state = state.copyWith(isLoading: false, successMessage: message);
       return true;
     } catch (e) {
-      state = state.copyWith(isLoading: false, error: e.toString());
+      state = state.copyWith(isLoading: false, error: userFriendlyErrorMessage(e));
       return false;
     }
   }

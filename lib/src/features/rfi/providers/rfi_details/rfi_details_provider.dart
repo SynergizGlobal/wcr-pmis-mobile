@@ -7,6 +7,7 @@ import '../../domain/rfi_details/rfi_detail_model.dart';
 import '../../domain/rfi_details/rfi_inspection_model.dart';
 import '../../domain/rfi_details/enclosure_checklist_item.dart';
 import '../../data/rfi_details/rfi_details_api.dart';
+import 'package:wcr_pmis_mobile/src/core/network/user_friendly_error_message.dart';
 
 
 part 'rfi_details_state.dart';
@@ -95,7 +96,7 @@ class RfiDetailsNotifier extends _$RfiDetailsNotifier {
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
-        errorMessage: e.toString(),
+        errorMessage: userFriendlyErrorMessage(e),
       );
     }
   }

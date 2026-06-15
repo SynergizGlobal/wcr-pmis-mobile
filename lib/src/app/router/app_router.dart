@@ -14,6 +14,7 @@ import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/contracts/co
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/contracts/contracts_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/contractors/contractor_form_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/contractors/contractors_page.dart';
+import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/design_drawing/design_drawing_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/utility_shifting/add_utility_shifting_form_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/reports/ai_custom_report_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/home/dashboard_page.dart';
@@ -128,6 +129,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         return LoginPage.routePath;
       }
       if (!loggedIn && loc == ContractFormPage.routePath) {
+        return LoginPage.routePath;
+      }
+      if (!loggedIn && loc == DesignDrawingPage.routePath) {
         return LoginPage.routePath;
       }
       if (loggedIn &&
@@ -352,6 +356,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             initialRecord: initialRecord,
           );
         },
+      ),
+      GoRoute(
+        path: DesignDrawingPage.routePath,
+        name: DesignDrawingPage.routeName,
+        builder: (BuildContext context, GoRouterState state) =>
+            DesignDrawingPage(
+              dataSource: ref.read(dashboardRemoteDataSourceProvider),
+            ),
       ),
       GoRoute(
         path: ContractorsPage.routePath,

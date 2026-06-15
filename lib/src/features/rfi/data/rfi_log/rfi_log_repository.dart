@@ -1,6 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../core/providers/dio_provider.dart';
 import '../../core/utils/rfi_file_paths.dart';
+import '../../core/utils/rfi_log_pdf_paths.dart';
 import '../../domain/rfi_log/rfi_log_item.dart';
 import '../../domain/rfi_log/rfi_report_details.dart';
 import 'rfi_log_api.dart';
@@ -30,7 +31,7 @@ class RfiLogRepository {
         id: json['id'] is int
             ? json['id'] as int
             : int.tryParse(json['id']?.toString() ?? '0') ?? 0,
-        rfiId: json['rfi_Id']?.toString() ?? json['rfiId']?.toString() ?? 'N/A',
+        rfiId: RfiLogPdfPaths.readRfiIdFromJson(json),
         dateOfSubmission: json['dateOfSubmission']?.toString() ?? 'N/A',
         structure: (json['element']?.toString() ?? json['structure']?.toString()) ?? 'N/A',
         rfiDescription: json['activity']?.toString() ?? 

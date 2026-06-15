@@ -210,7 +210,8 @@ class RfiLogScreen extends ConsumerWidget {
                       SliverFillRemaining(
                         child: ErrorStateWidget(
                           onRetry: () => notifier.fetchRfiLogs(),
-                          message: 'Failed to load RFI logs. Please try again.',
+                          message: state.errorMessage ??
+                              'Failed to load RFI logs. Please try again.',
                         ),
                       )
                     else ...[

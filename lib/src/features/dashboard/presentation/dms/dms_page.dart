@@ -7,6 +7,7 @@ import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/dms/tabs/dms
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/dms/tabs/dms_filter_form_tab.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/dms/tabs/dms_folders_tab.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/dms/widgets/dms_upload_letter_dialog.dart';
+import 'package:wcr_pmis_mobile/src/core/network/user_friendly_error_message.dart';
 
 class DmsPage extends StatefulWidget {
   const DmsPage({super.key, required this.dataSource});
@@ -306,7 +307,7 @@ class _CorrespondenceTabState extends State<_CorrespondenceTab> {
       }
       setState(() {
         _loading = false;
-        _loadError = error.toString();
+        _loadError = userFriendlyErrorMessage(error);
         _rows = <Map<String, dynamic>>[];
       });
     }

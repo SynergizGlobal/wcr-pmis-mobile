@@ -22,6 +22,7 @@ import 'package:wcr_pmis_mobile/src/features/rfi/presentation/pages/rfi_dashboar
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/activities/new_activities_update_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/domain/utils/quality_inspection_user_access.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/domain/utils/update_form_mobile_access.dart';
+import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/design_drawing/design_drawing_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/contracts/contracts_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/contractors/contractors_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/dms/dms_page.dart';
@@ -33,6 +34,7 @@ import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/home/provide
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/home/providers/update_forms_provider.dart';
 import 'package:wcr_pmis_mobile/src/features/profile/presentation/pages/profile_page.dart';
 import 'package:wcr_pmis_mobile/src/features/settings/presentation/providers/dashboard_view_mode_provider.dart';
+import 'package:wcr_pmis_mobile/src/core/network/user_friendly_error_message.dart';
 
 enum _HomeSection {
   home,
@@ -539,7 +541,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
               await AppDialog.show(
                 context: context,
                 title: 'Home Load Error',
-                message: error.toString(),
+                message: userFriendlyErrorMessage(error),
                 type: AppDialogType.error,
                 actions: <AppDialogAction>[
                   AppDialogAction(
@@ -984,6 +986,14 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         return;
       }
       context.pushNamed(ContractsPage.routeName);
+      return;
+    }
+    if (urlKey.contains('design') ||
+        (combinedKey.contains('design') && combinedKey.contains('drawing'))) {
+      if (!mounted) {
+        return;
+      }
+      context.pushNamed(DesignDrawingPage.routeName);
       return;
     }
     await AppDialog.show(

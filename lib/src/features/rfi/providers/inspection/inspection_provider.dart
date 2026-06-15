@@ -3,6 +3,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/inspection/inspection_repository.dart';
 import 'inspection_state.dart';
+import 'package:wcr_pmis_mobile/src/core/network/user_friendly_error_message.dart';
 
 final inspectionProvider =
     StateNotifierProvider<InspectionNotifier, InspectionState>((ref) {
@@ -29,7 +30,7 @@ class InspectionNotifier extends StateNotifier<InspectionState> {
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
-        error: e.toString(),
+        error: userFriendlyErrorMessage(e),
       );
     }
   }

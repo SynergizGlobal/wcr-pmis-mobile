@@ -2,6 +2,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../data/rfi_log/rfi_log_repository.dart';
 import '../../domain/rfi_log/rfi_log_item.dart';
 import 'rfi_log_state.dart';
+import 'package:wcr_pmis_mobile/src/core/network/user_friendly_error_message.dart';
 
 part 'rfi_log_provider.g.dart';
 
@@ -49,7 +50,7 @@ class RfiLogNotifier extends _$RfiLogNotifier {
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
-        errorMessage: e.toString(),
+        errorMessage: userFriendlyErrorMessage(e),
       );
     }
   }

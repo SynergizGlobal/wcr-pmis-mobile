@@ -2,12 +2,12 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:wcr_pmis_mobile/src/core/network/user_friendly_error_message.dart';
 
 class NetworkConnectivity {
   const NetworkConnectivity();
 
-  static const String noInternetMessage =
-      'No internet connection. Please check your network and try again.';
+  static const String noInternetMessage = noInternetUserMessage;
 
   Future<bool> hasConnection() async {
     try {

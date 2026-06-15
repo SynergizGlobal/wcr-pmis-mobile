@@ -10,6 +10,7 @@ import 'package:wcr_pmis_mobile/src/features/rfi/presentation/pages/rfi_list_pag
 import 'package:wcr_pmis_mobile/src/features/rfi/presentation/providers/rfi_providers.dart';
 import 'package:wcr_pmis_mobile/src/features/rfi/presentation/rfi_theme.dart';
 import 'package:wcr_pmis_mobile/src/features/rfi/presentation/widgets/rfi_metric_card.dart';
+import 'package:wcr_pmis_mobile/src/core/network/user_friendly_error_message.dart';
 
 class RfiHomeTab extends ConsumerWidget {
   const RfiHomeTab({
@@ -68,7 +69,7 @@ class RfiHomeTab extends ConsumerWidget {
               child: Center(child: CircularProgressIndicator()),
             ),
             error: (Object error, StackTrace stack) => RfiHomeError(
-              message: error.toString(),
+              message: userFriendlyErrorMessage(error),
               onRetry: onRetry,
             ),
             data: (RfiDashboardSnapshot snapshot) => _MetricsGrid(

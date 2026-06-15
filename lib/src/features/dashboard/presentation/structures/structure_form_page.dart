@@ -5,6 +5,7 @@ import 'package:wcr_pmis_mobile/src/core/widgets/app_dialog.dart';
 import 'package:wcr_pmis_mobile/src/core/widgets/app_form_field_style.dart';
 import 'package:wcr_pmis_mobile/src/core/widgets/app_select_sheet_field.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/data/datasources/dashboard_remote_data_source.dart';
+import 'package:wcr_pmis_mobile/src/core/network/user_friendly_error_message.dart';
 
 enum StructureFormMode { add, edit }
 
@@ -125,7 +126,7 @@ class _StructureFormPageState extends State<StructureFormPage> {
       await AppDialog.show(
         context: context,
         title: 'Unable to load form',
-        message: error.toString(),
+        message: userFriendlyErrorMessage(error),
         type: AppDialogType.error,
       );
     } finally {
@@ -156,7 +157,7 @@ class _StructureFormPageState extends State<StructureFormPage> {
       await AppDialog.show(
         context: context,
         title: 'Unable to load project data',
-        message: error.toString(),
+        message: userFriendlyErrorMessage(error),
         type: AppDialogType.error,
       );
     } finally {
@@ -190,7 +191,7 @@ class _StructureFormPageState extends State<StructureFormPage> {
       await AppDialog.show(
         context: context,
         title: 'Unable to load structure data',
-        message: error.toString(),
+        message: userFriendlyErrorMessage(error),
         type: AppDialogType.error,
       );
     } finally {
@@ -337,7 +338,7 @@ class _StructureFormPageState extends State<StructureFormPage> {
         context: context,
         title: 'Delete failed',
         message:
-            'Delete structure type is integrated but backend returned an error.\n\n$error',
+            userFriendlyErrorMessage(error, fallback: 'Unable to delete structure type. Please try again.'),
         type: AppDialogType.error,
       );
       setState(() {
@@ -367,7 +368,7 @@ class _StructureFormPageState extends State<StructureFormPage> {
           context: context,
           title: 'Delete failed',
           message:
-              'Delete structure row is integrated but backend returned an error.\n\n$error',
+              userFriendlyErrorMessage(error, fallback: 'Unable to delete structure row. Please try again.'),
           type: AppDialogType.error,
         );
       } finally {
@@ -463,7 +464,7 @@ class _StructureFormPageState extends State<StructureFormPage> {
       await AppDialog.show(
         context: context,
         title: 'Save failed',
-        message: error.toString(),
+        message: userFriendlyErrorMessage(error),
         type: AppDialogType.error,
       );
     } finally {

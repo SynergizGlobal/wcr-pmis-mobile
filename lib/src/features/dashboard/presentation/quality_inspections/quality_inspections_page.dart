@@ -6,6 +6,7 @@ import 'package:wcr_pmis_mobile/src/core/widgets/app_table_pagination_footer.dar
 import 'package:wcr_pmis_mobile/src/features/dashboard/data/datasources/dashboard_remote_data_source.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/domain/utils/quality_inspection_user_access.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/quality_inspections/add_quality_inspection_form_page.dart';
+import 'package:wcr_pmis_mobile/src/core/network/user_friendly_error_message.dart';
 
 class QualityInspectionsPage extends ConsumerStatefulWidget {
   const QualityInspectionsPage({super.key, required this.dataSource});
@@ -155,7 +156,7 @@ class _QualityInspectionsPageState extends ConsumerState<QualityInspectionsPage>
       }
       setState(() {
         _filtersLoading = false;
-        _filtersLoadError = error.toString();
+        _filtersLoadError = userFriendlyErrorMessage(error);
       });
     }
   }
@@ -188,7 +189,7 @@ class _QualityInspectionsPageState extends ConsumerState<QualityInspectionsPage>
       setState(() {
         _loading = false;
         _listLoaded = true;
-        _loadError = error.toString();
+        _loadError = userFriendlyErrorMessage(error);
         _allRows = <Map<String, dynamic>>[];
       });
     }

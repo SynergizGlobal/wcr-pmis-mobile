@@ -2,6 +2,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../domain/rfi_list/rfi_list_item.dart';
 import '../../data/rfi_list/rfi_list_repository.dart';
 import 'rfi_list_state.dart';
+import 'package:wcr_pmis_mobile/src/core/network/user_friendly_error_message.dart';
 
 part 'rfi_list_provider.g.dart';
 
@@ -27,7 +28,7 @@ class RfiListNotifier extends _$RfiListNotifier {
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
-        errorMessage: e.toString(),
+        errorMessage: userFriendlyErrorMessage(e),
       );
     }
   }
@@ -114,7 +115,7 @@ class RejectedRfiListNotifier extends _$RejectedRfiListNotifier {
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
-        errorMessage: e.toString(),
+        errorMessage: userFriendlyErrorMessage(e),
       );
     }
   }
@@ -202,7 +203,7 @@ class ScheduledRfiListNotifier extends _$ScheduledRfiListNotifier {
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
-        errorMessage: e.toString(),
+        errorMessage: userFriendlyErrorMessage(e),
       );
     }
   }
@@ -285,7 +286,7 @@ class RescheduledRfiListNotifier extends _$RescheduledRfiListNotifier {
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
-        errorMessage: e.toString(),
+        errorMessage: userFriendlyErrorMessage(e),
       );
     }
   }
@@ -368,7 +369,7 @@ class SubmittedRfiListNotifier extends _$SubmittedRfiListNotifier {
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
-        errorMessage: e.toString(),
+        errorMessage: userFriendlyErrorMessage(e),
       );
     }
   }
@@ -455,7 +456,7 @@ class ApprovedRfiListNotifier extends _$ApprovedRfiListNotifier {
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
-        errorMessage: e.toString(),
+        errorMessage: userFriendlyErrorMessage(e),
       );
     }
   }
@@ -538,7 +539,7 @@ class ClosedRfiListNotifier extends _$ClosedRfiListNotifier {
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
-        errorMessage: e.toString(),
+        errorMessage: userFriendlyErrorMessage(e),
       );
     }
   }

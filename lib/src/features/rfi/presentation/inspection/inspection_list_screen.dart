@@ -9,12 +9,17 @@ import '../../providers/auth/auth_provider.dart';
 import '../../core/utils/user_role.dart';
 import '../../core/widgets/table_search_header.dart';
 import '../../core/widgets/table_pagination_footer.dart';
+import '../../core/widgets/error_state_widget.dart';
 import '../../core/widgets/global_alert_dialog.dart';
 import './widgets/change_executive_dialog.dart';
 import '../widgets/delete_rfi_dialog.dart';
 import '../../domain/utils/rfi_list_item_mapper.dart';
 import './widgets/upload_attachment_dialog.dart';
 import './widgets/upload_test_results_dialog.dart';
+import 'package:wcr_pmis_mobile/src/core/auth/wcr_unauthorized.dart';
+import 'package:wcr_pmis_mobile/src/core/auth/wcr_session_expired_handler.dart';
+import 'package:wcr_pmis_mobile/src/core/network/user_friendly_error_message.dart';
+import 'package:wcr_pmis_mobile/src/core/widgets/wcr_session_expired_error_listener.dart';
 import 'package:wcr_pmis_mobile/src/features/rfi/presentation/rfi_theme.dart';
 
 class InspectionListScreen extends ConsumerWidget {
@@ -34,59 +39,67 @@ class InspectionListScreen extends ConsumerWidget {
 
     final ColorScheme scheme = Theme.of(context).colorScheme;
 
-    return Scaffold(
-      backgroundColor: RfiTheme.scaffoldBackground(context),
-      appBar: AppBar(
-        title: const Text('RFI INSPECTION LIST'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.pop(),
+    final bool sessionExpired = state.error != null &&
+        isWcrSessionExpiredError(state.error!);
+
+    return WcrSessionExpiredErrorListener(
+      error: state.error,
+      child: Scaffold(
+        backgroundColor: RfiTheme.scaffoldBackground(context),
+        appBar: AppBar(
+          title: const Text('RFI INSPECTION LIST'),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () => context.pop(),
+          ),
         ),
-      ),
-      body: SafeArea(
-        top: false,
-        child: state.isLoading && state.allItems.isEmpty
-              ? const Center(child: CircularProgressIndicator())
-              : Column(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                    child: Container(
-                      padding: const EdgeInsets.all(16.0),
-                      decoration: RfiTheme.surfaceCardDecoration(scheme),
-                      child: TableSearchHeader(
-                        rowsPerPage: state.rowsPerPage,
-                        onRowsPerPageChanged: (value) {
-                          if (value != null) notifier.updateRowsPerPage(value);
-                        },
-                        onSearchChanged: notifier.search,
+        body: SafeArea(
+          top: false,
+          child: state.isLoading && state.allItems.isEmpty
+                ? const Center(child: CircularProgressIndicator())
+                : Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                      child: Container(
+                        padding: const EdgeInsets.all(16.0),
+                        decoration: RfiTheme.surfaceCardDecoration(scheme),
+                        child: TableSearchHeader(
+                          rowsPerPage: state.rowsPerPage,
+                          onRowsPerPageChanged: (value) {
+                            if (value != null) notifier.updateRowsPerPage(value);
+                          },
+                          onSearchChanged: notifier.search,
+                        ),
                       ),
                     ),
-                  ),
 
-                  Expanded(
-                    child: state.error != null
-                        ? Center(
-                            child: Text('Error: ${state.error}',
-                                style: const TextStyle(color: Colors.red)),
-                          )
-                        : RefreshIndicator(
-                            onRefresh: () => notifier.fetchInspections(),
-                            child: _buildTableArea(context, ref, state, notifier, appRole),
-                          ),
-                  ),
-
-                  if (state.error == null && state.filteredItems.isNotEmpty)
-                    TablePaginationFooter(
-                      startIndex: totalItems == 0 ? 0 : startIndex,
-                      endIndex: endIndex,
-                      totalItems: totalItems,
-                      currentPage: state.currentPage,
-                      totalPages: totalPages,
-                      onPageChanged: notifier.updatePage,
+                    Expanded(
+                      child: state.error != null && !sessionExpired
+                          ? ErrorStateWidget(
+                              compact: true,
+                              title: 'Unable to load inspections',
+                              message: state.error!,
+                              onRetry: () => notifier.fetchInspections(),
+                            )
+                          : RefreshIndicator(
+                              onRefresh: () => notifier.fetchInspections(),
+                              child: _buildTableArea(context, ref, state, notifier, appRole),
+                            ),
                     ),
-                ],
-              ),
+
+                    if (state.error == null && state.filteredItems.isNotEmpty)
+                      TablePaginationFooter(
+                        startIndex: totalItems == 0 ? 0 : startIndex,
+                        endIndex: endIndex,
+                        totalItems: totalItems,
+                        currentPage: state.currentPage,
+                        totalPages: totalPages,
+                        onPageChanged: notifier.updatePage,
+                      ),
+                  ],
+                ),
+        ),
       ),
     );
   }
@@ -426,17 +439,23 @@ class InspectionListScreen extends ConsumerWidget {
                   );
                 }
               } catch (e) {
-                if (context.mounted) {
-                  final errorStr = e.toString();
-                  GlobalAlertDialog.show(
-                    context,
-                    title: 'Oops! Something went wrong',
-                    message: errorStr.contains('400') || errorStr.toLowerCase().contains('inspection approval status') 
-                      ? errorStr.replaceAll('Exception: ', '')
-                      : 'Unable to send for validation: $e',
-                    type: DialogType.error,
-                  );
+                if (!context.mounted) {
+                  return;
                 }
+                if (isWcrSessionExpiredError(e)) {
+                  await handleWcrSessionExpired(context: context, ref: ref);
+                  return;
+                }
+                final errorStr = userFriendlyErrorMessage(e);
+                GlobalAlertDialog.show(
+                  context,
+                  title: 'Oops! Something went wrong',
+                  message: errorStr.contains('400') ||
+                          errorStr.toLowerCase().contains('inspection approval status')
+                      ? errorStr
+                      : 'Unable to send for validation: $errorStr',
+                  type: DialogType.error,
+                );
               }
             },
             style: RfiTheme.primaryElevated(
