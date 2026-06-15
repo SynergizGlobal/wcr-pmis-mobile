@@ -10,6 +10,7 @@ import 'package:wcr_pmis_mobile/src/features/dashboard/data/datasources/dashboar
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/issues/add_issue_form_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/projects/add_project_form_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/projects/add_project_page.dart';
+import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/contracts/contract_form_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/contracts/contracts_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/contractors/contractor_form_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/contractors/contractors_page.dart';
@@ -121,6 +122,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         return LoginPage.routePath;
       }
       if (!loggedIn && loc == ContractorFormPage.routePath) {
+        return LoginPage.routePath;
+      }
+      if (!loggedIn && loc == ContractsPage.routePath) {
+        return LoginPage.routePath;
+      }
+      if (!loggedIn && loc == ContractFormPage.routePath) {
         return LoginPage.routePath;
       }
       if (loggedIn &&
@@ -327,6 +334,24 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             ContractsPage(
               dataSource: ref.read(dashboardRemoteDataSourceProvider),
             ),
+      ),
+      GoRoute(
+        path: ContractFormPage.routePath,
+        name: ContractFormPage.routeName,
+        builder: (BuildContext context, GoRouterState state) {
+          final String? contractId =
+              state.uri.queryParameters['contract_id']?.trim();
+          final Map<String, dynamic>? initialRecord =
+              state.extra is Map<String, dynamic>
+              ? Map<String, dynamic>.from(state.extra! as Map<String, dynamic>)
+              : null;
+          return ContractFormPage(
+            dataSource: ref.read(dashboardRemoteDataSourceProvider),
+            contractId:
+                contractId != null && contractId.isNotEmpty ? contractId : null,
+            initialRecord: initialRecord,
+          );
+        },
       ),
       GoRoute(
         path: ContractorsPage.routePath,

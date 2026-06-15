@@ -508,6 +508,139 @@ class DashboardRemoteDataSource {
     return _normalizeListResponse(response.data);
   }
 
+  Future<Map<String, dynamic>> fetchAddContractFormData() async {
+    final Response<dynamic> response = await _dio.post<dynamic>(
+      '/contract/add-contract-form',
+      data: const <String, dynamic>{},
+      options: _requestOptions,
+    );
+    return _normalizeResponse(response.data);
+  }
+
+  Future<Map<String, dynamic>> fetchEditContractFormData({
+    required String contractId,
+  }) async {
+    final String trimmedId = contractId.trim();
+    final Response<dynamic> response = await _dio.post<dynamic>(
+      '/contract/add-contract-form',
+      data: <String, dynamic>{'contract_id': trimmedId},
+      options: _requestOptions,
+    );
+    final Map<String, dynamic> data = _normalizeResponse(response.data);
+    if (_contractFormHasRecord(data, trimmedId)) {
+      return data;
+    }
+
+    final Response<dynamic> getResponse = await _dio.get<dynamic>(
+      '/contract/add-contract-form',
+      queryParameters: <String, String>{'contract_id': trimmedId},
+      options: _requestOptions,
+    );
+    return _normalizeResponse(getResponse.data);
+  }
+
+  bool _contractFormHasRecord(Map<String, dynamic> data, String contractId) {
+    final dynamic statusRaw = data['contract_Status'] ?? data['contractStatus'];
+    if (statusRaw is! List) {
+      return false;
+    }
+    for (final dynamic item in statusRaw) {
+      if (item is! Map) {
+        continue;
+      }
+      final Map<Object?, Object?> map = item as Map<Object?, Object?>;
+      final String id = _stringValue(map['contract_id'] ?? map['contract_id_fk']);
+      if (id == contractId) {
+        return true;
+      }
+      final String name = _stringValue(map['contract_name']);
+      if (name.isNotEmpty) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  String _stringValue(dynamic raw) {
+    if (raw == null) {
+      return '';
+    }
+    final String value = raw.toString().trim();
+    if (value.isEmpty || value.toLowerCase() == 'null') {
+      return '';
+    }
+    return value;
+  }
+
+  Future<List<Map<String, dynamic>>> fetchContractWorkStatusForForm({
+    required String contractAwarded,
+  }) async {
+    final Response<dynamic> response = await _dio.get<dynamic>(
+      '/contract/ajax/getContractStatusLIstFormContractFom',
+      queryParameters: <String, String>{
+        'contract_status': contractAwarded,
+      },
+      options: _requestOptions,
+    );
+    return _normalizeListResponse(response.data);
+  }
+
+  Future<List<Map<String, dynamic>>> fetchContractExecutivesForDepartment({
+    required String departmentFk,
+  }) async {
+    final Response<dynamic> response = await _dio.post<dynamic>(
+      '/contract/ajax/getExecutivesListForContractForm',
+      data: <String, dynamic>{'department_fk': departmentFk},
+      options: _requestOptions,
+    );
+    return _normalizeListResponse(response.data);
+  }
+
+  Future<Map<String, dynamic>> submitAddContract(
+    Map<String, dynamic> payload,
+  ) async {
+    final Response<dynamic> response = await _dio.post<dynamic>(
+      '/contract/add-contract',
+      data: _contractPayloadFormData(payload),
+      options: Options(
+        receiveTimeout: _dashboardReceiveTimeout,
+        connectTimeout: _dashboardConnectTimeout,
+        contentType: null,
+      ),
+    );
+    return _normalizeResponse(response.data);
+  }
+
+  Future<Map<String, dynamic>> submitUpdateContract(
+    Map<String, dynamic> payload,
+  ) async {
+    final Response<dynamic> response = await _dio.post<dynamic>(
+      '/contract/update-contract',
+      data: _contractPayloadFormData(payload),
+      options: Options(
+        receiveTimeout: _dashboardReceiveTimeout,
+        connectTimeout: _dashboardConnectTimeout,
+        contentType: null,
+      ),
+    );
+    return _normalizeResponse(response.data);
+  }
+
+  FormData _contractPayloadFormData(Map<String, dynamic> payload) {
+    final FormData formData = FormData();
+    formData.files.add(
+      MapEntry<String, MultipartFile>(
+        'payload',
+        MultipartFile.fromString(
+          jsonEncode(payload),
+          filename: 'blob',
+          contentType: DioMediaType.parse('application/json'),
+        ),
+      ),
+    );
+    return formData;
+  }
+
   Future<Map<String, dynamic>> fetchAiReport(String query) async {
     final response = await _dio.post<dynamic>(
       '/api/ai/report',

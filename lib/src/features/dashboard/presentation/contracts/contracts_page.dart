@@ -3,10 +3,12 @@ import 'dart:io';
 import 'package:excel/excel.dart' hide Border;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:wcr_pmis_mobile/src/core/widgets/app_dialog.dart';
 import 'package:wcr_pmis_mobile/src/core/widgets/app_table_pagination_footer.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/data/datasources/dashboard_remote_data_source.dart';
+import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/contracts/contract_form_page.dart';
 
 class ContractsPage extends StatefulWidget {
   const ContractsPage({super.key, required this.dataSource});
@@ -680,22 +682,24 @@ class _ContractsPageState extends State<ContractsPage> {
   }
 
   Future<void> _onAddTap() async {
-    await AppDialog.show(
-      context: context,
-      title: 'Coming soon',
-      message: 'Add contract will be available in a future update.',
-      type: AppDialogType.info,
-    );
+    final bool? saved = await context.push<bool>(ContractFormPage.routePath);
+    if (saved == true && mounted) {
+      await _reloadAll();
+    }
   }
 
   Future<void> _onEditTap(Map<String, dynamic> row) async {
-    await AppDialog.show(
-      context: context,
-      title: 'Coming soon',
-      message:
-          'Update contract ${_stringValue(row['contract_id'])} will be available in a future update.',
-      type: AppDialogType.info,
+    final String contractId = _stringValue(row['contract_id']);
+    if (contractId.isEmpty) {
+      return;
+    }
+    final bool? saved = await context.push<bool>(
+      '${ContractFormPage.routePath}?contract_id=${Uri.encodeComponent(contractId)}',
+      extra: row,
     );
+    if (saved == true && mounted) {
+      await _reloadAll();
+    }
   }
 
   Future<void> _confirmExportExcel(List<Map<String, dynamic>> rows) async {
