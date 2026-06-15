@@ -118,6 +118,11 @@ class _UtilityShiftingPageState extends State<UtilityShiftingPage>
               end: utilitySlice.end,
               page: utilitySlice.page,
               pageCount: utilitySlice.pageCount,
+              pageSize: _utilityPageSize,
+              onPageSizeChanged: (int value) => setState(() {
+                _utilityPageSize = value;
+                _utilityPage = 0;
+              }),
               onPrev: utilitySlice.page > 1
                   ? () => setState(() => _utilityPage = utilitySlice.page - 2)
                   : null,
@@ -131,6 +136,11 @@ class _UtilityShiftingPageState extends State<UtilityShiftingPage>
               end: uploadSlice.end,
               page: uploadSlice.page,
               pageCount: uploadSlice.pageCount,
+              pageSize: _uploadedPageSize,
+              onPageSizeChanged: (int value) => setState(() {
+                _uploadedPageSize = value;
+                _uploadedPage = 0;
+              }),
               onPrev: uploadSlice.page > 1
                   ? () => setState(() => _uploadedPage = uploadSlice.page - 2)
                   : null,
@@ -171,11 +181,6 @@ class _UtilityShiftingPageState extends State<UtilityShiftingPage>
               _utilitySearch = value.trim();
               _utilityPage = 0;
             }),
-            pageSize: _utilityPageSize,
-            onPageSizeChanged: (int value) => setState(() {
-              _utilityPageSize = value;
-              _utilityPage = 0;
-            }),
             primaryLeft: _ActionSpec(
               label: 'Filter ($_activeFilterCount)',
               icon: Icons.filter_alt_rounded,
@@ -207,7 +212,6 @@ class _UtilityShiftingPageState extends State<UtilityShiftingPage>
   }
 
   Widget _uploadsTab(List<Map<String, dynamic>> pageRows, List<Map<String, dynamic>> allRows) {
-    final ColorScheme cs = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.all(12),
       child: Column(
@@ -271,42 +275,6 @@ class _UtilityShiftingPageState extends State<UtilityShiftingPage>
                       border: const OutlineInputBorder(),
                     ),
                   ),
-                  const SizedBox(height: 10),
-                  Row(
-                    children: <Widget>[
-                      Text(
-                        'Show',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: cs.onSurfaceVariant,
-                        ),
-                      ),
-                      const SizedBox(width: 6),
-                      DropdownButton<int>(
-                        value: _uploadedPageSize,
-                        items: _pageSizes
-                            .map(
-                              (int item) => DropdownMenuItem<int>(
-                                value: item,
-                                child: Text('$item'),
-                              ),
-                            )
-                            .toList(),
-                        onChanged: (int? value) {
-                          if (value == null) return;
-                          setState(() {
-                            _uploadedPageSize = value;
-                            _uploadedPage = 0;
-                          });
-                        },
-                      ),
-                      Text(
-                        'entries',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: cs.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
-                  ),
                 ],
               ),
             ),
@@ -322,14 +290,11 @@ class _UtilityShiftingPageState extends State<UtilityShiftingPage>
     required TextEditingController searchController,
     required String searchValue,
     required ValueChanged<String> onSearchChanged,
-    required int pageSize,
-    required ValueChanged<int> onPageSizeChanged,
     required _ActionSpec primaryLeft,
     required _ActionSpec primaryRight,
     required _ActionSpec secondaryLeft,
     required _ActionSpec secondaryRight,
   }) {
-    final ColorScheme cs = Theme.of(context).colorScheme;
     return Card(
       margin: EdgeInsets.zero,
       child: Padding(
@@ -362,40 +327,6 @@ class _UtilityShiftingPageState extends State<UtilityShiftingPage>
                     : null,
                 border: const OutlineInputBorder(),
               ),
-            ),
-            const SizedBox(height: 10),
-            Row(
-              children: <Widget>[
-                Text(
-                  'Show',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: cs.onSurfaceVariant,
-                  ),
-                ),
-                const SizedBox(width: 6),
-                DropdownButton<int>(
-                  value: pageSize,
-                  items: _pageSizes
-                      .map(
-                        (int item) => DropdownMenuItem<int>(
-                          value: item,
-                          child: Text('$item'),
-                        ),
-                      )
-                      .toList(),
-                  onChanged: (int? value) {
-                    if (value != null) {
-                      onPageSizeChanged(value);
-                    }
-                  },
-                ),
-                Text(
-                  'entries',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: cs.onSurfaceVariant,
-                  ),
-                ),
-              ],
             ),
           ],
         ),
@@ -626,6 +557,8 @@ class _UtilityShiftingPageState extends State<UtilityShiftingPage>
     required int end,
     required int page,
     required int pageCount,
+    required int pageSize,
+    required ValueChanged<int> onPageSizeChanged,
     required VoidCallback? onPrev,
     required VoidCallback? onNext,
   }) {
@@ -635,6 +568,9 @@ class _UtilityShiftingPageState extends State<UtilityShiftingPage>
       endIndex: end,
       currentPage: total == 0 ? 0 : page - 1,
       pageCount: pageCount,
+      pageSize: pageSize,
+      pageSizeOptions: _pageSizes,
+      onPageSizeChanged: onPageSizeChanged,
       onPrevious: onPrev,
       onNext: onNext,
     );

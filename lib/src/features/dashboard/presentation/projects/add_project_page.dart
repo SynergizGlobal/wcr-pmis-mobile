@@ -221,49 +221,27 @@ class _AddProjectPageState extends ConsumerState<AddProjectPage> {
         ),
         Padding(
           padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
-          child: Row(
-            children: <Widget>[
-              const Text('Show '),
-              DropdownButton<int>(
-                value: _pageSize,
-                items: _pageSizeOptions
-                    .map(
-                      (int e) =>
-                          DropdownMenuItem<int>(value: e, child: Text('$e')),
-                    )
-                    .toList(),
-                onChanged: (int? value) {
-                  if (value == null) {
-                    return;
+          child: Align(
+            alignment: Alignment.centerRight,
+            child: SizedBox(
+              width: 132,
+              child: FilledButton.icon(
+                onPressed: () async {
+                  final bool? added = await Navigator.of(
+                    context,
+                  ).push<bool>(
+                    MaterialPageRoute<bool>(
+                      builder: (_) => const AddProjectFormPage(),
+                    ),
+                  );
+                  if (added == true) {
+                    ref.invalidate(projectListProvider);
                   }
-                  setState(() {
-                    _pageSize = value;
-                    _currentPage = 0;
-                  });
                 },
+                icon: const Icon(Icons.add_rounded),
+                label: const Text('Add'),
               ),
-              const Text(' entries'),
-              const Spacer(),
-              SizedBox(
-                width: 132,
-                child: FilledButton.icon(
-                  onPressed: () async {
-                    final bool? added = await Navigator.of(
-                      context,
-                    ).push<bool>(
-                      MaterialPageRoute<bool>(
-                        builder: (_) => const AddProjectFormPage(),
-                      ),
-                    );
-                    if (added == true) {
-                      ref.invalidate(projectListProvider);
-                    }
-                  },
-                  icon: const Icon(Icons.add_rounded),
-                  label: const Text('Add'),
-                ),
-              ),
-            ],
+            ),
           ),
         ),
         Expanded(
@@ -307,6 +285,12 @@ class _AddProjectPageState extends ConsumerState<AddProjectPage> {
             endIndex: end,
             currentPage: _currentPage,
             pageCount: pageCount,
+            pageSize: _pageSize,
+            pageSizeOptions: _pageSizeOptions,
+            onPageSizeChanged: (int value) => setState(() {
+              _pageSize = value;
+              _currentPage = 0;
+            }),
             onPrevious:
                 _currentPage > 0 ? () => setState(() => _currentPage--) : null,
             onNext: end < total ? () => setState(() => _currentPage++) : null,

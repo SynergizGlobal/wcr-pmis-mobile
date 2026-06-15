@@ -144,58 +144,24 @@ class RfiLogScreen extends ConsumerWidget {
                             const SizedBox(height: 16),
                             Divider(height: 1, color: Colors.grey.shade200),
                             const SizedBox(height: 12),
-
-                            Row(
-                              children: [
-                                Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Text('Show',
-                                        style: TextStyle(
-                                            fontSize: 12,
-                                            color: Colors.grey.shade600)),
-                                    const SizedBox(width: 8),
-                                    Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 8),
-                                      child: AppDropdown<int>(
-                                        value: state.entriesPerPage,
-                                        items: const [5, 10, 25, 50, 100],
-                                        itemLabel: (v) => v.toString(),
-                                        width: 80,
-                                        onChanged: (val) {
-                                          if (val != null) {
-                                            notifier.setEntriesPerPage(val);
-                                          }
-                                        },
-                                      ),
-                                    ),
-                                    const SizedBox(width: 6),
-                                    Text('entries',
-                                        style: TextStyle(
-                                            fontSize: 12,
-                                            color: Colors.grey.shade600)),
-                                  ],
-                                ),
-                                const Spacer(),
-                                TextButton.icon(
-                                  onPressed: notifier.clearFilters,
-                                  icon:
-                                      const Icon(Icons.filter_alt_off, size: 16),
-                                  label: const Text('Clear Filters',
-                                      style: TextStyle(fontSize: 12)),
-                                  style: TextButton.styleFrom(
-                                    foregroundColor: const Color(0xFFD9534F),
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 12, vertical: 6),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(8),
-                                      side: const BorderSide(
-                                          color: Color(0xFFD9534F), width: 0.5),
-                                    ),
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: TextButton.icon(
+                                onPressed: notifier.clearFilters,
+                                icon: const Icon(Icons.filter_alt_off, size: 16),
+                                label: const Text('Clear Filters',
+                                    style: TextStyle(fontSize: 12)),
+                                style: TextButton.styleFrom(
+                                  foregroundColor: const Color(0xFFD9534F),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 12, vertical: 6),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                    side: const BorderSide(
+                                        color: Color(0xFFD9534F), width: 0.5),
                                   ),
                                 ),
-                              ],
+                              ),
                             ),
                           ],
                         ),
@@ -421,6 +387,8 @@ class RfiLogScreen extends ConsumerWidget {
                   totalItems: state.filteredItems.length,
                   currentPage: state.currentPage,
                   totalPages: state.totalPages,
+                  pageSize: state.entriesPerPage,
+                  onPageSizeChanged: notifier.setEntriesPerPage,
                   onPageChanged: (page) => notifier.setPage(page),
                 ),
             ],

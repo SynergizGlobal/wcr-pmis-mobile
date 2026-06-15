@@ -10,6 +10,9 @@ class RfiTablePaginationFooter extends StatelessWidget {
     required this.currentPage,
     required this.totalPages,
     required this.onPageChanged,
+    this.pageSize,
+    this.pageSizeOptions = const <int>[5, 10, 25, 50, 100],
+    this.onPageSizeChanged,
   });
 
   final int startIndex;
@@ -18,6 +21,9 @@ class RfiTablePaginationFooter extends StatelessWidget {
   final int currentPage;
   final int totalPages;
   final ValueChanged<int> onPageChanged;
+  final int? pageSize;
+  final List<int> pageSizeOptions;
+  final ValueChanged<int>? onPageSizeChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -27,6 +33,9 @@ class RfiTablePaginationFooter extends StatelessWidget {
       endIndex: endIndex,
       currentPage: currentPage - 1,
       pageCount: totalPages,
+      pageSize: pageSize,
+      pageSizeOptions: pageSizeOptions,
+      onPageSizeChanged: onPageSizeChanged,
       onPrevious: currentPage > 1
           ? () => onPageChanged(currentPage - 1)
           : null,

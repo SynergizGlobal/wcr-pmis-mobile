@@ -85,10 +85,6 @@ class ValidationScreen extends ConsumerWidget {
                 padding: const EdgeInsets.all(16.0),
                 decoration: RfiTheme.surfaceCardDecoration(scheme),
                 child: TableSearchHeader(
-                  rowsPerPage: state.entriesPerPage,
-                  onRowsPerPageChanged: (val) {
-                    if (val != null) notifier.setEntriesPerPage(val);
-                  },
                   onSearchChanged: notifier.setSearchQuery,
                   searchHint: 'Search by RFI ID, status, remarks...',
                 ),
@@ -455,6 +451,8 @@ class ValidationScreen extends ConsumerWidget {
                 totalItems: totalItems,
                 currentPage: state.currentPage,
                 totalPages: totalPages,
+                pageSize: state.entriesPerPage,
+                onPageSizeChanged: notifier.setEntriesPerPage,
                 onPageChanged: (page) => notifier.setPage(page),
               ),
           ],

@@ -787,15 +787,16 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         );
         return;
       }
-      if (subMenus.length == 1) {
-        final UpdateFormSubItem only = subMenus.first;
-        await _handleUpdateFormNavigation(
-          label: only.formName,
-          webFormUrl: only.webFormUrl,
-          mobileFormUrl: only.mobileFormUrl,
-        );
-        return;
-      }
+    }
+
+    if (subMenus.length == 1) {
+      final UpdateFormSubItem only = subMenus.first;
+      await _handleUpdateFormNavigation(
+        label: only.formName,
+        webFormUrl: only.webFormUrl,
+        mobileFormUrl: only.mobileFormUrl,
+      );
+      return;
     }
 
     if (subMenus.isEmpty) {
@@ -940,8 +941,11 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     }
     if (urlKey.contains('new-activities-update') ||
         urlKey.contains('newactivitiesupdate') ||
+        urlKey.contains('execution-monitoring') ||
         combinedKey.contains('new activit') ||
-        combinedKey.contains('activitiesupdate')) {
+        combinedKey.contains('activitiesupdate') ||
+        (combinedKey.contains('execution') &&
+            (combinedKey.contains('monitor') || combinedKey.contains('moniter')))) {
       if (!mounted) {
         return;
       }

@@ -65,10 +65,6 @@ class InspectionListScreen extends ConsumerWidget {
                         padding: const EdgeInsets.all(16.0),
                         decoration: RfiTheme.surfaceCardDecoration(scheme),
                         child: TableSearchHeader(
-                          rowsPerPage: state.rowsPerPage,
-                          onRowsPerPageChanged: (value) {
-                            if (value != null) notifier.updateRowsPerPage(value);
-                          },
                           onSearchChanged: notifier.search,
                         ),
                       ),
@@ -95,6 +91,8 @@ class InspectionListScreen extends ConsumerWidget {
                         totalItems: totalItems,
                         currentPage: state.currentPage,
                         totalPages: totalPages,
+                        pageSize: state.rowsPerPage,
+                        onPageSizeChanged: notifier.updateRowsPerPage,
                         onPageChanged: notifier.updatePage,
                       ),
                   ],

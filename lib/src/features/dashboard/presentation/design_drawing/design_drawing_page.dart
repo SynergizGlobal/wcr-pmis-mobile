@@ -3,7 +3,6 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:wcr_pmis_mobile/src/core/widgets/app_dialog.dart';
-import 'package:wcr_pmis_mobile/src/core/widgets/app_select_sheet_field.dart';
 import 'package:wcr_pmis_mobile/src/core/widgets/app_table_pagination_footer.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/data/datasources/dashboard_remote_data_source.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/structures/widgets/structure_document_preview_dialog.dart';
@@ -114,6 +113,14 @@ class _DesignDrawingPageState extends State<DesignDrawingPage>
               end: designEnd,
               page: _designTotal == 0 ? 0 : _designPage + 1,
               pageCount: designPageCount,
+              pageSize: _designPageSize,
+              onPageSizeChanged: (int value) {
+                setState(() {
+                  _designPageSize = value;
+                  _designPage = 0;
+                });
+                _loadDesigns();
+              },
               onPrev: _designPage > 0
                   ? () {
                       setState(() => _designPage -= 1);
@@ -133,6 +140,11 @@ class _DesignDrawingPageState extends State<DesignDrawingPage>
               end: uploadSlice.end,
               page: uploadSlice.page,
               pageCount: uploadSlice.pageCount,
+              pageSize: _uploadPageSize,
+              onPageSizeChanged: (int value) => setState(() {
+                _uploadPageSize = value;
+                _uploadPage = 0;
+              }),
               onPrev: uploadSlice.page > 1
                   ? () => setState(() => _uploadPage = uploadSlice.page - 2)
                   : null,
@@ -175,7 +187,6 @@ class _DesignDrawingPageState extends State<DesignDrawingPage>
   }
 
   Widget _designToolbar() {
-    final bool narrow = MediaQuery.sizeOf(context).width < 720;
     return Card(
       margin: EdgeInsets.zero,
       child: Padding(
@@ -183,84 +194,27 @@ class _DesignDrawingPageState extends State<DesignDrawingPage>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            AppSelectSheetField<_FilterOption>(
-              label: 'Contract',
-              title: 'Select Contract',
-              items: _contractOptions,
-              value: _selectedContractOption,
-              itemLabelBuilder: (_FilterOption option) => option.label,
-              onChanged: (_FilterOption option) => _onContractChanged(option.value),
-              placeholderText: 'Select',
-              compact: true,
-            ),
+            _designSearchField(),
             const SizedBox(height: 10),
-            AppSelectSheetField<_FilterOption>(
-              label: 'Structure Type',
-              title: 'Select Structure Type',
-              items: _structureTypeOptions,
-              value: _selectedStructureTypeOption,
-              itemLabelBuilder: (_FilterOption option) => option.label,
-              onChanged: (_FilterOption option) =>
-                  _onStructureTypeChanged(option.value),
-              placeholderText: 'Select',
-              compact: true,
-            ),
-            const SizedBox(height: 10),
-            AppSelectSheetField<_FilterOption>(
-              label: 'Drawing Type',
-              title: 'Select Drawing Type',
-              items: _drawingTypeOptions,
-              value: _selectedDrawingTypeOption,
-              itemLabelBuilder: (_FilterOption option) => option.label,
-              onChanged: (_FilterOption option) =>
-                  _onDrawingTypeChanged(option.value),
-              placeholderText: 'Select',
-              compact: true,
-            ),
-            const SizedBox(height: 10),
-            Align(
-              alignment: Alignment.centerRight,
-              child: OutlinedButton.icon(
-                onPressed: _activeFilterCount > 0 ? _clearFilters : null,
-                icon: const Icon(Icons.filter_alt_off_rounded),
-                label: const Text('Clear Filter'),
-              ),
-            ),
-            const SizedBox(height: 10),
-            narrow
-                ? Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      _designSearchField(),
-                      const SizedBox(height: 8),
-                      _entriesDropdown(
-                        value: _designPageSize,
-                        onChanged: (int value) {
-                          setState(() {
-                            _designPageSize = value;
-                            _designPage = 0;
-                          });
-                          _loadDesigns();
-                        },
-                      ),
-                    ],
-                  )
-                : Row(
-                    children: <Widget>[
-                      Expanded(child: _designSearchField()),
-                      const SizedBox(width: 12),
-                      _entriesDropdown(
-                        value: _designPageSize,
-                        onChanged: (int value) {
-                          setState(() {
-                            _designPageSize = value;
-                            _designPage = 0;
-                          });
-                          _loadDesigns();
-                        },
-                      ),
-                    ],
+            Row(
+              children: <Widget>[
+                Expanded(
+                  child: FilledButton.tonalIcon(
+                    onPressed: _openFilterDialog,
+                    icon: const Icon(Icons.filter_alt_rounded),
+                    label: Text('Filter (${_activeFilterCount})'),
                   ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: _activeFilterCount > 0 ? _clearFilters : null,
+                    icon: const Icon(Icons.filter_alt_off_rounded),
+                    label: const Text('Clear Filter'),
+                  ),
+                ),
+              ],
+            ),
           ],
         ),
       ),
@@ -289,32 +243,28 @@ class _DesignDrawingPageState extends State<DesignDrawingPage>
     );
   }
 
-  Widget _entriesDropdown({
-    required int value,
-    required ValueChanged<int> onChanged,
+  Widget _stickyFooter({
+    required int total,
+    required int start,
+    required int end,
+    required int page,
+    required int pageCount,
+    required int pageSize,
+    required ValueChanged<int> onPageSizeChanged,
+    required VoidCallback? onPrev,
+    required VoidCallback? onNext,
   }) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: <Widget>[
-        const Text('Show ', style: TextStyle(fontSize: 12)),
-        DropdownButton<int>(
-          value: value,
-          items: _pageSizes
-              .map(
-                (int size) => DropdownMenuItem<int>(
-                  value: size,
-                  child: Text('$size'),
-                ),
-              )
-              .toList(),
-          onChanged: (int? next) {
-            if (next != null) {
-              onChanged(next);
-            }
-          },
-        ),
-        const Text(' entries', style: TextStyle(fontSize: 12)),
-      ],
+    return AppTablePaginationFooter(
+      total: total,
+      startIndex: total == 0 ? 0 : start - 1,
+      endIndex: end,
+      currentPage: total == 0 ? 0 : page - 1,
+      pageCount: pageCount,
+      pageSize: pageSize,
+      pageSizeOptions: _pageSizes,
+      onPageSizeChanged: onPageSizeChanged,
+      onPrevious: onPrev,
+      onNext: onNext,
     );
   }
 
@@ -401,18 +351,6 @@ class _DesignDrawingPageState extends State<DesignDrawingPage>
                           : null,
                       border: const OutlineInputBorder(),
                     ),
-                  ),
-                  const SizedBox(height: 10),
-                  Row(
-                    children: <Widget>[
-                      _entriesDropdown(
-                        value: _uploadPageSize,
-                        onChanged: (int value) => setState(() {
-                          _uploadPageSize = value;
-                          _uploadPage = 0;
-                        }),
-                      ),
-                    ],
                   ),
                 ],
               ),
@@ -605,40 +543,301 @@ class _DesignDrawingPageState extends State<DesignDrawingPage>
     );
   }
 
-  Widget _stickyFooter({
-    required int total,
-    required int start,
-    required int end,
-    required int page,
-    required int pageCount,
-    required VoidCallback? onPrev,
-    required VoidCallback? onNext,
-  }) {
-    return AppTablePaginationFooter(
-      total: total,
-      startIndex: total == 0 ? 0 : start - 1,
-      endIndex: end,
-      currentPage: total == 0 ? 0 : page - 1,
-      pageCount: pageCount,
-      onPrevious: onPrev,
-      onNext: onNext,
+  Future<({
+    List<_FilterOption> contracts,
+    List<_FilterOption> structureTypes,
+    List<_FilterOption> drawingTypes,
+  })> _fetchFilterOptions({
+    String? contractIdFk,
+    String? structureTypeFk,
+    String? drawingTypeFk,
+  }) async {
+    final List<List<Map<String, dynamic>>> responses =
+        await Future.wait<List<Map<String, dynamic>>>(
+      <Future<List<Map<String, dynamic>>>>[
+        widget.dataSource.fetchDesignContractFilter(
+          contractIdFk: contractIdFk,
+          structureTypeFk: structureTypeFk,
+          drawingTypeFk: drawingTypeFk,
+        ),
+        widget.dataSource.fetchDesignStructureTypeFilter(
+          contractIdFk: contractIdFk,
+          structureTypeFk: structureTypeFk,
+          drawingTypeFk: drawingTypeFk,
+        ),
+        widget.dataSource.fetchDesignDrawingTypeFilter(
+          contractIdFk: contractIdFk,
+          structureTypeFk: structureTypeFk,
+          drawingTypeFk: drawingTypeFk,
+        ),
+      ],
+    );
+    return (
+      contracts: _contractOptionsFromRows(responses[0]),
+      structureTypes: _simpleOptionsFromRows(
+        responses[1],
+        valueKey: 'structure_type_fk',
+        labelKey: 'structure_type_fk',
+      ),
+      drawingTypes: _simpleOptionsFromRows(
+        responses[2],
+        valueKey: 'drawing_type_fk',
+        labelKey: 'drawing_type_fk',
+      ),
     );
   }
 
-  _FilterOption? get _selectedContractOption => _optionForValue(
-    _contractOptions,
-    _selectedContract,
-  );
+  Future<void> _openFilterDialog() async {
+    String? dialogContract = _selectedContract;
+    String? dialogStructureType = _selectedStructureType;
+    String? dialogDrawingType = _selectedDrawingType;
+    List<_FilterOption> dialogContracts =
+        List<_FilterOption>.from(_contractOptions);
+    List<_FilterOption> dialogStructureTypes =
+        List<_FilterOption>.from(_structureTypeOptions);
+    List<_FilterOption> dialogDrawingTypes =
+        List<_FilterOption>.from(_drawingTypeOptions);
+    bool shouldApply = false;
+    bool dialogLoading = false;
 
-  _FilterOption? get _selectedStructureTypeOption => _optionForValue(
-    _structureTypeOptions,
-    _selectedStructureType,
-  );
+    Future<void> reloadDialogFilters(StateSetter setDialogState) async {
+      setDialogState(() => dialogLoading = true);
+      try {
+        final ({
+          List<_FilterOption> contracts,
+          List<_FilterOption> structureTypes,
+          List<_FilterOption> drawingTypes,
+        }) options = await _fetchFilterOptions(
+          contractIdFk: dialogContract,
+          structureTypeFk: dialogStructureType,
+          drawingTypeFk: dialogDrawingType,
+        );
+        setDialogState(() {
+          dialogContracts = options.contracts;
+          dialogStructureTypes = options.structureTypes;
+          dialogDrawingTypes = options.drawingTypes;
+          dialogContract = _retain(dialogContract, dialogContracts);
+          dialogStructureType = _retain(dialogStructureType, dialogStructureTypes);
+          dialogDrawingType = _retain(dialogDrawingType, dialogDrawingTypes);
+        });
+      } finally {
+        setDialogState(() => dialogLoading = false);
+      }
+    }
 
-  _FilterOption? get _selectedDrawingTypeOption => _optionForValue(
-    _drawingTypeOptions,
-    _selectedDrawingType,
-  );
+    await showDialog<void>(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setDialogState) {
+            return AlertDialog(
+              title: const Center(child: Text('Filter Design & Drawing')),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    if (dialogLoading)
+                      const Padding(
+                        padding: EdgeInsets.only(bottom: 10),
+                        child: LinearProgressIndicator(),
+                      ),
+                    _dialogPickField(
+                      label: 'Contract',
+                      options: dialogContracts,
+                      value: dialogContract,
+                      onChanged: (String? value) async {
+                        setDialogState(() => dialogContract = value);
+                        await reloadDialogFilters(setDialogState);
+                      },
+                    ),
+                    const SizedBox(height: 10),
+                    _dialogPickField(
+                      label: 'Structure Type',
+                      options: dialogStructureTypes,
+                      value: dialogStructureType,
+                      onChanged: (String? value) async {
+                        setDialogState(() => dialogStructureType = value);
+                        await reloadDialogFilters(setDialogState);
+                      },
+                    ),
+                    const SizedBox(height: 10),
+                    _dialogPickField(
+                      label: 'Drawing Type',
+                      options: dialogDrawingTypes,
+                      value: dialogDrawingType,
+                      onChanged: (String? value) async {
+                        setDialogState(() => dialogDrawingType = value);
+                        await reloadDialogFilters(setDialogState);
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              actions: <Widget>[
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  child: const Text('Cancel'),
+                ),
+                FilledButton(
+                  onPressed: () {
+                    shouldApply = true;
+                    Navigator.of(dialogContext).pop();
+                  },
+                  child: const Text('Apply'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    if (!shouldApply || !mounted) {
+      return;
+    }
+    FocusManager.instance.primaryFocus?.unfocus();
+    setState(() {
+      _selectedContract = dialogContract;
+      _selectedStructureType = dialogStructureType;
+      _selectedDrawingType = dialogDrawingType;
+      _designPage = 0;
+    });
+    await _applyFiltersAndReload();
+    if (mounted) {
+      FocusManager.instance.primaryFocus?.unfocus();
+    }
+  }
+
+  Widget _dialogPickField({
+    required String label,
+    required List<_FilterOption> options,
+    required String? value,
+    required Future<void> Function(String?) onChanged,
+  }) {
+    final ColorScheme cs = Theme.of(context).colorScheme;
+    final String selectedLabel = value == null
+        ? 'All'
+        : options
+                .firstWhere(
+                  (_FilterOption option) => option.value == value,
+                  orElse: () => _FilterOption(value: value, label: value),
+                )
+                .label;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Padding(
+          padding: const EdgeInsets.only(left: 4, bottom: 4),
+          child: Text(label, style: Theme.of(context).textTheme.titleMedium),
+        ),
+        InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: () async {
+            final String? picked = await _pickFilterOption(
+              title: label,
+              options: options,
+              selected: value,
+            );
+            if (picked != value) {
+              await onChanged(picked);
+            }
+          },
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            decoration: BoxDecoration(
+              border: Border.all(color: cs.outlineVariant),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: <Widget>[
+                Expanded(
+                  child: Text(
+                    selectedLabel,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                Icon(Icons.expand_more_rounded, color: cs.onSurfaceVariant),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<String?> _pickFilterOption({
+    required String title,
+    required List<_FilterOption> options,
+    required String? selected,
+  }) async {
+    return showModalBottomSheet<String?>(
+      context: context,
+      useSafeArea: true,
+      showDragHandle: true,
+      isScrollControlled: true,
+      builder: (BuildContext context) {
+        return FractionallySizedBox(
+          heightFactor: 0.72,
+          child: Column(
+            children: <Widget>[
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+                child: Text(
+                  'Select $title',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              Expanded(
+                child: ListView.separated(
+                  itemCount: options.length + 1,
+                  separatorBuilder: (BuildContext context, int index) => Divider(
+                    height: 1,
+                    thickness: 0.8,
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.outlineVariant.withValues(alpha: 0.6),
+                  ),
+                  itemBuilder: (BuildContext context, int index) {
+                    if (index == 0) {
+                      return ListTile(
+                        title: const Text('All', textAlign: TextAlign.center),
+                        trailing: selected == null
+                            ? Icon(
+                                Icons.check_circle_rounded,
+                                color: Theme.of(context).colorScheme.primary,
+                              )
+                            : null,
+                        onTap: () => Navigator.of(context).pop(null),
+                      );
+                    }
+                    final _FilterOption option = options[index - 1];
+                    final bool isSelected = option.value == selected;
+                    return ListTile(
+                      title: Text(option.label, textAlign: TextAlign.center),
+                      trailing: isSelected
+                          ? Icon(
+                              Icons.check_circle_rounded,
+                              color: Theme.of(context).colorScheme.primary,
+                            )
+                          : null,
+                      onTap: () => Navigator.of(context).pop(option.value),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
 
   int get _activeFilterCount {
     int count = 0;
@@ -680,41 +879,22 @@ class _DesignDrawingPageState extends State<DesignDrawingPage>
   }
 
   Future<void> _reloadFilters() async {
-    final List<List<Map<String, dynamic>>> responses =
-        await Future.wait<List<Map<String, dynamic>>>(
-      <Future<List<Map<String, dynamic>>>>[
-        widget.dataSource.fetchDesignContractFilter(
-          contractIdFk: _selectedContract,
-          structureTypeFk: _selectedStructureType,
-          drawingTypeFk: _selectedDrawingType,
-        ),
-        widget.dataSource.fetchDesignStructureTypeFilter(
-          contractIdFk: _selectedContract,
-          structureTypeFk: _selectedStructureType,
-          drawingTypeFk: _selectedDrawingType,
-        ),
-        widget.dataSource.fetchDesignDrawingTypeFilter(
-          contractIdFk: _selectedContract,
-          structureTypeFk: _selectedStructureType,
-          drawingTypeFk: _selectedDrawingType,
-        ),
-      ],
+    final ({
+      List<_FilterOption> contracts,
+      List<_FilterOption> structureTypes,
+      List<_FilterOption> drawingTypes,
+    }) options = await _fetchFilterOptions(
+      contractIdFk: _selectedContract,
+      structureTypeFk: _selectedStructureType,
+      drawingTypeFk: _selectedDrawingType,
     );
     if (!mounted) {
       return;
     }
     setState(() {
-      _contractOptions = _contractOptionsFromRows(responses[0]);
-      _structureTypeOptions = _simpleOptionsFromRows(
-        responses[1],
-        valueKey: 'structure_type_fk',
-        labelKey: 'structure_type_fk',
-      );
-      _drawingTypeOptions = _simpleOptionsFromRows(
-        responses[2],
-        valueKey: 'drawing_type_fk',
-        labelKey: 'drawing_type_fk',
-      );
+      _contractOptions = options.contracts;
+      _structureTypeOptions = options.structureTypes;
+      _drawingTypeOptions = options.drawingTypes;
       _selectedContract = _retain(_selectedContract, _contractOptions);
       _selectedStructureType =
           _retain(_selectedStructureType, _structureTypeOptions);
@@ -776,30 +956,6 @@ class _DesignDrawingPageState extends State<DesignDrawingPage>
         setState(() => _loading = false);
       }
     }
-  }
-
-  void _onContractChanged(String? value) {
-    setState(() {
-      _selectedContract = value;
-      _designPage = 0;
-    });
-    _applyFiltersAndReload();
-  }
-
-  void _onStructureTypeChanged(String? value) {
-    setState(() {
-      _selectedStructureType = value;
-      _designPage = 0;
-    });
-    _applyFiltersAndReload();
-  }
-
-  void _onDrawingTypeChanged(String? value) {
-    setState(() {
-      _selectedDrawingType = value;
-      _designPage = 0;
-    });
-    _applyFiltersAndReload();
   }
 
   void _clearFilters() {
@@ -936,18 +1092,6 @@ class _DesignDrawingPageState extends State<DesignDrawingPage>
     final List<_FilterOption> values = map.values.toList()
       ..sort((_FilterOption a, _FilterOption b) => a.label.compareTo(b.label));
     return values;
-  }
-
-  _FilterOption? _optionForValue(List<_FilterOption> options, String? value) {
-    if (value == null) {
-      return null;
-    }
-    for (final _FilterOption option in options) {
-      if (option.value == value) {
-        return option;
-      }
-    }
-    return null;
   }
 
   String? _retain(String? value, List<_FilterOption> options) {

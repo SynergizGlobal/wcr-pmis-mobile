@@ -201,22 +201,9 @@ class _AiCustomReportPageState extends State<AiCustomReportPage> {
               ],
             ),
             const SizedBox(height: 12),
-            Row(
-              children: <Widget>[
-                Expanded(
-                  child: _titledControl(
-                    title: 'Entries',
-                    child: _rowsPerPageDropdown(),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: _titledControl(
-                    title: 'Sort',
-                    child: _ascDescToggle(context),
-                  ),
-                ),
-              ],
+            _titledControl(
+              title: 'Sort',
+              child: _ascDescToggle(context),
             ),
             const SizedBox(height: 10),
             SizedBox(
@@ -804,40 +791,14 @@ class _AiCustomReportPageState extends State<AiCustomReportPage> {
       endIndex: end,
       currentPage: page - 1,
       pageCount: _totalPages,
+      pageSize: _rowsPerPage,
+      pageSizeOptions: _pageSizeOptions,
+      onPageSizeChanged: (int value) => setState(() {
+        _rowsPerPage = value;
+        _currentPage = 1;
+      }),
       onPrevious: page <= 1 ? null : () => setState(() => _currentPage = page - 1),
       onNext: page >= _totalPages ? null : () => setState(() => _currentPage = page + 1),
-    );
-  }
-
-  Widget _rowsPerPageDropdown() {
-    return InputDecorator(
-      decoration: const InputDecoration(
-        border: OutlineInputBorder(),
-        isDense: true,
-        contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<int>(
-          isExpanded: true,
-          value: _rowsPerPage,
-          isDense: true,
-          items: _pageSizeOptions
-              .map((int size) => DropdownMenuItem<int>(
-                    value: size,
-                    child: Text(size.toString()),
-                  ))
-              .toList(),
-          onChanged: (int? value) {
-            if (value == null) {
-              return;
-            }
-            setState(() {
-              _rowsPerPage = value;
-              _currentPage = 1;
-            });
-          },
-        ),
-      ),
     );
   }
 

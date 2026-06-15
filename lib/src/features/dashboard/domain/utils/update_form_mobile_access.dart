@@ -24,6 +24,7 @@ class UpdateFormMobileAccess {
     '52', // Structure Form (contract-wise structure works list)
     '3', // Contract
     '11', // Contractor
+    '53', // New Activities Update (Execution & Monitoring)
   };
 
   static String _normalize(String value) {
@@ -119,6 +120,11 @@ class UpdateFormMobileAccess {
     if (formId == '3' ||
         (urlKey == 'contract' && !urlKey.contains('contractor')) ||
         (nameKey == 'contract' && !nameKey.contains('contractor'))) {
+      return true;
+    }
+    if (urlKey.contains('new-activities-update') ||
+        urlKey.contains('newactivitiesupdate') ||
+        nameKey.contains('new activit')) {
       return true;
     }
     return false;

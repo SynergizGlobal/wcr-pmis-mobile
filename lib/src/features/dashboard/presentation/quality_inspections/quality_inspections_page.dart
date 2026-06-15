@@ -399,33 +399,8 @@ class _QualityInspectionsPageState extends ConsumerState<QualityInspectionsPage>
 
   Widget _toolbar(BuildContext context, List<Map<String, dynamic>> rows) {
     final int activeFilterCount = _activeFilterCount;
-    final bool narrow = MediaQuery.sizeOf(context).width < 720;
-
-    final Widget entriesControl = Row(
-      mainAxisSize: MainAxisSize.min,
-      children: <Widget>[
-        const Text('Show ', style: TextStyle(fontSize: 12)),
-        DropdownButton<int>(
-          value: _pageSize,
-          items: _pageSizeOptions
-              .map(
-                (int e) => DropdownMenuItem<int>(value: e, child: Text('$e')),
-              )
-              .toList(),
-          onChanged: (int? value) {
-            if (value == null) return;
-            setState(() {
-              _pageSize = value;
-              _currentPage = 0;
-            });
-          },
-        ),
-        const Text(' entries', style: TextStyle(fontSize: 12)),
-      ],
-    );
-
     final Widget searchField = SizedBox(
-      width: narrow ? double.infinity : 240,
+      width: double.infinity,
       child: TextField(
         controller: _searchController,
         onChanged: (String value) => setState(() {
@@ -459,22 +434,7 @@ class _QualityInspectionsPageState extends ConsumerState<QualityInspectionsPage>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
-            narrow
-                ? Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: <Widget>[
-                      searchField,
-                      const SizedBox(height: 8),
-                      entriesControl,
-                    ],
-                  )
-                : Row(
-                    children: <Widget>[
-                      searchField,
-                      const Spacer(),
-                      entriesControl,
-                    ],
-                  ),
+            searchField,
             const SizedBox(height: 10),
             Container(
               padding: const EdgeInsets.all(10),
@@ -795,6 +755,12 @@ class _QualityInspectionsPageState extends ConsumerState<QualityInspectionsPage>
       endIndex: end,
       currentPage: _currentPage,
       pageCount: pageCount,
+      pageSize: _pageSize,
+      pageSizeOptions: _pageSizeOptions,
+      onPageSizeChanged: (int value) => setState(() {
+        _pageSize = value;
+        _currentPage = 0;
+      }),
       onPrevious: _currentPage > 0 ? () => setState(() => _currentPage--) : null,
       onNext: end < total ? () => setState(() => _currentPage++) : null,
     );

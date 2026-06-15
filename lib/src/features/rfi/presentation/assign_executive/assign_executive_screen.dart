@@ -257,65 +257,23 @@ class _AssignExecutiveScreenState extends ConsumerState<AssignExecutiveScreen> {
 
     return Column(
       children: [
-        Row(
-          children: [
-            const Text('Show ', style: TextStyle(fontSize: 13)),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey.shade400),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: DropdownButtonHideUnderline(
-                child: DropdownButton<int>(
-                  value: _rowsPerPage,
-                  isDense: true,
-                  items: const [
-                    DropdownMenuItem(
-                        value: 5,
-                        child: Text('5', style: TextStyle(fontSize: 13))),
-                    DropdownMenuItem(
-                        value: 10,
-                        child: Text('10', style: TextStyle(fontSize: 13))),
-                    DropdownMenuItem(
-                        value: 25,
-                        child: Text('25', style: TextStyle(fontSize: 13))),
-                    DropdownMenuItem(
-                        value: 50,
-                        child: Text('50', style: TextStyle(fontSize: 13))),
-                    DropdownMenuItem(
-                        value: 100,
-                        child: Text('100', style: TextStyle(fontSize: 13))),
-                  ],
-                  onChanged: (v) => setState(() {
-                    _rowsPerPage = v!;
-                    _currentPage = 0;
-                  }),
-                ),
-              ),
+        SizedBox(
+          width: double.infinity,
+          child: TextField(
+            decoration: RfiTheme.searchFieldDecoration(
+              context,
+              hintText: 'Search...',
+            ).copyWith(
+              isDense: true,
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
             ),
-            const Text(' entries', style: TextStyle(fontSize: 13)),
-            const Spacer(),
-            SizedBox(
-              width: 160,
-              height: 34,
-              child: TextField(
-                decoration: RfiTheme.searchFieldDecoration(
-                  context,
-                  hintText: 'Search...',
-                ).copyWith(
-                  isDense: true,
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                ),
-                style: Theme.of(context).textTheme.bodySmall,
-                onChanged: (v) => setState(() {
-                  _searchQuery = v;
-                  _currentPage = 0;
-                }),
-              ),
-            ),
-          ],
+            style: Theme.of(context).textTheme.bodySmall,
+            onChanged: (v) => setState(() {
+              _searchQuery = v;
+              _currentPage = 0;
+            }),
+          ),
         ),
         const SizedBox(height: 8),
 
@@ -437,6 +395,11 @@ class _AssignExecutiveScreenState extends ConsumerState<AssignExecutiveScreen> {
           totalItems: filteredLogs.length,
           currentPage: _currentPage + 1,
           totalPages: totalPages == 0 ? 1 : totalPages,
+          pageSize: _rowsPerPage,
+          onPageSizeChanged: (int value) => setState(() {
+            _rowsPerPage = value;
+            _currentPage = 0;
+          }),
           onPageChanged: (page) => setState(() => _currentPage = page - 1),
         ),
       ],

@@ -107,16 +107,6 @@ class _RfiListContentState extends ConsumerState<RfiListContent> {
                 child: Padding(
                   padding: const EdgeInsets.all(16),
                   child: RfiTableSearchHeader(
-                    rowsPerPage: _rowsPerPage,
-                    onRowsPerPageChanged: (int? value) {
-                      if (value == null) {
-                        return;
-                      }
-                      setState(() {
-                        _rowsPerPage = value;
-                        _currentPage = 1;
-                      });
-                    },
                     onSearchChanged: (String value) {
                       setState(() {
                         _search = value.trim();
@@ -172,6 +162,11 @@ class _RfiListContentState extends ConsumerState<RfiListContent> {
               totalItems: total,
               currentPage: _currentPage,
               totalPages: totalPages,
+              pageSize: _rowsPerPage,
+              onPageSizeChanged: (int value) => setState(() {
+                _rowsPerPage = value;
+                _currentPage = 1;
+              }),
               onPageChanged: (int page) => setState(() => _currentPage = page),
             ),
           ],

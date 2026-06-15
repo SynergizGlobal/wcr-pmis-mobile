@@ -634,29 +634,9 @@ class _InspectionReferenceScreenState
             children: [
               Row(
                 mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text('Show ', style: TextStyle(fontSize: 13)),
-                  AppDropdown<int>(
-                    width: 80,
-                    value: _rowsPerPage,
-                    items: const [5, 10, 25, 50, 100],
-                    itemLabel: (val) => val.toString(),
-                    onChanged: (v) => setState(() {
-                      if (v != null) {
-                        _rowsPerPage = v;
-                        _currentPage = 0;
-                      }
-                    }),
-                  ),
-                  const SizedBox(width: 8),
-                  const Text(' entries', style: TextStyle(fontSize: 13)),
-                ],
-              ),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
+                children: <Widget>[
                   SizedBox(
-                    width: 140, // Slightly reduced to fit better
+                    width: 140,
                     height: 34,
                     child: TextField(
                       decoration: InputDecoration(
@@ -675,7 +655,7 @@ class _InspectionReferenceScreenState
                       }),
                     ),
                   ),
-                  if (customAction != null) ...[
+                  if (customAction != null) ...<Widget>[
                     const SizedBox(width: 8),
                     customAction,
                   ],
@@ -724,6 +704,11 @@ class _InspectionReferenceScreenState
           totalItems: filtered.length,
           currentPage: _currentPage + 1,
           totalPages: totalPages == 0 ? 1 : totalPages,
+          pageSize: _rowsPerPage,
+          onPageSizeChanged: (int value) => setState(() {
+            _rowsPerPage = value;
+            _currentPage = 0;
+          }),
           onPageChanged: (page) => setState(() => _currentPage = page - 1),
         ),
       ],

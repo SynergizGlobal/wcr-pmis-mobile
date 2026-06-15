@@ -138,7 +138,6 @@ class _NewActivitiesUpdatePageState extends State<NewActivitiesUpdatePage> {
   Widget _toolbar(BuildContext context, List<Map<String, dynamic>> rows) {
     final bool canExport = _canExportActivities;
     final int activeFilterCount = _activeFilterCount;
-    final bool narrow = MediaQuery.sizeOf(context).width < 720;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -215,23 +214,7 @@ class _NewActivitiesUpdatePageState extends State<NewActivitiesUpdatePage> {
           ),
         ),
         const SizedBox(height: 10),
-        if (narrow)
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: <Widget>[
-              _searchField(),
-              const SizedBox(height: 8),
-              _entriesControl(),
-            ],
-          )
-        else
-          Row(
-            children: <Widget>[
-              Expanded(child: _searchField()),
-              const SizedBox(width: 12),
-              _entriesControl(),
-            ],
-          ),
+        _searchField(),
       ],
     );
   }
@@ -470,36 +453,6 @@ class _NewActivitiesUpdatePageState extends State<NewActivitiesUpdatePage> {
             : null,
         border: const OutlineInputBorder(),
       ),
-    );
-  }
-
-  Widget _entriesControl() {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: <Widget>[
-        const Text('Show ', style: TextStyle(fontSize: 12)),
-        DropdownButton<int>(
-          value: _pageSize,
-          items: _pageSizeOptions
-              .map(
-                (int e) => DropdownMenuItem<int>(
-                  value: e,
-                  child: Text('$e'),
-                ),
-              )
-              .toList(),
-          onChanged: (int? value) {
-            if (value == null) {
-              return;
-            }
-            setState(() {
-              _pageSize = value;
-              _currentPage = 0;
-            });
-          },
-        ),
-        const Text(' entries', style: TextStyle(fontSize: 12)),
-      ],
     );
   }
 
@@ -1045,6 +998,12 @@ class _NewActivitiesUpdatePageState extends State<NewActivitiesUpdatePage> {
       endIndex: end,
       currentPage: _currentPage,
       pageCount: pageCount,
+      pageSize: _pageSize,
+      pageSizeOptions: _pageSizeOptions,
+      onPageSizeChanged: (int value) => setState(() {
+        _pageSize = value;
+        _currentPage = 0;
+      }),
       onPrevious: _currentPage > 0 ? () => setState(() => _currentPage--) : null,
       onNext: end < total ? () => setState(() => _currentPage++) : null,
     );
