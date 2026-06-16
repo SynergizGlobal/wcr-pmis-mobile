@@ -330,9 +330,9 @@ class _IssuesPageState extends State<IssuesPage> {
               width: _columnWidth('Action'),
               child: Center(
                 child: IconButton(
-                  tooltip: 'View',
-                  onPressed: () => _onIssueViewTap(row),
-                  icon: Icon(Icons.list_alt_rounded, color: colorScheme.primary),
+                  tooltip: 'Edit',
+                  onPressed: () => _onIssueEditTap(row),
+                  icon: Icon(Icons.edit_square, color: colorScheme.primary),
                 ),
               ),
             ),
@@ -607,14 +607,19 @@ class _IssuesPageState extends State<IssuesPage> {
     }
   }
 
-  Future<void> _onIssueViewTap(Map<String, dynamic> row) async {
-    await AppDialog.show(
-      context: context,
-      title: 'Issue Details',
-      message:
-          'Issue ID: ${_stringValue(row['issue_id'])}\nDescription: ${_stringValue(row['description'])}',
-      type: AppDialogType.info,
+  Future<void> _onIssueEditTap(Map<String, dynamic> row) async {
+    final String id = _safeString(row['issue_id']) ?? '';
+    if (id.isEmpty) {
+      return;
+    }
+    final bool? saved = await context.pushNamed<bool>(
+      AddIssueFormPage.routeName,
+      queryParameters: <String, String>{'issue_id': id},
+      extra: row,
     );
+    if (saved == true && mounted) {
+      await _reloadAll();
+    }
   }
 
   Future<void> _confirmExportExcel(List<Map<String, dynamic>> rows) async {

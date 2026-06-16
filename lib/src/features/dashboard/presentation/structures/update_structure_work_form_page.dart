@@ -89,6 +89,8 @@ class _UpdateStructureWorkFormPageState
 
   bool _loading = false;
   bool _saving = false;
+
+  bool get _interactionLocked => _loading || _saving;
   bool _contractsLoading = false;
   String? _loadError;
 
@@ -238,7 +240,9 @@ class _UpdateStructureWorkFormPageState
                                   const SizedBox(height: 8),
                                   Align(
                                     child: FilledButton.tonalIcon(
-                                      onPressed: _addExecutiveRow,
+                                      onPressed: _interactionLocked
+                                          ? null
+                                          : _addExecutiveRow,
                                       icon: const Icon(Icons.add_rounded),
                                       label: const Text('Add Contract Row'),
                                     ),
@@ -395,7 +399,9 @@ class _UpdateStructureWorkFormPageState
                                   const SizedBox(height: 8),
                                   Align(
                                     child: FilledButton.tonalIcon(
-                                      onPressed: _addDocumentRow,
+                                      onPressed: _interactionLocked
+                                          ? null
+                                          : _addDocumentRow,
                                       icon: const Icon(Icons.add_rounded),
                                       label: const Text('Add Document'),
                                     ),
@@ -423,14 +429,14 @@ class _UpdateStructureWorkFormPageState
                       children: <Widget>[
                         Expanded(
                           child: OutlinedButton(
-                            onPressed: _saving ? null : () => context.pop(),
+                            onPressed: _interactionLocked ? null : () => context.pop(),
                             child: const Text('Cancel'),
                           ),
                         ),
                         const SizedBox(width: 10),
                         Expanded(
                           child: FilledButton(
-                            onPressed: _saving ? null : _submit,
+                            onPressed: _interactionLocked ? null : _submit,
                             child: _saving
                                 ? const SizedBox(
                                     width: 18,
@@ -448,6 +454,24 @@ class _UpdateStructureWorkFormPageState
               ],
             ),
           ),
+          if (_saving)
+            Positioned.fill(
+              child: AbsorbPointer(
+                child: ColoredBox(
+                  color: colorScheme.scrim.withValues(alpha: 0.12),
+                  child: Center(
+                    child: SizedBox(
+                      width: 36,
+                      height: 36,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 3,
+                        color: colorScheme.primary,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
     );

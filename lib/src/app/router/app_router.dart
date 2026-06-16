@@ -23,6 +23,7 @@ import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/projects/pro
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/projects/project_summary_page.dart';
 import 'package:wcr_pmis_mobile/src/features/rfi/presentation/rfi_routes.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/activities/new_activities_update_page.dart';
+import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/activities/structure_p6_update_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/quality_inspections/add_quality_inspection_form_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/domain/utils/quality_inspection_user_access.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/quality_inspections/quality_inspections_page.dart';
@@ -90,6 +91,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         return LoginPage.routePath;
       }
       if (!loggedIn && loc == NewActivitiesUpdatePage.routePath) {
+        return LoginPage.routePath;
+      }
+      if (!loggedIn && loc == StructureP6UpdatePage.routePath) {
         return LoginPage.routePath;
       }
       if (!loggedIn && loc == UtilityShiftingPage.routePath) {
@@ -255,9 +259,21 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (BuildContext context, GoRouterState state) {
           final AuthSession? session =
               ref.read(authControllerProvider).valueOrNull;
+          final String? issueId =
+              state.uri.queryParameters['issue_id']?.trim();
+          Map<String, dynamic>? initialIssue;
+          final Object? extra = state.extra;
+          if (extra is Map) {
+            initialIssue = extra.map(
+              (dynamic key, dynamic value) =>
+                  MapEntry<String, dynamic>(key.toString(), value),
+            );
+          }
           return AddIssueFormPage(
             dataSource: ref.read(dashboardRemoteDataSourceProvider),
             session: session,
+            issueId: issueId != null && issueId.isNotEmpty ? issueId : null,
+            initialIssue: initialIssue,
           );
         },
       ),
@@ -266,6 +282,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         name: NewActivitiesUpdatePage.routeName,
         builder: (BuildContext context, GoRouterState state) =>
             NewActivitiesUpdatePage(
+              dataSource: ref.read(dashboardRemoteDataSourceProvider),
+            ),
+      ),
+      GoRoute(
+        path: StructureP6UpdatePage.routePath,
+        name: StructureP6UpdatePage.routeName,
+        builder: (BuildContext context, GoRouterState state) =>
+            StructureP6UpdatePage(
               dataSource: ref.read(dashboardRemoteDataSourceProvider),
             ),
       ),

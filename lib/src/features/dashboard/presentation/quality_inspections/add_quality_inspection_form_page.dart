@@ -301,7 +301,11 @@ class _AddQualityInspectionFormPageState
       _closedOn != null && _commentsCtrl.text.trim().isNotEmpty;
 
   bool get _canSaveDraft =>
-      _canEditCreateFields && !_loading && !_cascadeBusy && _project != null;
+      _canEditCreateFields &&
+      !_loading &&
+      !_cascadeBusy &&
+      !_parametersLoading &&
+      _project != null;
 
   bool get _isEditMode =>
       widget.inspectionId != null && widget.inspectionId!.trim().isNotEmpty;

@@ -3,6 +3,8 @@ import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
+import 'package:wcr_pmis_mobile/src/core/network/user_friendly_error_message.dart';
 import 'package:wcr_pmis_mobile/src/core/widgets/app_dialog.dart';
 import 'package:wcr_pmis_mobile/src/core/widgets/app_select_sheet_field.dart';
 import 'package:wcr_pmis_mobile/src/core/widgets/app_step_header.dart';
@@ -120,6 +122,8 @@ class AddIssueFormPage extends StatefulWidget {
     super.key,
     required this.dataSource,
     this.session,
+    this.issueId,
+    this.initialIssue,
   });
 
   static const String routeName = 'add-issue-form';
@@ -128,6 +132,10 @@ class AddIssueFormPage extends StatefulWidget {
   final DashboardRemoteDataSource dataSource;
 
   final AuthSession? session;
+
+  final String? issueId;
+
+  final Map<String, dynamic>? initialIssue;
 
   @override
   State<AddIssueFormPage> createState() => _AddIssueFormPageState();
@@ -140,6 +148,17 @@ class _AddIssueFormPageState extends State<AddIssueFormPage> {
   bool _saving = false;
   bool _cascadeBusy = false;
   int _currentStep = 0;
+
+  bool get _interactionLocked => _loading || _saving || _cascadeBusy;
+
+  bool get _isEditMode =>
+      widget.issueId != null && widget.issueId!.trim().isNotEmpty;
+
+  String _statusFk = 'Raised';
+  String _reportedByStored = '';
+  String _assignedDate = '';
+  String _resolvedDate = '';
+  String _escalationDate = '';
 
   List<_IssueOption> _projects = <_IssueOption>[];
   List<_IssueOption> _contracts = <_IssueOption>[];
@@ -253,7 +272,34 @@ class _AddIssueFormPageState extends State<AddIssueFormPage> {
           rowFieldKey: 'component',
         );
       });
-    } catch (_) {
+
+      if (_isEditMode) {
+        Map<String, dynamic> record = Map<String, dynamic>.from(
+          widget.initialIssue ?? <String, dynamic>{},
+        );
+        try {
+          final Map<String, dynamic> editResp =
+              await widget.dataSource.fetchIssueForEdit(
+            issueId: widget.issueId!.trim(),
+          );
+          if (!mounted) {
+            return;
+          }
+          record = <String, dynamic>{
+            ...record,
+            ..._mergedIssueRoot(editResp),
+          };
+        } catch (_) {
+          if (record.isEmpty) {
+            rethrow;
+          }
+        }
+        if (!mounted) {
+          return;
+        }
+        await _prefillFromIssueRecord(record);
+      }
+    } catch (error) {
       if (!mounted) {
         return;
       }
@@ -261,7 +307,9 @@ class _AddIssueFormPageState extends State<AddIssueFormPage> {
         context: context,
         type: AppDialogType.error,
         title: 'Load Failed',
-        message: 'Could not load add-issue form data. Please try again.',
+        message: _isEditMode
+            ? userFriendlyErrorMessage(error)
+            : 'Could not load add-issue form data. Please try again.',
       );
     } finally {
       if (mounted) {
@@ -271,6 +319,290 @@ class _AddIssueFormPageState extends State<AddIssueFormPage> {
   }
 
   String _reportedByUserId() => widget.session?.userId.trim() ?? '';
+
+  _IssueOption? _optionById(List<_IssueOption> items, String id) {
+    if (id.isEmpty) {
+      return null;
+    }
+    for (final _IssueOption item in items) {
+      if (item.id == id) {
+        return item;
+      }
+    }
+    return null;
+  }
+
+  _IssueOption? _optionByIdOrLabel(List<_IssueOption> items, String value) {
+    if (value.isEmpty) {
+      return null;
+    }
+    final _IssueOption? byId = _optionById(items, value);
+    if (byId != null) {
+      return byId;
+    }
+    final String lower = value.toLowerCase();
+    for (final _IssueOption item in items) {
+      if (item.label.toLowerCase() == lower) {
+        return item;
+      }
+    }
+    return null;
+  }
+
+  _IssueOption _ensureOption(
+    List<_IssueOption> items,
+    String id,
+    String label,
+  ) {
+    final _IssueOption? existing = _optionById(items, id);
+    if (existing != null) {
+      return existing;
+    }
+    final _IssueOption created = _IssueOption(
+      id: id,
+      label: label.isEmpty ? id : label,
+    );
+    items.add(created);
+    return created;
+  }
+
+  DateTime? _parseIssueDate(String raw) {
+    final String value = raw.trim();
+    if (value.isEmpty || value.toLowerCase() == 'null') {
+      return null;
+    }
+    final DateTime? iso = DateTime.tryParse(value);
+    if (iso != null) {
+      return iso;
+    }
+    for (final String pattern in <String>['dd-MMM-yy', 'dd-MMM-yyyy']) {
+      try {
+        return DateFormat(pattern).parse(value);
+      } catch (_) {}
+    }
+    return null;
+  }
+
+  String _issueDateForApi(DateTime? date) {
+    if (date == null) {
+      return '';
+    }
+    return _formatDate(date);
+  }
+
+  String _issueDateFromRecord(String raw) {
+    final DateTime? parsed = _parseIssueDate(raw);
+    if (parsed == null) {
+      return raw.trim();
+    }
+    return _formatDate(parsed);
+  }
+
+  Future<void> _prefillFromIssueRecord(Map<String, dynamic> record) async {
+    setState(() => _cascadeBusy = true);
+    try {
+      final String projectId = _pick(
+        record,
+        const <String>['project_id_fk', 'project_id'],
+      );
+      final String projectName = _pick(
+        record,
+        const <String>['project_name', 'projectName'],
+      );
+      final String contractId = _pick(
+        record,
+        const <String>['contract_id_fk', 'contract_id'],
+      );
+      final String contractLabel = _pick(
+        record,
+        const <String>['contract_short_name', 'contract_name', 'contract_id_fk'],
+      );
+      final String categoryFk = _pick(record, const <String>['category_fk']);
+      final String titleText = _pick(record, const <String>['title']);
+      final String structureText = _pick(record, const <String>['structure']);
+      final String componentText = _pick(record, const <String>['component']);
+      final String priorityFk = _pick(record, const <String>['priority_fk']);
+      final String zonalFk = _pick(record, const <String>['zonal_railway_fk']);
+      final String railwayName = _pick(record, const <String>['railway_name']);
+      final String otherOrgText = _pick(
+        record,
+        const <String>['other_organization'],
+      );
+
+      _statusFk = _pick(record, const <String>['status_fk']).isEmpty
+          ? 'Raised'
+          : _pick(record, const <String>['status_fk']);
+      _reportedByStored = _pick(record, const <String>['reported_by']);
+      _assignedDate = _issueDateFromRecord(
+        _pick(record, const <String>['assigned_date']),
+      );
+      _resolvedDate = _issueDateFromRecord(
+        _pick(record, const <String>['resolved_date']),
+      );
+      _escalationDate = _issueDateFromRecord(
+        _pick(record, const <String>['escalation_date']),
+      );
+
+      _descriptionCtrl.text = _pick(record, const <String>['description']);
+      _actionTakenCtrl.text = _pick(
+        record,
+        const <String>['corrective_measure'],
+      );
+      _locationCtrl.text = _pick(record, const <String>['location']);
+      _otherOrgResponsibleNameCtrl.text = _pick(
+        record,
+        const <String>['other_org_resposible_person_name'],
+      );
+      _otherOrgResponsibleDesignationCtrl.text = _pick(
+        record,
+        const <String>['other_org_resposible_person_designation'],
+      );
+      _deadlineResolutionDate = _parseIssueDate(
+        _pick(record, const <String>['date']),
+      );
+
+      _IssueOption? project = _optionById(_projects, projectId);
+      project ??= projectId.isEmpty
+          ? null
+          : _ensureOption(_projects, projectId, projectName);
+
+      _IssueOption? contract;
+      _IssueOption? category;
+      _IssueOption? title;
+      _IssueOption? structure;
+      _IssueOption? component;
+      _IssueOption? priority;
+      _IssueOption? responsible;
+      _IssueOption? otherOrg;
+
+      if (project != null) {
+        final Map<String, dynamic> contractsRes = await widget.dataSource
+            .fetchIssueFormContracts(projectIdFk: project.id);
+        if (!mounted) {
+          return;
+        }
+        final List<_IssueOption> contracts = _contractOptionsFrom(
+          _responseLists(contractsRes),
+        );
+        contract = _optionById(contracts, contractId);
+        contract ??= contractId.isEmpty
+            ? null
+            : _ensureOption(contracts, contractId, contractLabel);
+
+        if (contract != null) {
+          final String contractTypeFk = _pick(
+            contract.raw ?? <String, dynamic>{},
+            const <String>['contract_type_fk'],
+          );
+          final Map<String, dynamic> catRes = await widget.dataSource
+              .fetchIssueFormCategories(contractTypeFk: contractTypeFk);
+          if (!mounted) {
+            return;
+          }
+          final List<_IssueOption> categories = _categoryOptionsFrom(
+            _responseLists(catRes),
+          );
+          category = _optionById(categories, categoryFk);
+          if (category == null && categoryFk.isNotEmpty) {
+            category = _ensureOption(categories, categoryFk, categoryFk);
+          }
+
+          final Map<String, dynamic> structRes = await widget.dataSource
+              .fetchIssueFormStructures(contractIdFk: contract.id);
+          if (!mounted) {
+            return;
+          }
+          final List<dynamic> structRows = _responseLists(structRes);
+          final List<_IssueOption> structures = structRows.isEmpty
+              ? List<_IssueOption>.from(_structures)
+              : _issueOptionsFromField(structRows, rowFieldKey: 'structure');
+          if (structureText.isNotEmpty) {
+            structure = _optionById(structures, structureText) ??
+                _ensureOption(structures, structureText, structureText);
+
+            final Map<String, dynamic> compRes = await widget.dataSource
+                .fetchIssueFormComponents(
+              contractIdFk: contract.id,
+              structure: structureText,
+            );
+            if (!mounted) {
+              return;
+            }
+            final List<dynamic> compRows = _responseLists(compRes);
+            final List<_IssueOption> components = compRows.isEmpty
+                ? List<_IssueOption>.from(_components)
+                : _issueOptionsFromField(compRows, rowFieldKey: 'component');
+            if (componentText.isNotEmpty &&
+                componentText.toLowerCase() != 'null') {
+              component = _optionById(components, componentText) ??
+                  _ensureOption(components, componentText, componentText);
+            }
+            _components = components;
+          }
+          _structures = structures;
+          _categories = categories;
+
+          if (category != null || categoryFk.isNotEmpty) {
+            final String titlesKey = categoryFk.isNotEmpty
+                ? categoryFk
+                : category!.id.split('|').first;
+            final Map<String, dynamic> titlesRes = await widget.dataSource
+                .fetchIssueFormTitles(categoryFk: titlesKey);
+            if (!mounted) {
+              return;
+            }
+            final List<_IssueOption> titles = _titleOptionsFrom(
+              _responseLists(titlesRes),
+            );
+            title = _optionByIdOrLabel(titles, titleText);
+            if (title == null && titleText.isNotEmpty) {
+              title = _ensureOption(titles, titleText, titleText);
+            }
+            _titles = titles;
+          }
+        }
+        _contracts = contracts;
+      }
+
+      priority = _optionByIdOrLabel(_priorityItems, priorityFk);
+      priority ??= priorityFk.isEmpty
+          ? null
+          : _ensureOption(_priorityItems, priorityFk, priorityFk);
+
+      responsible = _optionById(_responsibleItems, zonalFk);
+      responsible ??= zonalFk.isEmpty
+          ? null
+          : _ensureOption(
+              _responsibleItems,
+              zonalFk,
+              railwayName.isEmpty ? zonalFk : railwayName,
+            );
+
+      if (otherOrgText.isNotEmpty) {
+        otherOrg = _optionByIdOrLabel(_otherOrgItems, otherOrgText) ??
+            _ensureOption(_otherOrgItems, otherOrgText, otherOrgText);
+      }
+
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _project = project;
+        _contract = contract;
+        _category = category;
+        _title = title;
+        _structure = structure;
+        _component = component;
+        _priority = priority;
+        _responsible = responsible;
+        _otherOrg = otherOrg;
+      });
+    } finally {
+      if (mounted) {
+        setState(() => _cascadeBusy = false);
+      }
+    }
+  }
 
   List<_IssueOption> _optionsFromMaps(
     List<dynamic> rows, {
@@ -691,9 +1023,9 @@ class _AddIssueFormPageState extends State<AddIssueFormPage> {
         }
         return true;
       case 1:
-        if (_reportedByUserId().isEmpty) {
+        if (_reportedByDisplayName().isEmpty) {
           _showRequired(
-            'Reported by requires a signed-in user. Please log in again.',
+            'Reported by is required for this issue.',
           );
           return false;
         }
@@ -707,22 +1039,25 @@ class _AddIssueFormPageState extends State<AddIssueFormPage> {
           );
           return false;
         }
-        if (_otherOrg == null) {
-          _showRequired(
-            'Please select other responsible organization (pending with).',
-          );
-          return false;
-        }
-        if (_otherOrgResponsibleNameCtrl.text.trim().isEmpty) {
-          _showRequired('Please enter responsible person name.');
-          return false;
-        }
-        if (_otherOrgResponsibleDesignationCtrl.text.trim().isEmpty) {
-          _showRequired('Please enter responsible person designation.');
-          return false;
+        if (_otherOrg != null) {
+          if (_otherOrgResponsibleNameCtrl.text.trim().isEmpty) {
+            _showRequired('Please enter responsible person name.');
+            return false;
+          }
+          if (_otherOrgResponsibleDesignationCtrl.text.trim().isEmpty) {
+            _showRequired('Please enter responsible person designation.');
+            return false;
+          }
         }
         return true;
       case 2:
+        if (_isEditMode &&
+            _attachments.every(
+              (_IssueAttachmentRow r) =>
+                  r.bytes == null || r.bytes!.isEmpty,
+            )) {
+          return true;
+        }
         for (final _IssueAttachmentRow r in _attachments) {
           final bool hasFile = r.bytes != null && r.bytes!.isNotEmpty;
           if (hasFile && r.fileType == null) {
@@ -762,6 +1097,9 @@ class _AddIssueFormPageState extends State<AddIssueFormPage> {
   }
 
   String _reportedByDisplayName() {
+    if (_isEditMode && _reportedByStored.trim().isNotEmpty) {
+      return _reportedByStored.trim();
+    }
     final String n = widget.session?.userName.trim() ?? '';
     if (n.isNotEmpty) {
       return n;
@@ -790,10 +1128,35 @@ class _AddIssueFormPageState extends State<AddIssueFormPage> {
     return _responsible!.id;
   }
 
-  Map<String, String> _buildAddIssueFields() {
+  String _categoryFkForApi() {
+    if (_category == null) {
+      return '';
+    }
+    final Map<String, dynamic>? raw = _category!.raw;
+    if (raw != null) {
+      final String fromRaw = _pick(
+        raw,
+        const <String>['category_fk', 'category'],
+      );
+      if (fromRaw.isNotEmpty) {
+        return fromRaw;
+      }
+    }
+    final String id = _category!.id;
+    if (id.contains('|')) {
+      return id.split('|').first;
+    }
+    return id;
+  }
+
+  Map<String, String> _buildIssueFields() {
     final String titleText = _title?.label ?? _title?.id ?? '';
     final String priorityText = _priority?.label ?? _priority?.id ?? '';
     final String otherOrgText = _otherOrg?.label ?? _otherOrg?.id ?? '';
+    final String? componentId = _component?.id;
+    final String componentValue = _isEditMode
+        ? ((componentId == null || componentId.isEmpty) ? 'null' : componentId)
+        : (componentId ?? '');
 
     final List<String> typeLabels = <String>[];
     final List<String> fileNames = <String>[];
@@ -812,19 +1175,17 @@ class _AddIssueFormPageState extends State<AddIssueFormPage> {
       fileNames.add(fn);
     }
 
-    return <String, String>{
+    final Map<String, String> fields = <String, String>{
       'project_id_fk': _project?.id ?? '',
       'contract_id_fk': _contract?.id ?? '',
       'structure': _structure?.id ?? '',
-      'component': _component?.id ?? '',
-      'category_fk': _category?.id ?? '',
+      'component': componentValue,
+      'category_fk': _categoryFkForApi(),
       'title': titleText,
       'priority_fk': priorityText,
       'description': _descriptionCtrl.text.trim(),
       'corrective_measure': _actionTakenCtrl.text.trim(),
-      'date': _deadlineResolutionDate != null
-          ? _formatDate(_deadlineResolutionDate)
-          : '',
+      'date': _issueDateForApi(_deadlineResolutionDate),
       'location': _locationCtrl.text.trim(),
       'other_organization': otherOrgText,
       'zonal_railway_fk': _zonalRailwayFk(),
@@ -833,12 +1194,25 @@ class _AddIssueFormPageState extends State<AddIssueFormPage> {
       'other_org_resposible_person_designation':
           _otherOrgResponsibleDesignationCtrl.text.trim(),
       'reported_by': _reportedByDisplayName(),
-      'assigned_date': '',
-      'resolved_date': '',
+      'assigned_date': _assignedDate,
+      'resolved_date': _resolvedDate,
+      'escalation_date': _escalationDate,
       'issue_file_types': typeLabels.join(','),
       'issueFileNames': fileNames.join(','),
       'issue_file_ids': '',
     };
+
+    if (_isEditMode) {
+      fields['issue_id'] = widget.issueId!.trim();
+      fields['status_fk'] = _statusFk;
+      if (fileNames.isEmpty) {
+        fields.remove('issue_file_types');
+        fields.remove('issueFileNames');
+        fields.remove('issue_file_ids');
+      }
+    }
+
+    return fields;
   }
 
   List<({Uint8List bytes, String fileName})> _buildIssueFileParts() {
@@ -867,10 +1241,16 @@ class _AddIssueFormPageState extends State<AddIssueFormPage> {
     }
     setState(() => _saving = true);
     try {
-      await widget.dataSource.submitAddIssue(
-        fields: _buildAddIssueFields(),
-        files: _buildIssueFileParts(),
-      );
+      if (_isEditMode) {
+        await widget.dataSource.submitUpdateIssue(
+          fields: _buildIssueFields(),
+        );
+      } else {
+        await widget.dataSource.submitAddIssue(
+          fields: _buildIssueFields(),
+          files: _buildIssueFileParts(),
+        );
+      }
       if (!mounted) {
         return;
       }
@@ -878,7 +1258,9 @@ class _AddIssueFormPageState extends State<AddIssueFormPage> {
         context: context,
         type: AppDialogType.success,
         title: 'Saved',
-        message: 'Issue submitted successfully.',
+        message: _isEditMode
+            ? 'Issue updated successfully.'
+            : 'Issue submitted successfully.',
       );
       if (!mounted) {
         return;
@@ -892,7 +1274,9 @@ class _AddIssueFormPageState extends State<AddIssueFormPage> {
         context: context,
         type: AppDialogType.error,
         title: 'Save Failed',
-        message: 'Unable to submit issue. Check required fields and try again.',
+        message: _isEditMode
+            ? 'Unable to update issue. Check required fields and try again.'
+            : 'Unable to submit issue. Check required fields and try again.',
       );
     } finally {
       if (mounted) {
@@ -905,7 +1289,7 @@ class _AddIssueFormPageState extends State<AddIssueFormPage> {
   Widget build(BuildContext context) {
     final ColorScheme cs = Theme.of(context).colorScheme;
     return Scaffold(
-      appBar: AppBar(title: const Text('Add Issue')),
+      appBar: AppBar(title: Text(_isEditMode ? 'Update Issue' : 'Add Issue')),
       body: SafeArea(
         child: Column(
           children: <Widget>[
@@ -915,7 +1299,7 @@ class _AddIssueFormPageState extends State<AddIssueFormPage> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: <Widget>[
                   AppStepHeader(
-                    title: 'Report an issue',
+                    title: _isEditMode ? 'Update issue' : 'Report an issue',
                     currentStep: _currentStep,
                     stepTitles: const <String>[
                       'Step 1 — Basics',
@@ -943,16 +1327,21 @@ class _AddIssueFormPageState extends State<AddIssueFormPage> {
                             ],
                           ),
                         ),
-                  if (_cascadeBusy)
+                  if (_cascadeBusy || _saving)
                     Positioned.fill(
                       child: AbsorbPointer(
                         child: ColoredBox(
-                          color: Colors.black.withValues(alpha: 0.06),
-                          child: const Center(
+                          color: Colors.black.withValues(
+                            alpha: _saving ? 0.12 : 0.06,
+                          ),
+                          child: Center(
                             child: SizedBox(
                               width: 36,
                               height: 36,
-                              child: CircularProgressIndicator(strokeWidth: 3),
+                              child: CircularProgressIndicator(
+                                strokeWidth: 3,
+                                color: _saving ? cs.primary : null,
+                              ),
                             ),
                           ),
                         ),
@@ -961,43 +1350,50 @@ class _AddIssueFormPageState extends State<AddIssueFormPage> {
                 ],
               ),
             ),
-            Container(
-              padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
-              decoration: BoxDecoration(
-                color: cs.surface,
-                border: Border(
-                  top: BorderSide(color: cs.outlineVariant.withValues(alpha: 0.7)),
-                ),
-              ),
-              child: Row(
-                children: <Widget>[
-                  if (_currentStep > 0)
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: _saving
-                            ? null
-                            : () => setState(() => _currentStep -= 1),
-                        icon: const Icon(Icons.arrow_back_rounded),
-                        label: const Text('Back'),
-                      ),
-                    ),
-                  if (_currentStep > 0) const SizedBox(width: 10),
-                  Expanded(
-                    child: FilledButton.icon(
-                      onPressed: _saving
-                          ? null
-                          : (_currentStep == 2 ? _submit : _next),
-                      icon: Icon(
-                        _currentStep == 2
-                            ? Icons.send_rounded
-                            : Icons.arrow_forward_rounded,
-                      ),
-                      label: Text(_currentStep == 2 ? 'Submit issue' : 'Continue'),
+            if (!_loading)
+              Container(
+                padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+                decoration: BoxDecoration(
+                  color: cs.surface,
+                  border: Border(
+                    top: BorderSide(
+                      color: cs.outlineVariant.withValues(alpha: 0.7),
                     ),
                   ),
-                ],
+                ),
+                child: Row(
+                  children: <Widget>[
+                    if (_currentStep > 0)
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: _interactionLocked
+                              ? null
+                              : () => setState(() => _currentStep -= 1),
+                          icon: const Icon(Icons.arrow_back_rounded),
+                          label: const Text('Back'),
+                        ),
+                      ),
+                    if (_currentStep > 0) const SizedBox(width: 10),
+                    Expanded(
+                      child: FilledButton.icon(
+                        onPressed: _interactionLocked
+                            ? null
+                            : (_currentStep == 2 ? _submit : _next),
+                        icon: Icon(
+                          _currentStep == 2
+                              ? Icons.send_rounded
+                              : Icons.arrow_forward_rounded,
+                        ),
+                        label: Text(
+                          _currentStep == 2
+                              ? (_isEditMode ? 'Update issue' : 'Submit issue')
+                              : 'Continue',
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
           ],
         ),
       ),
@@ -1005,10 +1401,7 @@ class _AddIssueFormPageState extends State<AddIssueFormPage> {
   }
 
   Widget _reportedByBanner(BuildContext context) {
-    final String name =
-        widget.session?.userName.trim().isNotEmpty == true
-            ? widget.session!.userName.trim()
-            : _reportedByUserId();
+    final String name = _reportedByDisplayName();
     final ThemeData theme = Theme.of(context);
     return InputDecorator(
       decoration: const InputDecoration(
@@ -1162,7 +1555,7 @@ class _AddIssueFormPageState extends State<AddIssueFormPage> {
         ),
         const SizedBox(height: gapV),
         AppSelectSheetField<_IssueOption>(
-          label: 'Other Responsible Organization (Pending with) *',
+          label: 'Other Responsible Organization (Pending with)',
           title: 'Select organization',
           items: _otherOrgItems,
           value: _otherOrg,
@@ -1230,7 +1623,7 @@ class _AddIssueFormPageState extends State<AddIssueFormPage> {
                   ),
                   const Spacer(),
                   TextButton.icon(
-                    onPressed: _saving ? null : _addAttachment,
+                    onPressed: _interactionLocked ? null : _addAttachment,
                     icon: const Icon(Icons.add_rounded, size: 20),
                     label: const Text('Add row'),
                   ),
@@ -1273,7 +1666,9 @@ class _AddIssueFormPageState extends State<AddIssueFormPage> {
                   ),
                 ),
                 IconButton(
-                  onPressed: _saving ? null : () => _removeAttachment(row.id),
+                  onPressed: _interactionLocked
+                      ? null
+                      : () => _removeAttachment(row.id),
                   icon: const Icon(Icons.delete_outline_rounded),
                 ),
               ],
@@ -1298,7 +1693,7 @@ class _AddIssueFormPageState extends State<AddIssueFormPage> {
             ),
             const SizedBox(height: 8),
             OutlinedButton.icon(
-              onPressed: _saving ? null : () => _pickFile(row),
+              onPressed: _interactionLocked ? null : () => _pickFile(row),
               icon: const Icon(Icons.attach_file_rounded),
               label: Text(row.pickedFileName ?? 'Choose file'),
             ),

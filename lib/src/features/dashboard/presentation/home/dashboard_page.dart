@@ -20,6 +20,7 @@ import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/issues/issue
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/projects/project_details_page.dart';
 import 'package:wcr_pmis_mobile/src/features/rfi/presentation/pages/rfi_dashboard_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/activities/new_activities_update_page.dart';
+import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/activities/structure_p6_update_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/domain/utils/quality_inspection_user_access.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/domain/utils/update_form_mobile_access.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/design_drawing/design_drawing_page.dart';
@@ -950,6 +951,16 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         return;
       }
       context.pushNamed(NewActivitiesUpdatePage.routeName);
+      return;
+    }
+    if (urlKey.contains('p6-new-data') ||
+        urlKey.contains('p6newdata') ||
+        combinedKey.contains('structure p6') ||
+        combinedKey.contains('p6 update')) {
+      if (!mounted) {
+        return;
+      }
+      context.pushNamed(StructureP6UpdatePage.routeName);
       return;
     }
     if (urlKey.contains('dms') ||

@@ -950,6 +950,36 @@ class DashboardRemoteDataSource {
     return _normalizeResponse(response.data);
   }
 
+  Future<Map<String, dynamic>> fetchIssueForEdit({
+    required String issueId,
+  }) async {
+    final Response<dynamic> response = await _dio.post<dynamic>(
+      '/issue/ajax/form/get-issue/get-issue',
+      data: <String, dynamic>{'issue_id': issueId},
+      options: _requestOptions,
+    );
+    return _normalizeResponse(response.data);
+  }
+
+  Future<Map<String, dynamic>> submitUpdateIssue({
+    required Map<String, String> fields,
+  }) async {
+    final FormData formData = FormData();
+    fields.forEach((String k, String v) {
+      formData.fields.add(MapEntry<String, String>(k, v));
+    });
+    final Response<dynamic> response = await _dio.post<dynamic>(
+      '/issue/update-issue',
+      data: formData,
+      options: Options(
+        receiveTimeout: _dashboardReceiveTimeout,
+        connectTimeout: _dashboardConnectTimeout,
+        contentType: null,
+      ),
+    );
+    return _normalizeResponse(response.data);
+  }
+
   Future<Map<String, dynamic>> fetchQualityInspectionList({
     Map<String, dynamic> filters = const <String, dynamic>{},
   }) async {
@@ -1957,6 +1987,125 @@ class DashboardRemoteDataSource {
       data: formData,
       options: _requestOptions.copyWith(
         contentType: 'multipart/form-data',
+      ),
+    );
+    return _normalizeResponse(response.data);
+  }
+
+  Map<String, String> _p6NewDataFilterPayload({
+    String? contractIdFk,
+    String? statusFk,
+    String? uploadType,
+  }) {
+    String valueOrEmpty(String? value) => value?.trim().isNotEmpty == true
+        ? value!.trim()
+        : '';
+    return <String, String>{
+      'contract_id_fk': valueOrEmpty(contractIdFk),
+      'status_fk': valueOrEmpty(statusFk),
+      'upload_type': valueOrEmpty(uploadType),
+    };
+  }
+
+  Future<List<Map<String, dynamic>>> fetchP6NewActivityData({
+    String? contractIdFk,
+    String? statusFk,
+    String? uploadType,
+  }) async {
+    final Response<dynamic> response = await _dio.post<dynamic>(
+      '/ajax/getP6NewActivityData',
+      data: _p6NewDataFilterPayload(
+        contractIdFk: contractIdFk,
+        statusFk: statusFk,
+        uploadType: uploadType,
+      ),
+      options: _requestOptions,
+    );
+    return _normalizeListResponse(response.data);
+  }
+
+  Future<List<Map<String, dynamic>>> fetchP6NewDataContractsFilter() async {
+    final Response<dynamic> response = await _dio.post<dynamic>(
+      '/ajax/getContractsListFilterInP6New',
+      data: const <String, dynamic>{},
+      options: _requestOptions,
+    );
+    return _normalizeListResponse(response.data);
+  }
+
+  Future<List<Map<String, dynamic>>> fetchP6NewDataUploadTypesFilter() async {
+    final Response<dynamic> response = await _dio.post<dynamic>(
+      '/ajax/getUploadTypesFilterInP6New',
+      data: const <String, dynamic>{},
+      options: _requestOptions,
+    );
+    return _normalizeListResponse(response.data);
+  }
+
+  Future<List<Map<String, dynamic>>> fetchP6NewDataStatusFilter() async {
+    final Response<dynamic> response = await _dio.post<dynamic>(
+      '/ajax/getStatusListFilterInP6New',
+      data: const <String, dynamic>{},
+      options: _requestOptions,
+    );
+    return _normalizeListResponse(response.data);
+  }
+
+  Future<Map<String, dynamic>> fetchP6NewDataFormBootstrap() async {
+    final Response<dynamic> response = await _dio.post<dynamic>(
+      '/p6-new-data-new',
+      data: const <String, dynamic>{},
+      options: _requestOptions,
+    );
+    return _normalizeResponse(response.data);
+  }
+
+  Future<({Uint8List bytes, String? fileName})> downloadP6NewDataFileFormat() async {
+    final Response<dynamic> response = await _dio.get<dynamic>(
+      '/p6-new-data-template',
+      options: Options(
+        receiveTimeout: _dashboardReceiveTimeout,
+        connectTimeout: _dashboardConnectTimeout,
+        responseType: ResponseType.bytes,
+      ),
+    );
+    final dynamic data = response.data;
+    final List<int> raw = data is List<int> ? data : <int>[];
+    final String? contentDisposition =
+        response.headers.value('content-disposition');
+    final String? fileName = _fileNameFromContentDisposition(contentDisposition);
+    return (bytes: Uint8List.fromList(raw), fileName: fileName);
+  }
+
+  Future<Map<String, dynamic>> submitP6NewDataUpload({
+    required String endpoint,
+    required String projectIdFk,
+    required String contractIdFk,
+    required String dataDate,
+    required String fileName,
+    required Uint8List bytes,
+    bool includeFobId = false,
+  }) async {
+    final Map<String, dynamic> fields = <String, dynamic>{
+      'project_id_fk': projectIdFk,
+      'contract_id_fk': contractIdFk,
+      'data_date': dataDate,
+      if (includeFobId) 'fob_id_fk': '',
+    };
+    final FormData formData = FormData.fromMap(<String, dynamic>{
+      ...fields,
+      'p6dataFile': MultipartFile.fromBytes(
+        bytes,
+        filename: fileName,
+      ),
+    });
+    final Response<dynamic> response = await _dio.post<dynamic>(
+      endpoint,
+      data: formData,
+      options: Options(
+        receiveTimeout: _dashboardReceiveTimeout,
+        connectTimeout: _dashboardConnectTimeout,
+        contentType: null,
       ),
     );
     return _normalizeResponse(response.data);

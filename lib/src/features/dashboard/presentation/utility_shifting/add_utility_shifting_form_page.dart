@@ -308,6 +308,8 @@ class _AddUtilityShiftingFormPageState
   bool _saving = false;
   int _currentStep = 0;
 
+  bool get _interactionLocked => _loading || _saving;
+
   String? _editNumericId;
 
   List<_OptionItem> _projects = <_OptionItem>[];
@@ -411,63 +413,86 @@ class _AddUtilityShiftingFormPageState
               ),
             ),
             Expanded(
-              child: _loading
-                  ? const Center(child: CircularProgressIndicator())
-                  : Form(
-                      key: _formKey,
-                      child: ListView(
-                        padding: const EdgeInsets.fromLTRB(12, 0, 12, 16),
-                        children: <Widget>[
-                          if (_currentStep == 0) _stepBasic(),
-                          if (_currentStep == 1) _stepImpact(),
-                          if (_currentStep == 2) _stepProgressAttachments(),
-                        ],
-                      ),
-                    ),
-            ),
-            Container(
-              padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
-              decoration: BoxDecoration(
-                color: cs.surface,
-                border: Border(
-                  top: BorderSide(
-                    color: cs.outlineVariant.withValues(alpha: 0.7),
-                  ),
-                ),
-              ),
-              child: Row(
+              child: Stack(
                 children: <Widget>[
-                  if (_currentStep > 0)
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: _saving
-                            ? null
-                            : () => setState(() => _currentStep -= 1),
-                        icon: const Icon(Icons.arrow_back_rounded),
-                        label: const Text('Back'),
+                  _loading
+                      ? const Center(child: CircularProgressIndicator())
+                      : Form(
+                          key: _formKey,
+                          child: ListView(
+                            padding: const EdgeInsets.fromLTRB(12, 0, 12, 16),
+                            children: <Widget>[
+                              if (_currentStep == 0) _stepBasic(),
+                              if (_currentStep == 1) _stepImpact(),
+                              if (_currentStep == 2) _stepProgressAttachments(),
+                            ],
+                          ),
+                        ),
+                  if (_saving)
+                    Positioned.fill(
+                      child: AbsorbPointer(
+                        child: ColoredBox(
+                          color: Colors.black.withValues(alpha: 0.12),
+                          child: Center(
+                            child: SizedBox(
+                              width: 36,
+                              height: 36,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 3,
+                                color: cs.primary,
+                              ),
+                            ),
+                          ),
+                        ),
                       ),
                     ),
-                  if (_currentStep > 0) const SizedBox(width: 10),
-                  Expanded(
-                    child: FilledButton.icon(
-                      onPressed: _saving
-                          ? null
-                          : _currentStep == 2
-                          ? _submit
-                          : _nextStep,
-                      icon: Icon(
-                        _currentStep == 2
-                            ? Icons.save_rounded
-                            : Icons.arrow_forward_rounded,
-                      ),
-                      label: Text(
-                        _currentStep == 2 ? 'Save Utility' : 'Continue',
-                      ),
-                    ),
-                  ),
                 ],
               ),
             ),
+            if (!_loading)
+              Container(
+                padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+                decoration: BoxDecoration(
+                  color: cs.surface,
+                  border: Border(
+                    top: BorderSide(
+                      color: cs.outlineVariant.withValues(alpha: 0.7),
+                    ),
+                  ),
+                ),
+                child: Row(
+                  children: <Widget>[
+                    if (_currentStep > 0)
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: _interactionLocked
+                              ? null
+                              : () => setState(() => _currentStep -= 1),
+                          icon: const Icon(Icons.arrow_back_rounded),
+                          label: const Text('Back'),
+                        ),
+                      ),
+                    if (_currentStep > 0) const SizedBox(width: 10),
+                    Expanded(
+                      child: FilledButton.icon(
+                        onPressed: _interactionLocked
+                            ? null
+                            : _currentStep == 2
+                            ? _submit
+                            : _nextStep,
+                        icon: Icon(
+                          _currentStep == 2
+                              ? Icons.save_rounded
+                              : Icons.arrow_forward_rounded,
+                        ),
+                        label: Text(
+                          _currentStep == 2 ? 'Save Utility' : 'Continue',
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
           ],
         ),
       ),
@@ -674,7 +699,7 @@ class _AddUtilityShiftingFormPageState
           _progressRowCard(context, i, _progressRows[i]),
         Center(
           child: FilledButton.tonalIcon(
-            onPressed: _saving ? null : _addProgressRow,
+            onPressed: _interactionLocked ? null : _addProgressRow,
             icon: const Icon(Icons.add_rounded),
             label: const Text('Add progress'),
           ),
@@ -697,7 +722,7 @@ class _AddUtilityShiftingFormPageState
           _attachmentRowCard(context, i, _attachmentRows[i]),
         Center(
           child: FilledButton.tonalIcon(
-            onPressed: _saving ? null : _addAttachmentRow,
+            onPressed: _interactionLocked ? null : _addAttachmentRow,
             icon: const Icon(Icons.add_rounded),
             label: const Text('Add attachment'),
           ),
@@ -776,7 +801,9 @@ class _AddUtilityShiftingFormPageState
                     backgroundColor: cs.errorContainer,
                     foregroundColor: cs.onErrorContainer,
                   ),
-                  onPressed: _saving ? null : () => _removeProgressRow(index),
+                  onPressed: _interactionLocked
+                      ? null
+                      : () => _removeProgressRow(index),
                   icon: const Icon(Icons.delete_outline_rounded),
                 ),
               ],
@@ -837,7 +864,9 @@ class _AddUtilityShiftingFormPageState
                     backgroundColor: cs.errorContainer,
                     foregroundColor: cs.onErrorContainer,
                   ),
-                  onPressed: _saving ? null : () => _removeAttachmentRow(index),
+                  onPressed: _interactionLocked
+                      ? null
+                      : () => _removeAttachmentRow(index),
                   icon: const Icon(Icons.delete_outline_rounded),
                 ),
               ],
@@ -864,7 +893,7 @@ class _AddUtilityShiftingFormPageState
             ),
             const SizedBox(height: 10),
             OutlinedButton.icon(
-              onPressed: _saving ? null : () => _pickAttachmentFile(row),
+              onPressed: _interactionLocked ? null : () => _pickAttachmentFile(row),
               icon: const Icon(Icons.attach_file_rounded),
               label: Text(row.bytes == null ? 'Upload file' : 'Change file'),
             ),

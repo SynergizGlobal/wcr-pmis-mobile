@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:wcr_pmis_mobile/src/core/widgets/app_dialog.dart';
 import 'package:wcr_pmis_mobile/src/core/widgets/app_select_sheet_field.dart';
+import 'package:wcr_pmis_mobile/src/core/widgets/app_step_header.dart';
 import 'package:wcr_pmis_mobile/src/core/widgets/app_text_form_field.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/data/datasources/dashboard_remote_data_source.dart';
 
@@ -29,27 +30,11 @@ class ContractFormPage extends StatefulWidget {
 }
 
 class _ContractFormPageState extends State<ContractFormPage> {
-  static const List<_ContractStepMeta> _steps = <_ContractStepMeta>[
-    _ContractStepMeta(
-      title: 'Contract Managers',
-      subtitle: 'Project, HOD, department and bank funding',
-      icon: Icons.groups_outlined,
-    ),
-    _ContractStepMeta(
-      title: 'Executives',
-      subtitle: 'Assign responsible people by department',
-      icon: Icons.badge_outlined,
-    ),
-    _ContractStepMeta(
-      title: 'Contract Details',
-      subtitle: 'Names, costs, dates and tender revisions',
-      icon: Icons.description_outlined,
-    ),
-    _ContractStepMeta(
-      title: 'Documents',
-      subtitle: 'Upload contract files and attachments',
-      icon: Icons.folder_open_outlined,
-    ),
+  static const List<String> _stepTitles = <String>[
+    'Contract Managers',
+    'Executives',
+    'Contract Details',
+    'Documents',
   ];
   static const List<String> _typeOfReviewOptions = <String>['Prior', 'Post'];
   static const int _shortNameMaxLength = 100;
@@ -72,6 +57,8 @@ class _ContractFormPageState extends State<ContractFormPage> {
   bool _loading = true;
   bool _saving = false;
   bool _loadingWorkStatus = false;
+
+  bool get _footerLocked => _saving || _loadingWorkStatus;
   int _currentStep = 0;
 
   bool _contractAwarded = false;
@@ -154,10 +141,12 @@ class _ContractFormPageState extends State<ContractFormPage> {
           children: <Widget>[
             if (!_loading)
               Padding(
-                padding: const EdgeInsets.fromLTRB(12, 10, 12, 4),
-                child: _ContractFormStepper(
-                  steps: _steps,
+                padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
+                child: AppStepHeader(
+                  title: _isEdit ? 'Update Contract' : 'Add Contract',
                   currentStep: _currentStep,
+                  stepTitles: _stepTitles,
+                  compact: true,
                 ),
               ),
             Expanded(
@@ -213,21 +202,7 @@ class _ContractFormPageState extends State<ContractFormPage> {
                     ),
                   ),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: <Widget>[
-                    Text(
-                      'Step ${_currentStep + 1} of ${_steps.length} · ${_steps[_currentStep].title}',
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                        color: cs.onSurfaceVariant,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    _buildFooterActions(),
-                  ],
-                ),
+                child: _buildFooterActions(),
               ),
           ],
         ),
@@ -242,7 +217,7 @@ class _ContractFormPageState extends State<ContractFormPage> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
             OutlinedButton.icon(
-              onPressed: _saving
+              onPressed: _footerLocked
                   ? null
                   : () => setState(() => _currentStep -= 1),
               icon: const Icon(Icons.arrow_back_rounded),
@@ -250,7 +225,7 @@ class _ContractFormPageState extends State<ContractFormPage> {
             ),
             const SizedBox(height: 10),
             FilledButton.icon(
-              onPressed: _saving ? null : () => _submit(),
+              onPressed: _footerLocked ? null : () => _submit(),
               icon: const Icon(Icons.save_rounded),
               label: Text(_saving ? 'Updating...' : 'Update'),
             ),
@@ -261,7 +236,7 @@ class _ContractFormPageState extends State<ContractFormPage> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
           OutlinedButton.icon(
-            onPressed: _saving
+            onPressed: _footerLocked
                 ? null
                 : () => setState(() => _currentStep -= 1),
             icon: const Icon(Icons.arrow_back_rounded),
@@ -272,14 +247,14 @@ class _ContractFormPageState extends State<ContractFormPage> {
             children: <Widget>[
               Expanded(
                 child: OutlinedButton(
-                  onPressed: _saving ? null : () => _submit(addAnother: true),
+                  onPressed: _footerLocked ? null : () => _submit(addAnother: true),
                   child: Text(_saving ? 'Saving...' : 'Add'),
                 ),
               ),
               const SizedBox(width: 10),
               Expanded(
                 child: FilledButton.icon(
-                  onPressed: _saving ? null : () => _submit(),
+                  onPressed: _footerLocked ? null : () => _submit(),
                   icon: const Icon(Icons.save_rounded),
                   label: Text(_saving ? 'Saving...' : 'Save'),
                 ),
@@ -294,7 +269,7 @@ class _ContractFormPageState extends State<ContractFormPage> {
       children: <Widget>[
         if (_currentStep > 0) ...<Widget>[
           OutlinedButton.icon(
-            onPressed: _saving
+            onPressed: _footerLocked
                 ? null
                 : () => setState(() => _currentStep -= 1),
             icon: const Icon(Icons.arrow_back_rounded),
@@ -304,7 +279,7 @@ class _ContractFormPageState extends State<ContractFormPage> {
         ],
         Expanded(
           child: FilledButton.icon(
-            onPressed: _saving ? null : _nextStep,
+            onPressed: _footerLocked ? null : _nextStep,
             icon: const Icon(Icons.arrow_forward_rounded),
             label: const Text('Continue'),
           ),
@@ -2619,182 +2594,6 @@ class _ContractFormPageState extends State<ContractFormPage> {
       return part2;
     }
     return fallback;
-  }
-}
-
-class _ContractStepMeta {
-  const _ContractStepMeta({
-    required this.title,
-    required this.subtitle,
-    required this.icon,
-  });
-
-  final String title;
-  final String subtitle;
-  final IconData icon;
-}
-
-class _ContractFormStepper extends StatelessWidget {
-  const _ContractFormStepper({
-    required this.steps,
-    required this.currentStep,
-  });
-
-  final List<_ContractStepMeta> steps;
-  final int currentStep;
-
-  @override
-  Widget build(BuildContext context) {
-    final ColorScheme cs = Theme.of(context).colorScheme;
-    final TextTheme tt = Theme.of(context).textTheme;
-    final int safeStep = currentStep.clamp(0, steps.length - 1);
-    final _ContractStepMeta meta = steps[safeStep];
-    final double progress = (safeStep + 1) / steps.length;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: <Widget>[
-        ClipRRect(
-          borderRadius: BorderRadius.circular(999),
-          child: LinearProgressIndicator(
-            value: progress,
-            minHeight: 5,
-            backgroundColor: cs.surfaceContainerHighest,
-            color: cs.primary,
-          ),
-        ),
-        const SizedBox(height: 14),
-        SizedBox(
-          height: 42,
-          child: Row(
-            children: List<Widget>.generate(steps.length * 2 - 1, (int i) {
-              if (i.isOdd) {
-                final int leftIndex = i ~/ 2;
-                final bool filled = safeStep > leftIndex;
-                return Expanded(
-                  child: Align(
-                    alignment: Alignment.center,
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 220),
-                      height: 2,
-                      color: filled
-                          ? cs.primary
-                          : cs.outlineVariant.withValues(alpha: 0.45),
-                    ),
-                  ),
-                );
-              }
-
-              final int index = i ~/ 2;
-              final bool done = safeStep > index;
-              final bool active = safeStep == index;
-              final Color fillColor = done || active
-                  ? cs.primary
-                  : cs.surfaceContainerHighest;
-              final Color contentColor =
-                  done || active ? cs.onPrimary : cs.onSurfaceVariant;
-
-              return AnimatedContainer(
-                duration: const Duration(milliseconds: 220),
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: fillColor,
-                  border: Border.all(
-                    color: active
-                        ? cs.primary
-                        : cs.outlineVariant.withValues(alpha: 0.55),
-                    width: active ? 2 : 1,
-                  ),
-                  boxShadow: active
-                      ? <BoxShadow>[
-                          BoxShadow(
-                            color: cs.primary.withValues(alpha: 0.28),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
-                          ),
-                        ]
-                      : null,
-                ),
-                child: Center(
-                  child: done
-                      ? Icon(Icons.check_rounded, size: 18, color: contentColor)
-                      : Icon(
-                          steps[index].icon,
-                          size: 18,
-                          color: contentColor,
-                        ),
-                ),
-              );
-            }),
-          ),
-        ),
-        const SizedBox(height: 12),
-        AnimatedSwitcher(
-          duration: const Duration(milliseconds: 220),
-          child: Container(
-            key: ValueKey<int>(safeStep),
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: <Color>[
-                  cs.primaryContainer.withValues(alpha: 0.72),
-                  cs.primaryContainer.withValues(alpha: 0.28),
-                ],
-              ),
-              border: Border.all(color: cs.primary.withValues(alpha: 0.18)),
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: cs.surface.withValues(alpha: 0.72),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(meta.icon, color: cs.primary, size: 24),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      Text(
-                        'Step ${safeStep + 1} of ${steps.length}',
-                        style: tt.labelMedium?.copyWith(
-                          color: cs.primary,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        meta.title,
-                        style: tt.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        meta.subtitle,
-                        style: tt.bodySmall?.copyWith(
-                          color: cs.onSurfaceVariant,
-                          height: 1.35,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
   }
 }
 
