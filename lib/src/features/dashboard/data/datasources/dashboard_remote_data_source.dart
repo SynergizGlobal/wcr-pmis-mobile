@@ -687,6 +687,19 @@ class DashboardRemoteDataSource {
     return _extractRowList(response.data);
   }
 
+  Future<List<Map<String, dynamic>>> fetchProgressTableData({
+    required String projectId,
+  }) async {
+    final Response<dynamic> response = await _dio.get<dynamic>(
+      '/progresstable/data/${Uri.encodeComponent(projectId.trim())}',
+      options: _requestOptions,
+    );
+    if (response.data is List<dynamic>) {
+      return _extractRowList(response.data);
+    }
+    return _normalizeListResponse(response.data);
+  }
+
   Future<Uint8List> fetchStructurePhotoBytes(String fileName) async {
     final String trimmed = fileName.trim();
     if (trimmed.isEmpty) {

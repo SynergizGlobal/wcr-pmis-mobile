@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/projects/tabs/daily_progress_tab.dart';
+import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/projects/tabs/progress_table_tab.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/projects/tabs/project_overview_tab.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/projects/tabs/site_photos_tab.dart';
 
@@ -17,6 +18,7 @@ class ProjectSummaryArgs {
 
 enum _SummaryTab {
   projectOverview('Project Overview', Icons.dashboard_rounded),
+  progressTable('Progress Table', Icons.table_chart_rounded),
   dailyProgress('Daily Progress', Icons.trending_up_rounded),
   sitePhotos('Site Photos', Icons.photo_library_rounded);
 
@@ -178,6 +180,12 @@ class _ProjectSummaryPageState extends State<ProjectSummaryPage> {
                   projectId: widget.args.projectId,
                   projectName: widget.args.projectName,
                 ),
+              )
+            : const SizedBox.shrink(),
+        _visitedTabs.contains(_SummaryTab.progressTable)
+            ? Padding(
+                padding: const EdgeInsets.all(12),
+                child: ProgressTableTab(projectId: widget.args.projectId),
               )
             : const SizedBox.shrink(),
         _visitedTabs.contains(_SummaryTab.dailyProgress)
