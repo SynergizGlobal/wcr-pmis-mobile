@@ -1972,6 +1972,47 @@ class DashboardRemoteDataSource {
     return _normalizeResponse(response.data);
   }
 
+  Future<List<Map<String, dynamic>>> fetchModifyActualsActivitiesList({
+    required String contractIdFk,
+    String? stripChartStructureIdFk,
+    String? searchStr,
+  }) async {
+    final Response<dynamic> response = await _dio.post<dynamic>(
+      '/ajax/getNewActivitiesfiltersList',
+      data: <String, dynamic>{
+        'contract_id_fk': contractIdFk,
+        'strip_chart_structure_id_fk': stripChartStructureIdFk ?? '',
+        'searchStr': searchStr ?? '',
+      },
+      options: _requestOptions,
+    );
+    return _normalizeListResponse(response.data);
+  }
+
+  Future<List<Map<String, dynamic>>> fetchContractStructures({
+    required String contractIdFk,
+  }) async {
+    final Response<dynamic> response = await _dio.get<dynamic>(
+      '/ajax/getContractStructures',
+      queryParameters: <String, dynamic>{
+        'contract_id_fk': contractIdFk,
+      },
+      options: _requestOptions,
+    );
+    return _normalizeListResponse(response.data);
+  }
+
+  Future<Map<String, dynamic>> submitModifyActualsBulk({
+    required Map<String, dynamic> payload,
+  }) async {
+    final Response<dynamic> response = await _dio.post<dynamic>(
+      '/update-modify-actuals-bulk',
+      data: payload,
+      options: _requestOptions,
+    );
+    return _normalizeResponse(response.data);
+  }
+
   Future<Map<String, dynamic>> uploadNewActivitiesUpdateFile({
     required String fileName,
     required Uint8List bytes,

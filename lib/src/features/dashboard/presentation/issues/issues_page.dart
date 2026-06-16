@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:wcr_pmis_mobile/src/core/widgets/app_dialog.dart';
 import 'package:wcr_pmis_mobile/src/core/widgets/app_table_pagination_footer.dart';
+import 'package:wcr_pmis_mobile/src/core/widgets/app_toolbar_table_scaffold_body.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/data/datasources/dashboard_remote_data_source.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/issues/add_issue_form_page.dart';
 import 'package:wcr_pmis_mobile/src/core/network/user_friendly_error_message.dart';
@@ -92,20 +93,9 @@ class _IssuesPageState extends State<IssuesPage> {
           GestureDetector(
             behavior: HitTestBehavior.translucent,
             onTap: () => FocusScope.of(context).unfocus(),
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                children: <Widget>[
-                  _toolbar(context, filteredRows),
-                  const SizedBox(height: 10),
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.only(bottom: 2),
-                      child: _tableCard(context, pageRows),
-                    ),
-                  ),
-                ],
-              ),
+            child: AppToolbarTableScaffoldBody(
+              toolbar: _toolbar(context, filteredRows),
+              table: _tableCard(context, pageRows),
             ),
           ),
           if (_loading)

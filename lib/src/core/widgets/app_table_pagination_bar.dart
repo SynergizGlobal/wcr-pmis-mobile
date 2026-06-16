@@ -51,11 +51,11 @@ class AppTablePageSizeSelector extends StatelessWidget {
     final TextStyle style =
         textStyle ?? AppTablePaginationStyles.metaTextStyle(context, compact: compact);
 
-    return Row(
+    final Widget selector = Row(
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
         Text('Show', style: style),
-        SizedBox(width: compact ? 4 : 6),
+        SizedBox(width: compact ? 2 : 6),
         DropdownButtonHideUnderline(
           child: DropdownButton<int>(
             value: value,
@@ -76,10 +76,21 @@ class AppTablePageSizeSelector extends StatelessWidget {
             },
           ),
         ),
-        SizedBox(width: compact ? 2 : 4),
-        Text('entries', style: style),
+        if (!compact) ...<Widget>[
+          const SizedBox(width: 4),
+          Text('entries', style: style),
+        ],
       ],
     );
+
+    if (compact) {
+      return FittedBox(
+        fit: BoxFit.scaleDown,
+        alignment: Alignment.centerLeft,
+        child: selector,
+      );
+    }
+    return selector;
   }
 }
 
@@ -131,43 +142,70 @@ class AppTablePaginationMetaRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (BuildContext context, BoxConstraints constraints) {
-        final bool compact = constraints.maxWidth < 380;
+        final double width = constraints.maxWidth;
+        final bool compactControls = width < 400;
+        final bool compactSummary = width < 480;
         final TextStyle metaStyle = AppTablePaginationStyles.metaTextStyle(
           context,
-          compact: compact,
+          compact: compactControls,
         );
         final String summary = AppTablePaginationSummaryText.label(
           total: total,
           startIndex: startIndex,
           endIndex: endIndex,
-          compact: compact,
+          compact: compactSummary,
         );
 
-        return Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: <Widget>[
-            if (_hasPageSize)
-              Flexible(
-                fit: FlexFit.loose,
-                child: AppTablePageSizeSelector(
-                  value: pageSize!,
-                  options: pageSizeOptions,
-                  onChanged: onPageSizeChanged!,
-                  textStyle: metaStyle,
-                  compact: compact,
+        final Widget summaryText = Text(
+          summary,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: metaStyle,
+        );
+
+        final double summaryReserve = compactSummary ? 108.0 : 220.0;
+
+        if (!_hasPageSize) {
+          return Align(
+            alignment: Alignment.centerRight,
+            child: summaryText,
+          );
+        }
+
+        return SizedBox(
+          width: width,
+          height: 36,
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: <Widget>[
+              Positioned(
+                left: 0,
+                top: 0,
+                bottom: 0,
+                right: summaryReserve,
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: AppTablePageSizeSelector(
+                      value: pageSize!,
+                      options: pageSizeOptions,
+                      onChanged: onPageSizeChanged!,
+                      textStyle: metaStyle,
+                      compact: compactControls,
+                    ),
+                  ),
                 ),
               ),
-            if (_hasPageSize) SizedBox(width: compact ? 6 : 10),
-            Expanded(
-              child: Text(
-                summary,
-                textAlign: _hasPageSize ? TextAlign.end : TextAlign.start,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: metaStyle,
+              Positioned(
+                right: 0,
+                top: 0,
+                bottom: 0,
+                child: Center(child: summaryText),
               ),
-            ),
-          ],
+            ],
+          ),
         );
       },
     );

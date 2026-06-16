@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:wcr_pmis_mobile/src/core/widgets/app_dialog.dart';
 import 'package:wcr_pmis_mobile/src/core/widgets/app_table_pagination_footer.dart';
+import 'package:wcr_pmis_mobile/src/core/widgets/app_toolbar_table_scaffold_body.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/data/datasources/dashboard_remote_data_source.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/domain/utils/quality_inspection_user_access.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/quality_inspections/add_quality_inspection_form_page.dart';
@@ -387,9 +388,13 @@ class _QualityInspectionsPageState extends ConsumerState<QualityInspectionsPage>
                 ),
                 const SizedBox(height: 8),
               ],
-              _toolbar(context, filteredRows),
-              const SizedBox(height: 10),
-              Expanded(child: _tableCard(context, pageRows)),
+              Expanded(
+                child: AppToolbarTableScaffoldBody(
+                  padding: EdgeInsets.zero,
+                  toolbar: _toolbar(context, filteredRows),
+                  table: _tableCard(context, pageRows),
+                ),
+              ),
             ],
           ),
         ),

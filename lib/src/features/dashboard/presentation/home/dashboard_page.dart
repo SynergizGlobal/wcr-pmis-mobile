@@ -19,6 +19,7 @@ import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/reports/ai_c
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/issues/issues_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/projects/project_details_page.dart';
 import 'package:wcr_pmis_mobile/src/features/rfi/presentation/pages/rfi_dashboard_page.dart';
+import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/activities/modify_actuals_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/activities/new_activities_update_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/activities/structure_p6_update_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/domain/utils/quality_inspection_user_access.dart';
@@ -940,13 +941,19 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
       context.pushNamed(QualityInspectionsPage.routeName);
       return;
     }
+    if (urlKey.contains('modify-actuals') ||
+        urlKey.contains('modifyactuals') ||
+        combinedKey.contains('modify actual')) {
+      if (!mounted) {
+        return;
+      }
+      context.pushNamed(ModifyActualsPage.routeName);
+      return;
+    }
     if (urlKey.contains('new-activities-update') ||
         urlKey.contains('newactivitiesupdate') ||
-        urlKey.contains('execution-monitoring') ||
         combinedKey.contains('new activit') ||
-        combinedKey.contains('activitiesupdate') ||
-        (combinedKey.contains('execution') &&
-            (combinedKey.contains('monitor') || combinedKey.contains('moniter')))) {
+        combinedKey.contains('activitiesupdate')) {
       if (!mounted) {
         return;
       }

@@ -22,6 +22,7 @@ import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/issues/issue
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/projects/project_details_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/projects/project_summary_page.dart';
 import 'package:wcr_pmis_mobile/src/features/rfi/presentation/rfi_routes.dart';
+import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/activities/modify_actuals_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/activities/new_activities_update_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/activities/structure_p6_update_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/quality_inspections/add_quality_inspection_form_page.dart';
@@ -94,6 +95,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         return LoginPage.routePath;
       }
       if (!loggedIn && loc == StructureP6UpdatePage.routePath) {
+        return LoginPage.routePath;
+      }
+      if (!loggedIn && loc == ModifyActualsPage.routePath) {
         return LoginPage.routePath;
       }
       if (!loggedIn && loc == UtilityShiftingPage.routePath) {
@@ -290,6 +294,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         name: StructureP6UpdatePage.routeName,
         builder: (BuildContext context, GoRouterState state) =>
             StructureP6UpdatePage(
+              dataSource: ref.read(dashboardRemoteDataSourceProvider),
+            ),
+      ),
+      GoRoute(
+        path: ModifyActualsPage.routePath,
+        name: ModifyActualsPage.routeName,
+        builder: (BuildContext context, GoRouterState state) =>
+            ModifyActualsPage(
               dataSource: ref.read(dashboardRemoteDataSourceProvider),
             ),
       ),

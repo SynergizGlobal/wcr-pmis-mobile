@@ -9,6 +9,7 @@ import 'package:wcr_pmis_mobile/src/core/network/user_friendly_error_message.dar
 import 'package:wcr_pmis_mobile/src/core/widgets/app_dialog.dart';
 import 'package:wcr_pmis_mobile/src/core/widgets/app_select_sheet_field.dart';
 import 'package:wcr_pmis_mobile/src/core/widgets/app_table_pagination_footer.dart';
+import 'package:wcr_pmis_mobile/src/core/widgets/app_toolbar_table_scaffold_body.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/data/datasources/dashboard_remote_data_source.dart';
 
 enum _P6UploadKind {
@@ -108,20 +109,9 @@ class _StructureP6UpdatePageState extends State<StructureP6UpdatePage> {
           GestureDetector(
             behavior: HitTestBehavior.translucent,
             onTap: () => FocusScope.of(context).unfocus(),
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                children: <Widget>[
-                  _toolbar(context),
-                  const SizedBox(height: 10),
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.only(bottom: 2),
-                      child: _tableCard(context, pageRows),
-                    ),
-                  ),
-                ],
-              ),
+            child: AppToolbarTableScaffoldBody(
+              toolbar: _toolbar(context),
+              table: _tableCard(context, pageRows),
             ),
           ),
           if (_loading)

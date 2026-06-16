@@ -26,6 +26,7 @@ class UpdateFormMobileAccess {
     '11', // Contractor
     '53', // New Activities Update (Execution & Monitoring)
     '1281', // Structure P6 Updates (Execution & Monitoring)
+    '1359', // Modify Actuals (Execution & Monitoring)
   };
 
   static String _normalize(String value) {
@@ -132,6 +133,11 @@ class UpdateFormMobileAccess {
         urlKey.contains('p6newdata') ||
         nameKey.contains('structure p6') ||
         nameKey.contains('p6 update')) {
+      return true;
+    }
+    if (urlKey.contains('modify-actuals') ||
+        urlKey.contains('modifyactuals') ||
+        nameKey.contains('modify actual')) {
       return true;
     }
     return false;
