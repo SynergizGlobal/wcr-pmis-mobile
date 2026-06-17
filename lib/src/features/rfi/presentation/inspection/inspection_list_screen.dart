@@ -146,6 +146,8 @@ class InspectionListScreen extends ConsumerWidget {
             columns: const [
               DataColumn(label: Text('RFI ID')),
               DataColumn(label: Text('Raised Date')),
+              DataColumn(label: Text('Scheduled On')),
+              DataColumn(label: Text('Contractor\nSubmitted on')),
               DataColumn(label: Text('Structure')),
               DataColumn(label: Text('Element')),
               DataColumn(label: Text('Activity')),
@@ -179,6 +181,8 @@ class InspectionListScreen extends ConsumerWidget {
       cells: [
         DataCell(Text(item.rfiId ?? '---', style: cellStyle)),
         DataCell(Text(item.dateOfSubmission ?? '---', style: cellStyle)),
+        DataCell(Text(_scheduledOn(item), style: cellStyle)),
+        DataCell(Text(_contractorSubmittedOn(item), style: cellStyle)),
         DataCell(Container(
             width: 100,
             padding: const EdgeInsets.symmetric(vertical: 8),
@@ -477,6 +481,20 @@ class InspectionListScreen extends ConsumerWidget {
         onSuccess: () => ref.read(inspectionProvider.notifier).fetchInspections(),
       ),
     );
+  }
+
+  String _scheduledOn(InspectionItem item) {
+    final date = item.dateOfInspection;
+    final time = item.timeOfInspection;
+    if (date == null || date.isEmpty) return '---';
+    if (time == null || time.isEmpty) return date;
+    return '$date $time';
+  }
+
+  String _contractorSubmittedOn(InspectionItem item) {
+    final value = item.contractorSubmittedOn;
+    if (value == null || value.isEmpty) return '---';
+    return value;
   }
 
   bool _canStartInspection(InspectionItem item, UserRole appRole) {

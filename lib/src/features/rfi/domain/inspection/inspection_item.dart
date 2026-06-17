@@ -94,6 +94,7 @@ class InspectionItem with _$InspectionItem {
     String? typeOfRFI,
     String? approvalStatus,
     String? dateOfSubmission,
+    String? contractorSubmittedOn,
     String? validationStatus,
     @JsonKey(name: 'remarks') String? validationRemarks,
     String? validationComments,

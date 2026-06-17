@@ -1205,6 +1205,7 @@ mixin _$InspectionItem {
   String? get typeOfRFI => throw _privateConstructorUsedError;
   String? get approvalStatus => throw _privateConstructorUsedError;
   String? get dateOfSubmission => throw _privateConstructorUsedError;
+  String? get contractorSubmittedOn => throw _privateConstructorUsedError;
   String? get validationStatus => throw _privateConstructorUsedError;
   @JsonKey(name: 'remarks')
   String? get validationRemarks => throw _privateConstructorUsedError;
@@ -1268,6 +1269,7 @@ abstract class $InspectionItemCopyWith<$Res> {
     String? typeOfRFI,
     String? approvalStatus,
     String? dateOfSubmission,
+    String? contractorSubmittedOn,
     String? validationStatus,
     @JsonKey(name: 'remarks') String? validationRemarks,
     String? validationComments,
@@ -1328,6 +1330,7 @@ class _$InspectionItemCopyWithImpl<$Res, $Val extends InspectionItem>
     Object? typeOfRFI = freezed,
     Object? approvalStatus = freezed,
     Object? dateOfSubmission = freezed,
+    Object? contractorSubmittedOn = freezed,
     Object? validationStatus = freezed,
     Object? validationRemarks = freezed,
     Object? validationComments = freezed,
@@ -1452,6 +1455,10 @@ class _$InspectionItemCopyWithImpl<$Res, $Val extends InspectionItem>
                 ? _value.dateOfSubmission
                 : dateOfSubmission // ignore: cast_nullable_to_non_nullable
                       as String?,
+            contractorSubmittedOn: freezed == contractorSubmittedOn
+                ? _value.contractorSubmittedOn
+                : contractorSubmittedOn // ignore: cast_nullable_to_non_nullable
+                      as String?,
             validationStatus: freezed == validationStatus
                 ? _value.validationStatus
                 : validationStatus // ignore: cast_nullable_to_non_nullable
@@ -1562,6 +1569,7 @@ abstract class _$$InspectionItemImplCopyWith<$Res>
     String? typeOfRFI,
     String? approvalStatus,
     String? dateOfSubmission,
+    String? contractorSubmittedOn,
     String? validationStatus,
     @JsonKey(name: 'remarks') String? validationRemarks,
     String? validationComments,
@@ -1622,6 +1630,7 @@ class __$$InspectionItemImplCopyWithImpl<$Res>
     Object? typeOfRFI = freezed,
     Object? approvalStatus = freezed,
     Object? dateOfSubmission = freezed,
+    Object? contractorSubmittedOn = freezed,
     Object? validationStatus = freezed,
     Object? validationRemarks = freezed,
     Object? validationComments = freezed,
@@ -1746,6 +1755,10 @@ class __$$InspectionItemImplCopyWithImpl<$Res>
             ? _value.dateOfSubmission
             : dateOfSubmission // ignore: cast_nullable_to_non_nullable
                   as String?,
+        contractorSubmittedOn: freezed == contractorSubmittedOn
+            ? _value.contractorSubmittedOn
+            : contractorSubmittedOn // ignore: cast_nullable_to_non_nullable
+                  as String?,
         validationStatus: freezed == validationStatus
             ? _value.validationStatus
             : validationStatus // ignore: cast_nullable_to_non_nullable
@@ -1835,6 +1848,7 @@ class _$InspectionItemImpl implements _InspectionItem {
     this.typeOfRFI,
     this.approvalStatus,
     this.dateOfSubmission,
+    this.contractorSubmittedOn,
     this.validationStatus,
     @JsonKey(name: 'remarks') this.validationRemarks,
     this.validationComments,
@@ -1911,6 +1925,8 @@ class _$InspectionItemImpl implements _InspectionItem {
   @override
   final String? dateOfSubmission;
   @override
+  final String? contractorSubmittedOn;
+  @override
   final String? validationStatus;
   @override
   @JsonKey(name: 'remarks')
@@ -1966,7 +1982,7 @@ class _$InspectionItemImpl implements _InspectionItem {
 
   @override
   String toString() {
-    return 'InspectionItem(id: $id, element: $element, status: $status, imgClient: $imgClient, contractId: $contractId, contract: $contract, structure: $structure, assignedPersonClient: $assignedPersonClient, action: $action, rfiId: $rfiId, activity: $activity, rfiDescription: $rfiDescription, description: $description, timeOfInspection: $timeOfInspection, nameOfRepresentative: $nameOfRepresentative, inspectionStatus: $inspectionStatus, measurementType: $measurementType, totalQty: $totalQty, createdBy: $createdBy, dateOfInspection: $dateOfInspection, project: $project, work: $work, structureType: $structureType, component: $component, typeOfRFI: $typeOfRFI, approvalStatus: $approvalStatus, dateOfSubmission: $dateOfSubmission, validationStatus: $validationStatus, validationRemarks: $validationRemarks, validationComments: $validationComments, validationAuthor: $validationAuthor, validationDate: $validationDate, imgContractor: $imgContractor, representativeReportingToContractor: $representativeReportingToContractor, testResCon: $testResCon, testResEngg: $testResEngg, enclosuresList: $enclosuresList, enclosure: $enclosure, inspectionDetails: $inspectionDetails, measurements: $measurements)';
+    return 'InspectionItem(id: $id, element: $element, status: $status, imgClient: $imgClient, contractId: $contractId, contract: $contract, structure: $structure, assignedPersonClient: $assignedPersonClient, action: $action, rfiId: $rfiId, activity: $activity, rfiDescription: $rfiDescription, description: $description, timeOfInspection: $timeOfInspection, nameOfRepresentative: $nameOfRepresentative, inspectionStatus: $inspectionStatus, measurementType: $measurementType, totalQty: $totalQty, createdBy: $createdBy, dateOfInspection: $dateOfInspection, project: $project, work: $work, structureType: $structureType, component: $component, typeOfRFI: $typeOfRFI, approvalStatus: $approvalStatus, dateOfSubmission: $dateOfSubmission, contractorSubmittedOn: $contractorSubmittedOn, validationStatus: $validationStatus, validationRemarks: $validationRemarks, validationComments: $validationComments, validationAuthor: $validationAuthor, validationDate: $validationDate, imgContractor: $imgContractor, representativeReportingToContractor: $representativeReportingToContractor, testResCon: $testResCon, testResEngg: $testResEngg, enclosuresList: $enclosuresList, enclosure: $enclosure, inspectionDetails: $inspectionDetails, measurements: $measurements)';
   }
 
   @override
@@ -2021,6 +2037,8 @@ class _$InspectionItemImpl implements _InspectionItem {
                 other.approvalStatus == approvalStatus) &&
             (identical(other.dateOfSubmission, dateOfSubmission) ||
                 other.dateOfSubmission == dateOfSubmission) &&
+            (identical(other.contractorSubmittedOn, contractorSubmittedOn) ||
+                other.contractorSubmittedOn == contractorSubmittedOn) &&
             (identical(other.validationStatus, validationStatus) ||
                 other.validationStatus == validationStatus) &&
             (identical(other.validationRemarks, validationRemarks) ||
@@ -2090,6 +2108,7 @@ class _$InspectionItemImpl implements _InspectionItem {
     typeOfRFI,
     approvalStatus,
     dateOfSubmission,
+    contractorSubmittedOn,
     validationStatus,
     validationRemarks,
     validationComments,
@@ -2151,6 +2170,7 @@ abstract class _InspectionItem implements InspectionItem {
     final String? typeOfRFI,
     final String? approvalStatus,
     final String? dateOfSubmission,
+    final String? contractorSubmittedOn,
     final String? validationStatus,
     @JsonKey(name: 'remarks') final String? validationRemarks,
     final String? validationComments,
@@ -2224,6 +2244,8 @@ abstract class _InspectionItem implements InspectionItem {
   String? get approvalStatus;
   @override
   String? get dateOfSubmission;
+  @override
+  String? get contractorSubmittedOn;
   @override
   String? get validationStatus;
   @override

@@ -7,7 +7,7 @@ part of 'rfi_details_provider.dart';
 // **************************************************************************
 
 String _$rfiDetailsNotifierHash() =>
-    r'c83d9218cce1f39417bcdb587f641c9593f443ff';
+    r'c9880680ef80a506d37ec90fbd85288cc25b492b';
 
 /// See also [RfiDetailsNotifier].
 @ProviderFor(RfiDetailsNotifier)

@@ -6,7 +6,7 @@ part of 'rfi_list_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$rfiListNotifierHash() => r'b1fcfda856d93c55f53edb9284b332e0f5d1f675';
+String _$rfiListNotifierHash() => r'a03c37615911127223e74ce926bc174e14a3a9b3';
 
 /// See also [RfiListNotifier].
 @ProviderFor(RfiListNotifier)
@@ -23,7 +23,7 @@ final rfiListNotifierProvider =
 
 typedef _$RfiListNotifier = AutoDisposeNotifier<RfiListState>;
 String _$rejectedRfiListNotifierHash() =>
-    r'a74621f4637306b5126219a3b5922f29a5d34e20';
+    r'0881f3080d9186b7468d7ca9fe818b061d85b355';
 
 /// See also [RejectedRfiListNotifier].
 @ProviderFor(RejectedRfiListNotifier)
@@ -40,7 +40,7 @@ final rejectedRfiListNotifierProvider =
 
 typedef _$RejectedRfiListNotifier = AutoDisposeNotifier<RfiListState>;
 String _$scheduledRfiListNotifierHash() =>
-    r'4157302730f457fe631cdd90fd6087c0f813067d';
+    r'63ebec8acfac7d1baeda5b8b7048d16e7c641e81';
 
 /// See also [ScheduledRfiListNotifier].
 @ProviderFor(ScheduledRfiListNotifier)
@@ -60,7 +60,7 @@ final scheduledRfiListNotifierProvider =
 
 typedef _$ScheduledRfiListNotifier = AutoDisposeNotifier<RfiListState>;
 String _$rescheduledRfiListNotifierHash() =>
-    r'0523f17ec4e5865fc80f3bc9107cb0d7f40b6abf';
+    r'13de963d695c900c780691741c7c24661b06229b';
 
 /// See also [RescheduledRfiListNotifier].
 @ProviderFor(RescheduledRfiListNotifier)
@@ -80,7 +80,7 @@ final rescheduledRfiListNotifierProvider =
 
 typedef _$RescheduledRfiListNotifier = AutoDisposeNotifier<RfiListState>;
 String _$submittedRfiListNotifierHash() =>
-    r'edcb2f905c5f0d2ba749434ca4703be8f30181cd';
+    r'b665ec3ef5049df296320f34a724164103018a8c';
 
 /// See also [SubmittedRfiListNotifier].
 @ProviderFor(SubmittedRfiListNotifier)
@@ -100,7 +100,7 @@ final submittedRfiListNotifierProvider =
 
 typedef _$SubmittedRfiListNotifier = AutoDisposeNotifier<RfiListState>;
 String _$approvedRfiListNotifierHash() =>
-    r'895037599a1e794dcf66d28637666a999ce70df5';
+    r'18512692d831e0766b8c12ea70327ccb084c995a';
 
 /// See also [ApprovedRfiListNotifier].
 @ProviderFor(ApprovedRfiListNotifier)
@@ -117,7 +117,7 @@ final approvedRfiListNotifierProvider =
 
 typedef _$ApprovedRfiListNotifier = AutoDisposeNotifier<RfiListState>;
 String _$closedRfiListNotifierHash() =>
-    r'0ec380c3cf24e657c03cb6397aac497b6a28ce26';
+    r'11a327c46b24c3a18ce4d024b4e580fb811495db';
 
 /// See also [ClosedRfiListNotifier].
 @ProviderFor(ClosedRfiListNotifier)
