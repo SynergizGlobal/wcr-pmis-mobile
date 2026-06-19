@@ -20,6 +20,7 @@ import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/issues/issue
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/projects/project_details_page.dart';
 import 'package:wcr_pmis_mobile/src/features/rfi/presentation/pages/rfi_dashboard_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/activities/modify_actuals_page.dart';
+import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/validation/validate_data_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/activities/new_activities_update_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/activities/structure_p6_update_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/domain/utils/quality_inspection_user_access.dart';
@@ -948,6 +949,15 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         return;
       }
       context.pushNamed(ModifyActualsPage.routeName);
+      return;
+    }
+    if (urlKey.contains('validation') ||
+        urlKey.contains('validate') ||
+        (combinedKey.contains('validate') && combinedKey.contains('data'))) {
+      if (!mounted) {
+        return;
+      }
+      context.pushNamed(ValidateDataPage.routeName);
       return;
     }
     if (urlKey.contains('new-activities-update') ||

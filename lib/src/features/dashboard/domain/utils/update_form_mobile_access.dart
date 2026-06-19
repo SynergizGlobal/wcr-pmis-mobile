@@ -16,6 +16,7 @@ class UpdateFormMobileAccess {
     '1394', // Quality Inspection
     '10', // Contracts/Tenders
     '17', // Design & Drawing
+    '40', // Validate Data
   };
 
   /// Stable [UpdateFormSubItem.formId] values with native mobile screens.
@@ -93,6 +94,12 @@ class UpdateFormMobileAccess {
     }
     if ((nameKey.contains('design') && nameKey.contains('drawing')) ||
         urlKey.contains('design')) {
+      return true;
+    }
+    if (nameKey.contains('validate') && nameKey.contains('data')) {
+      return true;
+    }
+    if (urlKey.contains('validation') || urlKey.contains('validate')) {
       return true;
     }
     return false;

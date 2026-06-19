@@ -2026,6 +2026,126 @@ class DashboardRemoteDataSource {
     return _normalizeResponse(response.data);
   }
 
+  Future<List<Map<String, dynamic>>> fetchValidationContracts({
+    required String approvalStatusFk,
+  }) async {
+    final Response<dynamic> response = await _dio.post<dynamic>(
+      '/validation/ajax/getContractsInApprovableActivities',
+      data: <String, dynamic>{'approval_status_fk': approvalStatusFk},
+      options: _requestOptions,
+    );
+    return _normalizeListResponse(response.data);
+  }
+
+  Future<List<Map<String, dynamic>>> fetchValidationStructures({
+    required String approvalStatusFk,
+  }) async {
+    final Response<dynamic> response = await _dio.post<dynamic>(
+      '/validation/ajax/getStructuresInApprovableActivities',
+      data: <String, dynamic>{'approval_status_fk': approvalStatusFk},
+      options: _requestOptions,
+    );
+    return _normalizeListResponse(response.data);
+  }
+
+  Future<List<Map<String, dynamic>>> fetchValidationUpdatedByList({
+    required String approvalStatusFk,
+  }) async {
+    final Response<dynamic> response = await _dio.post<dynamic>(
+      '/validation/ajax/getUpdatedByListInApprovableActivities',
+      data: <String, dynamic>{'approval_status_fk': approvalStatusFk},
+      options: _requestOptions,
+    );
+    return _normalizeListResponse(response.data);
+  }
+
+  Future<List<Map<String, dynamic>>> fetchApprovableActivities({
+    required String approvalStatusFk,
+    String? contractIdFk,
+    String? structure,
+    String? updatedByUserIdFk,
+  }) async {
+    final Response<dynamic> response = await _dio.post<dynamic>(
+      '/validation/ajax/getApprovableActivities',
+      data: <String, dynamic>{
+        'updated_by_user_id_fk': updatedByUserIdFk ?? '',
+        'contract_id_fk': contractIdFk ?? '',
+        'structure': structure ?? '',
+        'approval_status_fk': approvalStatusFk.toLowerCase(),
+      },
+      options: _requestOptions,
+    );
+    return _normalizeListResponse(response.data);
+  }
+
+  Future<Map<String, dynamic>> approveActivityProgress({
+    required String structure,
+    required String progressId,
+    String? workIdFk,
+    required String contractIdFk,
+  }) async {
+    final Response<dynamic> response = await _dio.post<dynamic>(
+      '/validation/ajax/approveActivityProgress',
+      queryParameters: <String, dynamic>{
+        'structure': structure,
+        'progress_id': progressId,
+        'work_id_fk': workIdFk ?? 'null',
+        'contract_id_fk': contractIdFk,
+      },
+      options: _requestOptions,
+    );
+    return _normalizeResponse(response.data);
+  }
+
+  Future<Map<String, dynamic>> rejectActivityProgress({
+    required String structure,
+    required String progressId,
+    String? workIdFk,
+    required String contractIdFk,
+  }) async {
+    final Response<dynamic> response = await _dio.post<dynamic>(
+      '/validation/ajax/rejectActivityProgress',
+      queryParameters: <String, dynamic>{
+        'structure': structure,
+        'progress_id': progressId,
+        'work_id_fk': workIdFk ?? 'null',
+        'contract_id_fk': contractIdFk,
+      },
+      options: _requestOptions,
+    );
+    return _normalizeResponse(response.data);
+  }
+
+  Future<Map<String, dynamic>> approveMultipleActivityProgress({
+    required String progressIds,
+    String? workIdFk,
+    required String contractIdFk,
+    required String structure,
+  }) async {
+    final Response<dynamic> response = await _dio.post<dynamic>(
+      '/validation/ajax/approveMultipleActivityProgress',
+      queryParameters: <String, dynamic>{
+        'progress_id': progressIds,
+        'work_id_fk': workIdFk ?? '',
+        'contract_id_fk': contractIdFk,
+        'structure': structure,
+      },
+      options: _requestOptions,
+    );
+    return _normalizeResponse(response.data);
+  }
+
+  Future<Map<String, dynamic>> rejectMultipleActivityProgress({
+    required String progressIds,
+  }) async {
+    final Response<dynamic> response = await _dio.post<dynamic>(
+      '/validation/ajax/rejectMultipleActivityProgress',
+      queryParameters: <String, dynamic>{'progress_id': progressIds},
+      options: _requestOptions,
+    );
+    return _normalizeResponse(response.data);
+  }
+
   Future<Map<String, dynamic>> uploadNewActivitiesUpdateFile({
     required String fileName,
     required Uint8List bytes,

@@ -29,6 +29,7 @@ import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/quality_insp
 import 'package:wcr_pmis_mobile/src/features/dashboard/domain/utils/quality_inspection_user_access.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/quality_inspections/quality_inspections_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/dms/dms_page.dart';
+import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/validation/validate_data_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/utility_shifting/utility_shifting_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/structures/structure_form_list_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/structures/structure_form_page.dart';
@@ -98,6 +99,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         return LoginPage.routePath;
       }
       if (!loggedIn && loc == ModifyActualsPage.routePath) {
+        return LoginPage.routePath;
+      }
+      if (!loggedIn && loc == ValidateDataPage.routePath) {
         return LoginPage.routePath;
       }
       if (!loggedIn && loc == UtilityShiftingPage.routePath) {
@@ -302,6 +306,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         name: ModifyActualsPage.routeName,
         builder: (BuildContext context, GoRouterState state) =>
             ModifyActualsPage(
+              dataSource: ref.read(dashboardRemoteDataSourceProvider),
+            ),
+      ),
+      GoRoute(
+        path: ValidateDataPage.routePath,
+        name: ValidateDataPage.routeName,
+        builder: (BuildContext context, GoRouterState state) =>
+            ValidateDataPage(
               dataSource: ref.read(dashboardRemoteDataSourceProvider),
             ),
       ),
