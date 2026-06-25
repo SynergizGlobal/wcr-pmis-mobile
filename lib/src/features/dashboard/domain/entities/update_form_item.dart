@@ -7,6 +7,7 @@ class UpdateFormSubItem {
     required this.priority,
     this.webFormUrl,
     this.mobileFormUrl,
+    this.showInMobile = true,
     this.level2Menus = const <UpdateFormSubItem>[],
   });
 
@@ -15,6 +16,7 @@ class UpdateFormSubItem {
   final int priority;
   final String? webFormUrl;
   final String? mobileFormUrl;
+  final bool showInMobile;
   final List<UpdateFormSubItem> level2Menus;
 
   factory UpdateFormSubItem.fromJson(Map<String, dynamic> json) {
@@ -24,6 +26,7 @@ class UpdateFormSubItem {
       priority: int.tryParse(json['priority']?.toString() ?? '') ?? 0,
       webFormUrl: json['webFormUrl']?.toString(),
       mobileFormUrl: json['mobileFormUrl']?.toString(),
+      showInMobile: _parseShowInMobile(json['displayInMobile']),
       level2Menus: _parseSubMenus(json['formsSubMenuLevel2']),
     );
   }
@@ -36,6 +39,7 @@ class UpdateFormItem {
     required this.priority,
     this.webFormUrl,
     this.mobileFormUrl,
+    this.showInMobile = true,
     required this.subMenus,
   });
 
@@ -44,6 +48,7 @@ class UpdateFormItem {
   final int priority;
   final String? webFormUrl;
   final String? mobileFormUrl;
+  final bool showInMobile;
   final List<UpdateFormSubItem> subMenus;
 
   List<UpdateFormSubItem> get orderedSubMenus {
@@ -68,9 +73,18 @@ class UpdateFormItem {
       priority: int.tryParse(json['priority']?.toString() ?? '') ?? 0,
       webFormUrl: json['webFormUrl']?.toString(),
       mobileFormUrl: json['mobileFormUrl']?.toString(),
+      showInMobile: _parseShowInMobile(json['displayInMobile']),
       subMenus: parsedSubMenus,
     );
   }
+}
+
+bool _parseShowInMobile(dynamic value) {
+  final String normalized = value?.toString().trim().toLowerCase() ?? '';
+  if (normalized.isEmpty) {
+    return true;
+  }
+  return normalized == 'yes' || normalized == 'y' || normalized == 'true';
 }
 
 List<UpdateFormSubItem> _parseSubMenus(dynamic raw) {

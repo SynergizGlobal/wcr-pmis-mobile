@@ -62,6 +62,407 @@ class DashboardRemoteDataSource {
     return _normalizeResponse(response.data);
   }
 
+  Future<List<Map<String, dynamic>>> fetchReportForms() async {
+    final Response<dynamic> response = await _dio.get<dynamic>(
+      '/forms/api/getReportForms',
+      queryParameters: <String, String>{
+        '_t': DateTime.now().millisecondsSinceEpoch.toString(),
+      },
+      options: _requestOptions,
+    );
+    return _normalizeListResponse(response.data);
+  }
+
+  Future<List<Map<String, dynamic>>> fetchLandReportProjectList({
+    String? categoryFk,
+  }) async {
+    final Response<dynamic> response = await _dio.get<dynamic>(
+      '/api/land-report/project-list',
+      queryParameters: <String, dynamic>{
+        if (categoryFk != null && categoryFk.trim().isNotEmpty)
+          'category_fk': categoryFk.trim(),
+      },
+      options: _requestOptions,
+    );
+    return _normalizeListResponse(response.data);
+  }
+
+  Future<List<Map<String, dynamic>>> fetchLandReportTypeList({
+    String? projectIdFk,
+  }) async {
+    final Response<dynamic> response = await _dio.get<dynamic>(
+      '/api/land-report/type-list',
+      queryParameters: <String, dynamic>{
+        if (projectIdFk != null && projectIdFk.trim().isNotEmpty)
+          'project_id_fk': projectIdFk.trim(),
+      },
+      options: _requestOptions,
+    );
+    return _normalizeListResponse(response.data);
+  }
+
+  Future<List<Map<String, dynamic>>> fetchLandReportSubCategoryList({
+    String? projectIdFk,
+    String? categoryFk,
+  }) async {
+    final Response<dynamic> response = await _dio.get<dynamic>(
+      '/api/land-report/sub-category-list',
+      queryParameters: <String, dynamic>{
+        if (projectIdFk != null && projectIdFk.trim().isNotEmpty)
+          'project_id_fk': projectIdFk.trim(),
+        if (categoryFk != null && categoryFk.trim().isNotEmpty)
+          'category_fk': categoryFk.trim(),
+      },
+      options: _requestOptions,
+    );
+    return _normalizeListResponse(response.data);
+  }
+
+  Future<({Uint8List bytes, String? fileName})> generateLandAcquisitionReport({
+    required String projectIdFk,
+    required String categoryFk,
+    required String laSubCategoryFk,
+  }) async {
+    final Response<dynamic> response = await _dio.post<dynamic>(
+      '/api/land-report/generate',
+      data: <String, dynamic>{
+        'project_id_fk': projectIdFk,
+        'category_fk': categoryFk,
+        'la_sub_category_fk': laSubCategoryFk,
+      },
+      options: Options(
+        receiveTimeout: _dashboardReceiveTimeout,
+        connectTimeout: _dashboardConnectTimeout,
+        responseType: ResponseType.bytes,
+      ),
+    );
+    final dynamic data = response.data;
+    final List<int> raw = data is List<int> ? data : <int>[];
+    final String? contentDisposition =
+        response.headers.value('content-disposition');
+    final String? fileName = _fileNameFromContentDisposition(contentDisposition);
+    return (bytes: Uint8List.fromList(raw), fileName: fileName);
+  }
+
+  Future<Map<String, dynamic>> fetchUtilityReportFilters({
+    String? projectIdFk,
+    String? executionAgencyFk,
+    String? contractIdFk,
+    String? hodUserIdFk,
+  }) async {
+    final Response<dynamic> response = await _dio.get<dynamic>(
+      '/utility-report',
+      queryParameters: <String, dynamic>{
+        if (projectIdFk != null && projectIdFk.trim().isNotEmpty)
+          'project_id_fk': projectIdFk.trim(),
+        if (executionAgencyFk != null && executionAgencyFk.trim().isNotEmpty)
+          'execution_agency_fk': executionAgencyFk.trim(),
+        if (contractIdFk != null && contractIdFk.trim().isNotEmpty)
+          'contract_id_fk': contractIdFk.trim(),
+        if (hodUserIdFk != null && hodUserIdFk.trim().isNotEmpty)
+          'hod_user_id_fk': hodUserIdFk.trim(),
+      },
+      options: _requestOptions,
+    );
+    return _normalizeResponse(response.data);
+  }
+
+  Future<List<Map<String, dynamic>>> fetchActivitiesExportProjectList() async {
+    final Response<dynamic> response = await _dio.get<dynamic>(
+      '/api/activities-export/projects',
+      options: _requestOptions,
+    );
+    return _normalizeListResponse(response.data);
+  }
+
+  Future<List<Map<String, dynamic>>> fetchActivitiesExportContractList({
+    String? projectId,
+  }) async {
+    final Response<dynamic> response = await _dio.get<dynamic>(
+      '/api/activities-export/contracts',
+      queryParameters: <String, dynamic>{
+        if (projectId != null && projectId.trim().isNotEmpty)
+          'project_id': projectId.trim(),
+      },
+      options: _requestOptions,
+    );
+    return _normalizeListResponse(response.data);
+  }
+
+  Future<({Uint8List bytes, String? fileName})> generateContractWiseActivitiesReport({
+    required String projectId,
+    required String contractIdFk,
+  }) async {
+    final Response<dynamic> response = await _dio.post<dynamic>(
+      '/api/activities-export/generate',
+      data: <String, dynamic>{
+        'project_id': projectId,
+        'contract_id_fk': contractIdFk,
+      },
+      options: Options(
+        receiveTimeout: _dashboardReceiveTimeout,
+        connectTimeout: _dashboardConnectTimeout,
+        responseType: ResponseType.bytes,
+      ),
+    );
+    return _bytesResponse(response);
+  }
+
+  Future<({Uint8List bytes, String? fileName})> generateUtilityShiftingReport({
+    required String projectIdFk,
+    required String executionAgencyFk,
+    required String contractIdFk,
+    required String hodUserIdFk,
+  }) async {
+    final Response<dynamic> response = await _dio.post<dynamic>(
+      '/utility-report/generate',
+      data: <String, dynamic>{
+        'project_id_fk': projectIdFk,
+        'execution_agency_fk': executionAgencyFk,
+        'contract_id_fk': contractIdFk,
+        'hod_user_id_fk': hodUserIdFk,
+      },
+      options: Options(
+        receiveTimeout: _dashboardReceiveTimeout,
+        connectTimeout: _dashboardConnectTimeout,
+        responseType: ResponseType.bytes,
+      ),
+    );
+    final dynamic data = response.data;
+    final List<int> raw = data is List<int> ? data : <int>[];
+    final String? contentDisposition =
+        response.headers.value('content-disposition');
+    final String? fileName = _fileNameFromContentDisposition(contentDisposition);
+    return (bytes: Uint8List.fromList(raw), fileName: fileName);
+  }
+
+  Map<String, dynamic> _issuesReportFilterPayload({
+    String? hodUserIdFk,
+    String? contractIdFk,
+    String? statusFk,
+    String? location,
+    String? categoryFk,
+    String? issueId,
+  }) {
+    String valueOrEmpty(String? value) =>
+        value != null && value.trim().isNotEmpty ? value.trim() : '';
+    return <String, dynamic>{
+      'hod_user_id_fk': valueOrEmpty(hodUserIdFk),
+      'contract_id_fk': valueOrEmpty(contractIdFk),
+      'status_fk': valueOrEmpty(statusFk),
+      'location': valueOrEmpty(location),
+      'category_fk': valueOrEmpty(categoryFk),
+      'issue_id': valueOrEmpty(issueId),
+    };
+  }
+
+  Future<List<Map<String, dynamic>>> _postIssuesReportList(
+    String path, {
+    String? hodUserIdFk,
+    String? contractIdFk,
+    String? statusFk,
+    String? location,
+    String? categoryFk,
+    String? issueId,
+  }) async {
+    final Response<dynamic> response = await _dio.post<dynamic>(
+      path,
+      data: _issuesReportFilterPayload(
+        hodUserIdFk: hodUserIdFk,
+        contractIdFk: contractIdFk,
+        statusFk: statusFk,
+        location: location,
+        categoryFk: categoryFk,
+        issueId: issueId,
+      ),
+      options: _requestOptions,
+    );
+    return _normalizeListResponse(response.data);
+  }
+
+  Future<List<Map<String, dynamic>>> fetchIssuesReportHodList({
+    String? hodUserIdFk,
+    String? contractIdFk,
+    String? statusFk,
+    String? location,
+    String? categoryFk,
+    String? issueId,
+  }) {
+    return _postIssuesReportList(
+      '/api/issues-report/getHodList',
+      hodUserIdFk: hodUserIdFk,
+      contractIdFk: contractIdFk,
+      statusFk: statusFk,
+      location: location,
+      categoryFk: categoryFk,
+      issueId: issueId,
+    );
+  }
+
+  Future<List<Map<String, dynamic>>> fetchIssuesReportContractList({
+    String? hodUserIdFk,
+    String? contractIdFk,
+    String? statusFk,
+    String? location,
+    String? categoryFk,
+    String? issueId,
+  }) {
+    return _postIssuesReportList(
+      '/api/issues-report/getContractList',
+      hodUserIdFk: hodUserIdFk,
+      contractIdFk: contractIdFk,
+      statusFk: statusFk,
+      location: location,
+      categoryFk: categoryFk,
+      issueId: issueId,
+    );
+  }
+
+  Future<List<Map<String, dynamic>>> fetchIssuesReportStatusList({
+    String? hodUserIdFk,
+    String? contractIdFk,
+    String? statusFk,
+    String? location,
+    String? categoryFk,
+    String? issueId,
+  }) {
+    return _postIssuesReportList(
+      '/api/issues-report/status-list',
+      hodUserIdFk: hodUserIdFk,
+      contractIdFk: contractIdFk,
+      statusFk: statusFk,
+      location: location,
+      categoryFk: categoryFk,
+      issueId: issueId,
+    );
+  }
+
+  Future<List<Map<String, dynamic>>> fetchIssuesReportLocationList({
+    String? hodUserIdFk,
+    String? contractIdFk,
+    String? statusFk,
+    String? location,
+    String? categoryFk,
+    String? issueId,
+  }) {
+    return _postIssuesReportList(
+      '/api/issues-report/location-list',
+      hodUserIdFk: hodUserIdFk,
+      contractIdFk: contractIdFk,
+      statusFk: statusFk,
+      location: location,
+      categoryFk: categoryFk,
+      issueId: issueId,
+    );
+  }
+
+  Future<List<Map<String, dynamic>>> fetchIssuesReportCategoryList({
+    String? hodUserIdFk,
+    String? contractIdFk,
+    String? statusFk,
+    String? location,
+    String? categoryFk,
+    String? issueId,
+  }) {
+    return _postIssuesReportList(
+      '/api/issues-report/category-list',
+      hodUserIdFk: hodUserIdFk,
+      contractIdFk: contractIdFk,
+      statusFk: statusFk,
+      location: location,
+      categoryFk: categoryFk,
+      issueId: issueId,
+    );
+  }
+
+  Future<List<Map<String, dynamic>>> fetchIssuesReportTitleList({
+    String? hodUserIdFk,
+    String? contractIdFk,
+    String? statusFk,
+    String? location,
+    String? categoryFk,
+    String? issueId,
+  }) {
+    return _postIssuesReportList(
+      '/api/issues-report/title-list',
+      hodUserIdFk: hodUserIdFk,
+      contractIdFk: contractIdFk,
+      statusFk: statusFk,
+      location: location,
+      categoryFk: categoryFk,
+      issueId: issueId,
+    );
+  }
+
+  Future<({Uint8List bytes, String? fileName})> generatePendingIssuesReport({
+    required String hodUserIdFk,
+    required String contractIdFk,
+  }) async {
+    final Response<dynamic> response = await _dio.post<dynamic>(
+      '/api/issues-report/generate',
+      data: <String, dynamic>{
+        'hod_user_id_fk': hodUserIdFk,
+        'contract_id_fk': contractIdFk,
+      },
+      options: Options(
+        receiveTimeout: _dashboardReceiveTimeout,
+        connectTimeout: _dashboardConnectTimeout,
+        responseType: ResponseType.bytes,
+      ),
+    );
+    return _bytesResponse(response);
+  }
+
+  Future<({Uint8List bytes, String? fileName})> fetchIssuesSummaryReport({
+    String scope = 'ALL',
+  }) async {
+    final Response<dynamic> response = await _dio.get<dynamic>(
+      '/api/issues-report/issues-summary-report/$scope',
+      options: Options(
+        receiveTimeout: _dashboardReceiveTimeout,
+        connectTimeout: _dashboardConnectTimeout,
+        responseType: ResponseType.bytes,
+      ),
+    );
+    return _bytesResponse(response);
+  }
+
+  Future<({Uint8List bytes, String? fileName})> generateIssueDetailsReport({
+    required String hodUserIdFk,
+    required String contractIdFk,
+    required String statusFk,
+    required String location,
+    required String categoryFk,
+    required String issueId,
+  }) async {
+    final Response<dynamic> response = await _dio.post<dynamic>(
+      '/api/issues-details-report/generate',
+      data: <String, dynamic>{
+        'hod_user_id_fk': hodUserIdFk,
+        'contract_id_fk': contractIdFk,
+        'status_fk': statusFk,
+        'location': location,
+        'category_fk': categoryFk,
+        'issue_id': issueId,
+      },
+      options: Options(
+        receiveTimeout: _dashboardReceiveTimeout,
+        connectTimeout: _dashboardConnectTimeout,
+        responseType: ResponseType.bytes,
+      ),
+    );
+    return _bytesResponse(response);
+  }
+
+  ({Uint8List bytes, String? fileName}) _bytesResponse(Response<dynamic> response) {
+    final dynamic data = response.data;
+    final List<int> raw = data is List<int> ? data : <int>[];
+    final String? contentDisposition =
+        response.headers.value('content-disposition');
+    final String? fileName = _fileNameFromContentDisposition(contentDisposition);
+    return (bytes: Uint8List.fromList(raw), fileName: fileName);
+  }
+
   Future<Map<String, dynamic>> fetchRailwayZones() async {
     final response = await _dio.get<dynamic>(
       '/projects/api/railwayZones',

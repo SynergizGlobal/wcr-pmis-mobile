@@ -17,6 +17,8 @@ import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/contractors/
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/design_drawing/design_drawing_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/utility_shifting/add_utility_shifting_form_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/reports/ai_custom_report_page.dart';
+import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/reports/report_form_page.dart';
+import 'package:wcr_pmis_mobile/src/features/dashboard/domain/entities/report_form_args.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/home/dashboard_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/issues/issues_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/projects/project_details_page.dart';
@@ -102,6 +104,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         return LoginPage.routePath;
       }
       if (!loggedIn && loc == ValidateDataPage.routePath) {
+        return LoginPage.routePath;
+      }
+      if (!loggedIn && loc == ReportFormPage.routePath) {
         return LoginPage.routePath;
       }
       if (!loggedIn && loc == UtilityShiftingPage.routePath) {
@@ -241,6 +246,22 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             AiCustomReportPage(
               dataSource: ref.read(dashboardRemoteDataSourceProvider),
             ),
+      ),
+      GoRoute(
+        path: ReportFormPage.routePath,
+        name: ReportFormPage.routeName,
+        builder: (BuildContext context, GoRouterState state) {
+          final Object? extra = state.extra;
+          if (extra is! ReportFormArgs) {
+            return const Scaffold(
+              body: Center(child: Text('Report not found.')),
+            );
+          }
+          return ReportFormPage(
+            args: extra,
+            dataSource: ref.read(dashboardRemoteDataSourceProvider),
+          );
+        },
       ),
       GoRoute(
         path: AddUtilityShiftingFormPage.routePath,

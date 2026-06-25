@@ -15,7 +15,8 @@ import 'package:wcr_pmis_mobile/src/features/auth/presentation/controllers/auth_
 import 'package:wcr_pmis_mobile/src/features/dashboard/domain/entities/home_dashboard_data.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/domain/entities/update_form_item.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/projects/add_project_page.dart';
-import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/reports/ai_custom_report_page.dart';
+import 'package:wcr_pmis_mobile/src/features/dashboard/domain/entities/report_form_args.dart';
+import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/reports/report_form_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/issues/issues_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/projects/project_details_page.dart';
 import 'package:wcr_pmis_mobile/src/features/rfi/presentation/pages/rfi_dashboard_page.dart';
@@ -34,6 +35,7 @@ import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/utility_shif
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/structures/structure_form_list_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/structures/structures_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/home/providers/home_dashboard_provider.dart';
+import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/home/providers/report_forms_provider.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/home/providers/update_forms_provider.dart';
 import 'package:wcr_pmis_mobile/src/features/profile/presentation/pages/profile_page.dart';
 import 'package:wcr_pmis_mobile/src/features/settings/presentation/providers/dashboard_view_mode_provider.dart';
@@ -115,10 +117,6 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
   }
 
   void _onBottomSelected(int index) {
-    if (index == 2) {
-      context.pushNamed(AiCustomReportPage.routeName);
-      return;
-    }
     if (index == 3) {
       final List<_HomeSection> moreSections = _availableMoreSections;
       if (moreSections.length == 1) {
@@ -135,7 +133,8 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
       _section = switch (index) {
         0 => _HomeSection.home,
         1 => _HomeSection.updateForms,
-        _ => _HomeSection.reports,
+        2 => _HomeSection.reports,
+        _ => _HomeSection.home,
       };
     });
   }
@@ -214,7 +213,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     return switch (section) {
       _HomeSection.home => 'West Central Railway',
       _HomeSection.updateForms => 'Update Forms',
-      _HomeSection.reports => 'AI Reports',
+      _HomeSection.reports => 'Reports',
       _HomeSection.documents => 'Documents',
       _HomeSection.quickLinks => 'Quick Links',
       _HomeSection.admin => 'Admin',
@@ -235,6 +234,9 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     );
     final AsyncValue<List<UpdateFormItem>> updateFormsAsync = ref.watch(
       updateFormsProvider,
+    );
+    final AsyncValue<List<UpdateFormItem>> reportFormsAsync = ref.watch(
+      reportFormsProvider,
     );
     final DashboardViewMode viewMode = ref.watch(dashboardViewModeProvider);
     final String pageTitle = _titleForSection(_section);
@@ -305,6 +307,12 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                 ? _buildUpdateFormsSection(
                     viewKey: ValueKey<String>('update-forms-${viewMode.name}'),
                     updateFormsAsync: updateFormsAsync,
+                    viewMode: viewMode,
+                  )
+                : _section == _HomeSection.reports
+                ? _buildReportsSection(
+                    viewKey: ValueKey<String>('reports-${viewMode.name}'),
+                    reportFormsAsync: reportFormsAsync,
                     viewMode: viewMode,
                   )
                 : _sectionCardsScreen(
@@ -392,7 +400,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                     ),
                     _bottomItem(
                       index: 2,
-                      label: 'AI Reports',
+                      label: 'Reports',
                       icon: Icons.bar_chart_rounded,
                       selectedIcon: Icons.bar_chart_rounded,
                     ),
@@ -609,6 +617,53 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     );
   }
 
+  Widget _buildReportsSection({
+    Key? viewKey,
+    required AsyncValue<List<UpdateFormItem>> reportFormsAsync,
+    required DashboardViewMode viewMode,
+  }) {
+    return reportFormsAsync.when(
+      data: (List<UpdateFormItem> forms) {
+        final List<_DashboardCardSpec> cards = _collectReportFormCards(forms);
+        if (cards.isEmpty) {
+          return ListView(
+            key: ValueKey<String>('${viewKey.toString()}-empty'),
+            children: const <Widget>[
+              AppActionCard(title: 'No reports available right now.'),
+            ],
+          );
+        }
+        return _sectionCardsScreen(
+          viewKey: viewKey,
+          cards: cards,
+          viewMode: viewMode,
+        );
+      },
+      loading: () => ListView(
+        key: ValueKey<String>('${viewKey.toString()}-loading'),
+        children: const <Widget>[
+          Center(
+            child: Padding(
+              padding: EdgeInsets.symmetric(vertical: 32),
+              child: CircularProgressIndicator(),
+            ),
+          ),
+        ],
+      ),
+      error: (Object error, StackTrace _) => ListView(
+        key: ValueKey<String>('${viewKey.toString()}-error'),
+        children: <Widget>[
+          AppActionCard(
+            title: 'Unable to load reports',
+            icon: Icons.wifi_off_rounded,
+            rightPlaceholder: const Icon(Icons.refresh_rounded),
+            onTap: () => ref.invalidate(reportFormsProvider),
+          ),
+        ],
+      ),
+    );
+  }
+
   List<_DashboardCardSpec> _homeTypeCardsFromData(HomeDashboardData data) {
     final List<_DashboardCardSpec> cards = <_DashboardCardSpec>[];
     for (final HomeProjectType type in data.projectTypes) {
@@ -760,15 +815,16 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
       return;
     }
     if (_section == _HomeSection.reports &&
-        card.title.toLowerCase().contains('custom report')) {
-      context.pushNamed(AiCustomReportPage.routeName);
+        card.payload is UpdateFormItem) {
+      await _onReportFormTap(card.payload! as UpdateFormItem);
       return;
     }
-    if (_section == _HomeSection.reports &&
-        card.title.toLowerCase().contains('issues')) {
-      context.pushNamed(IssuesPage.routeName);
-      return;
-    }
+    // AI Custom Report navigation is paused.
+    // if (_section == _HomeSection.reports &&
+    //     card.title.toLowerCase().contains('custom report')) {
+    //   context.pushNamed(AiCustomReportPage.routeName);
+    //   return;
+    // }
     await AppDialog.show(
       context: context,
       title: title,
@@ -851,6 +907,131 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
       label: selected.formName,
       webFormUrl: selected.webFormUrl,
       mobileFormUrl: selected.mobileFormUrl,
+    );
+  }
+
+  Future<void> _onReportFormTap(UpdateFormItem form) async {
+    final List<UpdateFormSubItem> subMenus = _mobileReportSubMenus(form);
+
+    if (subMenus.length == 1) {
+      final UpdateFormSubItem only = subMenus.first;
+      await _handleReportNavigation(
+        formId: only.formId,
+        label: only.formName,
+        webFormUrl: only.webFormUrl,
+        mobileFormUrl: only.mobileFormUrl,
+        parentFormName: form.formName,
+      );
+      return;
+    }
+
+    if (subMenus.isEmpty) {
+      await _handleReportNavigation(
+        formId: form.formId,
+        label: form.formName,
+        webFormUrl: form.webFormUrl,
+        mobileFormUrl: form.mobileFormUrl,
+      );
+      return;
+    }
+
+    final UpdateFormSubItem? selected =
+        await showModalBottomSheet<UpdateFormSubItem>(
+          context: context,
+          useSafeArea: true,
+          showDragHandle: true,
+          builder: (BuildContext context) {
+            return Padding(
+              padding: const EdgeInsets.fromLTRB(12, 0, 12, 18),
+              child: ListView.separated(
+                shrinkWrap: true,
+                itemCount: subMenus.length,
+                separatorBuilder: (BuildContext context, int _) => Divider(
+                  height: 1,
+                  thickness: 0.8,
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.outlineVariant.withValues(alpha: 0.55),
+                ),
+                itemBuilder: (BuildContext context, int index) {
+                  final UpdateFormSubItem sub = subMenus[index];
+                  return ListTile(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    title: Text(sub.formName),
+                    trailing: const Icon(Icons.chevron_right_rounded),
+                    onTap: () => Navigator.of(context).pop(sub),
+                  );
+                },
+              ),
+            );
+          },
+        );
+    if (!mounted || selected == null) {
+      return;
+    }
+    await _handleReportNavigation(
+      formId: selected.formId,
+      label: selected.formName,
+      webFormUrl: selected.webFormUrl,
+      mobileFormUrl: selected.mobileFormUrl,
+      parentFormName: form.formName,
+    );
+  }
+
+  List<UpdateFormSubItem> _mobileReportSubMenus(UpdateFormItem form) {
+    return form.orderedSubMenus.where((UpdateFormSubItem item) {
+      return item.showInMobile;
+    }).toList();
+  }
+
+  List<_DashboardCardSpec> _collectReportFormCards(List<UpdateFormItem> forms) {
+    final List<_DashboardCardSpec> cards = <_DashboardCardSpec>[];
+
+    for (final UpdateFormItem item in forms) {
+      if (!item.showInMobile) {
+        continue;
+      }
+      cards.add(
+        _DashboardCardSpec(
+          title: item.formName,
+          payload: item,
+          icon: Icons.assessment_outlined,
+          leftPlaceholder: _reportFormIcon(item),
+        ),
+      );
+    }
+
+    return cards;
+  }
+
+  Future<void> _handleReportNavigation({
+    required String formId,
+    required String label,
+    String? webFormUrl,
+    String? mobileFormUrl,
+    String? parentFormName,
+  }) async {
+    if (!mounted) {
+      return;
+    }
+    context.pushNamed(
+      ReportFormPage.routeName,
+      extra: ReportFormArgs(
+        formId: formId,
+        formName: label,
+        webFormUrl: webFormUrl,
+        mobileFormUrl: mobileFormUrl,
+        parentFormName: parentFormName,
+      ),
+    );
+  }
+
+  Widget? _reportFormIcon(UpdateFormItem item) {
+    return _updateFormAssetIconFromKey(
+      _normalizeFormKey(item.formName),
+      formId: item.formId.trim(),
     );
   }
 
