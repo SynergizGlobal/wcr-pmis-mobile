@@ -208,6 +208,315 @@ class DashboardRemoteDataSource {
     return _bytesResponse(response);
   }
 
+  Future<({Uint8List bytes, String? fileName})> generateTpcStatusReport() async {
+    return _postEmptyBytesDownload('/api/activities-export/tpc-status-report');
+  }
+
+  Future<({Uint8List bytes, String? fileName})>
+      generateStationImprovementsReport() async {
+    return _postEmptyBytesDownload(
+      '/api/activities-export/station-improvements-report',
+    );
+  }
+
+  Map<String, dynamic> _contractReportFilterPayload({
+    String? projectIdFk,
+    String? contractId,
+    String? contractorIdFk,
+    String? contractStatusFk,
+    String? hodDesignations,
+    String? status,
+  }) {
+    String? valueOrNull(String? value) =>
+        value != null && value.trim().isNotEmpty ? value.trim() : null;
+    final String? project = valueOrNull(projectIdFk);
+    final String? contract = valueOrNull(contractId);
+    return <String, dynamic>{
+      'project_id_fk': project,
+      'project_id': project,
+      'contract_id': contract,
+      'contract_id_fk': contract,
+      'contractor_id_fk': valueOrNull(contractorIdFk),
+      'contract_status_fk': valueOrNull(contractStatusFk),
+      'hod_designations': valueOrNull(hodDesignations),
+      'status': valueOrNull(status),
+    };
+  }
+
+  Future<List<Map<String, dynamic>>> _postContractReportList(
+    String path, {
+    String? projectIdFk,
+    String? contractId,
+    String? contractorIdFk,
+    String? contractStatusFk,
+    String? hodDesignations,
+    String? status,
+  }) async {
+    final Response<dynamic> response = await _dio.post<dynamic>(
+      path,
+      data: _contractReportFilterPayload(
+        projectIdFk: projectIdFk,
+        contractId: contractId,
+        contractorIdFk: contractorIdFk,
+        contractStatusFk: contractStatusFk,
+        hodDesignations: hodDesignations,
+        status: status,
+      ),
+      options: _requestOptions,
+    );
+    return _normalizeListResponse(response.data);
+  }
+
+  Future<List<Map<String, dynamic>>> fetchContractDetailReportProjectList() async {
+    final Response<dynamic> response = await _dio.get<dynamic>(
+      '/contract-report/api/getProjectList',
+      queryParameters: <String, String>{
+        '_t': DateTime.now().millisecondsSinceEpoch.toString(),
+      },
+      options: _requestOptions,
+    );
+    return _normalizeListResponse(response.data);
+  }
+
+  Future<List<Map<String, dynamic>>> fetchContractDetailReportContractList({
+    String? projectIdFk,
+    String? contractId,
+    String? contractorIdFk,
+    String? contractStatusFk,
+    String? hodDesignations,
+    String? status,
+  }) {
+    return _postContractReportList(
+      '/contract-report/ajax/getContractListInContractReport',
+      projectIdFk: projectIdFk,
+      contractId: contractId,
+      contractorIdFk: contractorIdFk,
+      contractStatusFk: contractStatusFk,
+      hodDesignations: hodDesignations,
+      status: status,
+    );
+  }
+
+  Future<List<Map<String, dynamic>>> fetchContractDetailReportContractorList({
+    String? projectIdFk,
+    String? contractId,
+    String? contractorIdFk,
+    String? contractStatusFk,
+    String? hodDesignations,
+    String? status,
+  }) {
+    return _postContractReportList(
+      '/contract-report/ajax/getContractorsListInContractReport',
+      projectIdFk: projectIdFk,
+      contractId: contractId,
+      contractorIdFk: contractorIdFk,
+      contractStatusFk: contractStatusFk,
+      hodDesignations: hodDesignations,
+      status: status,
+    );
+  }
+
+  Future<List<Map<String, dynamic>>> fetchContractDetailReportStatusList({
+    String? projectIdFk,
+    String? contractId,
+    String? contractorIdFk,
+    String? contractStatusFk,
+    String? hodDesignations,
+    String? status,
+  }) {
+    return _postContractReportList(
+      '/contract-report/ajax/getContractStatusListInContractReport',
+      projectIdFk: projectIdFk,
+      contractId: contractId,
+      contractorIdFk: contractorIdFk,
+      contractStatusFk: contractStatusFk,
+      hodDesignations: hodDesignations,
+      status: status,
+    );
+  }
+
+  Future<List<Map<String, dynamic>>> fetchContractDetailReportHodList({
+    String? projectIdFk,
+    String? contractId,
+    String? contractorIdFk,
+    String? contractStatusFk,
+    String? hodDesignations,
+    String? status,
+  }) {
+    return _postContractReportList(
+      '/contract-report/ajax/getHODListInContractReport',
+      projectIdFk: projectIdFk,
+      contractId: contractId,
+      contractorIdFk: contractorIdFk,
+      contractStatusFk: contractStatusFk,
+      hodDesignations: hodDesignations,
+      status: status,
+    );
+  }
+
+  Future<List<Map<String, dynamic>>> fetchListOfContractsReportContractStatusList({
+    String? projectIdFk,
+    String? contractorIdFk,
+    String? contractStatusFk,
+    String? hodDesignations,
+    String? status,
+  }) {
+    return _postContractReportList(
+      '/contract-report/ajax/getStatsuListInContractReport',
+      projectIdFk: projectIdFk,
+      contractorIdFk: contractorIdFk,
+      contractStatusFk: contractStatusFk,
+      hodDesignations: hodDesignations,
+      status: status,
+    );
+  }
+
+  Future<({Uint8List bytes, String? fileName})> generateBgInsuranceReport({
+    String? projectIdFk,
+    String? contractorIdFk,
+    String? contractStatusFk,
+    required String date,
+    required String toDate,
+  }) async {
+    String? valueOrNull(String? value) =>
+        value != null && value.trim().isNotEmpty ? value.trim() : null;
+
+    final Response<dynamic> response = await _dio.post<dynamic>(
+      '/contract-report/generate-bg-insurance-report',
+      data: <String, dynamic>{
+        'project_id_fk': valueOrNull(projectIdFk),
+        'contractor_id_fk': valueOrNull(contractorIdFk),
+        'contract_status_fk': valueOrNull(contractStatusFk),
+        'status': null,
+        'date': date,
+        'todate': toDate,
+      },
+      options: Options(
+        receiveTimeout: _dashboardReceiveTimeout,
+        connectTimeout: _dashboardConnectTimeout,
+        responseType: ResponseType.bytes,
+      ),
+    );
+    return _bytesResponse(response);
+  }
+
+  Future<({Uint8List bytes, String? fileName})> generateContractCompletionReport({
+    String? projectIdFk,
+    String? contractorIdFk,
+    String? contractStatusFk,
+    String? hodDesignations,
+  }) async {
+    final Response<dynamic> response = await _dio.post<dynamic>(
+      '/contract-report/generate-contract-completion-report',
+      data: FormData.fromMap(<String, dynamic>{
+        'project_id_fk': projectIdFk ?? '',
+        'hod_designations': hodDesignations ?? '',
+        'contractor_id_fk': contractorIdFk ?? '',
+        'status': '',
+        'contract_status_fk': contractStatusFk ?? '',
+        'contract_id': '',
+        'date': '',
+        'todate': '',
+        'report_no': '9',
+      }),
+      options: Options(
+        receiveTimeout: _dashboardReceiveTimeout,
+        connectTimeout: _dashboardConnectTimeout,
+        responseType: ResponseType.bytes,
+      ),
+    );
+    return _bytesResponse(response);
+  }
+
+  Future<({Uint8List bytes, String? fileName})> generateListOfContractsReport({
+    String? projectIdFk,
+    String? contractorIdFk,
+    String? contractStatus,
+    String? contractStatusFk,
+    String? hodDesignations,
+  }) async {
+    final Response<dynamic> response = await _dio.post<dynamic>(
+      '/contract-report/generate-list-of-contracts-report',
+      data: FormData.fromMap(<String, dynamic>{
+        'project_id_fk': projectIdFk ?? '',
+        'hod_designations': hodDesignations ?? '',
+        'contractor_id_fk': contractorIdFk ?? '',
+        'status': contractStatus ?? '',
+        'contract_status_fk': contractStatusFk ?? '',
+        'contract_id': '',
+        'date': '',
+        'todate': '',
+        'report_no': '7',
+      }),
+      options: Options(
+        receiveTimeout: _dashboardReceiveTimeout,
+        connectTimeout: _dashboardConnectTimeout,
+        responseType: ResponseType.bytes,
+      ),
+    );
+    return _bytesResponse(response);
+  }
+
+  Future<({Uint8List bytes, String? fileName})> generateContractDetailReport({
+    required String contractId,
+    String? projectIdFk,
+    String? hodDesignations,
+    String? contractorIdFk,
+    String? contractStatusFk,
+  }) async {
+    final Response<dynamic> response = await _dio.post<dynamic>(
+      '/contract-report/generate-contract-detail-report/$contractId',
+      data: FormData.fromMap(<String, dynamic>{
+        'project_id_fk': projectIdFk ?? '',
+        'hod_designations': hodDesignations ?? '',
+        'contractor_id_fk': contractorIdFk ?? '',
+        'status': '',
+        'contract_status_fk': contractStatusFk ?? '',
+        'contract_id': contractId,
+        'date': '',
+        'todate': '',
+        'report_no': '2',
+      }),
+      options: Options(
+        receiveTimeout: _dashboardReceiveTimeout,
+        connectTimeout: _dashboardConnectTimeout,
+        responseType: ResponseType.bytes,
+      ),
+    );
+    return _bytesResponse(response);
+  }
+
+  Future<({Uint8List bytes, String? fileName})> generateContractorsListReport() async {
+    final Response<dynamic> response = await _dio.post<dynamic>(
+      '/contract-report/contractorslist',
+      options: Options(
+        receiveTimeout: _dashboardReceiveTimeout,
+        connectTimeout: _dashboardConnectTimeout,
+        responseType: ResponseType.bytes,
+      ),
+    );
+    return _bytesResponse(response);
+  }
+
+  Future<({Uint8List bytes, String? fileName})> generateBgContractualLettersReport({
+    required String dateOfStart,
+    required String bgDate,
+  }) async {
+    final Response<dynamic> response = await _dio.post<dynamic>(
+      '/contract-report/ajax/generate-bg-contractual-letters',
+      data: FormData.fromMap(<String, dynamic>{
+        'date_of_start': dateOfStart,
+        'bg_date': bgDate,
+      }),
+      options: Options(
+        receiveTimeout: _dashboardReceiveTimeout,
+        connectTimeout: _dashboardConnectTimeout,
+        responseType: ResponseType.bytes,
+      ),
+    );
+    return _bytesResponse(response);
+  }
+
   Future<({Uint8List bytes, String? fileName})> generateUtilityShiftingReport({
     required String projectIdFk,
     required String executionAgencyFk,
@@ -399,7 +708,7 @@ class DashboardRemoteDataSource {
     required String contractIdFk,
   }) async {
     final Response<dynamic> response = await _dio.post<dynamic>(
-      '/api/issues-report/generate',
+      '/api/issues-report/generate-pending',
       data: <String, dynamic>{
         'hod_user_id_fk': hodUserIdFk,
         'contract_id_fk': contractIdFk,
@@ -461,6 +770,22 @@ class DashboardRemoteDataSource {
         response.headers.value('content-disposition');
     final String? fileName = _fileNameFromContentDisposition(contentDisposition);
     return (bytes: Uint8List.fromList(raw), fileName: fileName);
+  }
+
+  /// Web POSTs an empty JSON object (`{}`), not a bodyless request.
+  Future<({Uint8List bytes, String? fileName})> _postEmptyBytesDownload(
+    String path,
+  ) async {
+    final Response<dynamic> response = await _dio.post<dynamic>(
+      path,
+      data: const <String, dynamic>{},
+      options: Options(
+        receiveTimeout: _dashboardReceiveTimeout,
+        connectTimeout: _dashboardConnectTimeout,
+        responseType: ResponseType.bytes,
+      ),
+    );
+    return _bytesResponse(response);
   }
 
   Future<Map<String, dynamic>> fetchRailwayZones() async {

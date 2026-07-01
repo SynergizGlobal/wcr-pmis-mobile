@@ -15,8 +15,11 @@ import 'package:wcr_pmis_mobile/src/features/auth/presentation/controllers/auth_
 import 'package:wcr_pmis_mobile/src/features/dashboard/domain/entities/home_dashboard_data.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/domain/entities/update_form_item.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/projects/add_project_page.dart';
+import 'package:wcr_pmis_mobile/src/features/dashboard/data/datasources/dashboard_remote_data_source.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/domain/entities/report_form_args.dart';
+import 'package:wcr_pmis_mobile/src/features/dashboard/domain/utils/report_kind.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/reports/report_form_page.dart';
+import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/reports/widgets/direct_download_report_screen.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/issues/issues_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/projects/project_details_page.dart';
 import 'package:wcr_pmis_mobile/src/features/rfi/presentation/pages/rfi_dashboard_page.dart';
@@ -981,9 +984,78 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
   }
 
   List<UpdateFormSubItem> _mobileReportSubMenus(UpdateFormItem form) {
-    return form.orderedSubMenus.where((UpdateFormSubItem item) {
-      return item.showInMobile;
-    }).toList();
+    final List<UpdateFormSubItem> items = form.orderedSubMenus
+        .where((UpdateFormSubItem item) => item.showInMobile)
+        .toList();
+    if (form.formId.trim() == '275') {
+      return _augmentProgressReportSubMenus(
+        items.where((UpdateFormSubItem item) => item.formId.trim() != '305').toList(),
+      );
+    }
+    return items;
+  }
+
+  /// `getReportForms` often omits TCP / Station Improvements under Progress.
+  /// Inject them so one-tap download works with the APIs already wired in app.
+  List<UpdateFormSubItem> _augmentProgressReportSubMenus(
+    List<UpdateFormSubItem> apiItems,
+  ) {
+    const List<UpdateFormSubItem> knownProgressReports = <UpdateFormSubItem>[
+      UpdateFormSubItem(
+        formId: 'progress-tcp',
+        formName: 'TCP',
+        priority: 0,
+        webFormUrl: 'activities-export/tpc-status-report',
+      ),
+      UpdateFormSubItem(
+        formId: 'progress-station-improvements',
+        formName: 'Station Improvements Report',
+        priority: 1,
+        webFormUrl: 'activities-export/station-improvements-report',
+      ),
+    ];
+
+    final List<UpdateFormSubItem> merged = List<UpdateFormSubItem>.from(apiItems);
+    for (final UpdateFormSubItem candidate in knownProgressReports) {
+      if (!_progressSubMenuAlreadyPresent(merged, candidate)) {
+        merged.add(candidate);
+      }
+    }
+    merged.sort(
+      (UpdateFormSubItem a, UpdateFormSubItem b) => a.priority.compareTo(b.priority),
+    );
+    return merged;
+  }
+
+  bool _progressSubMenuAlreadyPresent(
+    List<UpdateFormSubItem> items,
+    UpdateFormSubItem candidate,
+  ) {
+    final String candidateUrl =
+        (candidate.webFormUrl ?? '').trim().toLowerCase();
+    final String candidateName = candidate.formName.trim().toLowerCase();
+
+    for (final UpdateFormSubItem item in items) {
+      final String url = (item.webFormUrl ?? '').trim().toLowerCase();
+      final String name = item.formName.trim().toLowerCase();
+
+      if (candidateUrl.isNotEmpty &&
+          (url.contains(candidateUrl) ||
+              (candidateUrl.contains(url) && url.isNotEmpty))) {
+        return true;
+      }
+      if (name == candidateName) {
+        return true;
+      }
+      if (candidateName.contains('tcp') &&
+          (name.contains('tcp') || name.contains('tpc'))) {
+        return true;
+      }
+      if (candidateName.contains('station') && name.contains('station')) {
+        return true;
+      }
+    }
+    return false;
   }
 
   List<_DashboardCardSpec> _collectReportFormCards(List<UpdateFormItem> forms) {
@@ -1016,15 +1088,51 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     if (!mounted) {
       return;
     }
+
+    final ReportFormArgs args = ReportFormArgs(
+      formId: formId,
+      formName: label,
+      webFormUrl: webFormUrl,
+      mobileFormUrl: mobileFormUrl,
+      parentFormName: parentFormName,
+    );
+
+    final ReportKind reportKind = resolveReportKind(args);
+    final DashboardRemoteDataSource dataSource =
+        ref.read(dashboardRemoteDataSourceProvider);
+
+    switch (reportKind) {
+      case ReportKind.listOfContractors:
+        await runDirectReportDownload(
+          context: context,
+          download: dataSource.generateContractorsListReport,
+          defaultFileName: 'list_of_contractors',
+          reportTitle: label,
+        );
+        return;
+      case ReportKind.tpcProgressReport:
+        await runDirectReportDownload(
+          context: context,
+          download: dataSource.generateTpcStatusReport,
+          defaultFileName: 'tpc_status_report',
+          reportTitle: label,
+        );
+        return;
+      case ReportKind.stationImprovementsReport:
+        await runDirectReportDownload(
+          context: context,
+          download: dataSource.generateStationImprovementsReport,
+          defaultFileName: 'station_improvements_report',
+          reportTitle: label,
+        );
+        return;
+      default:
+        break;
+    }
+
     context.pushNamed(
       ReportFormPage.routeName,
-      extra: ReportFormArgs(
-        formId: formId,
-        formName: label,
-        webFormUrl: webFormUrl,
-        mobileFormUrl: mobileFormUrl,
-        parentFormName: parentFormName,
-      ),
+      extra: args,
     );
   }
 

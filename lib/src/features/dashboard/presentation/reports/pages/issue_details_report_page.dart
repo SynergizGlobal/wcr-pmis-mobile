@@ -215,45 +215,24 @@ class _IssueDetailsReportScreenState extends State<IssueDetailsReportScreen> {
       final List<List<Map<String, dynamic>>> responses =
           await Future.wait<List<Map<String, dynamic>>>(
         <Future<List<Map<String, dynamic>>>>[
-          widget.dataSource.fetchIssuesReportHodList(
-            hodUserIdFk: _selectedHod?.value,
-            contractIdFk: _selectedContract?.value,
-            statusFk: _selectedStatus?.value,
-            location: _selectedLocation?.value,
-            categoryFk: _selectedCategory?.value,
-            issueId: _selectedTitle?.value,
-          ),
+          widget.dataSource.fetchIssuesReportHodList(),
           widget.dataSource.fetchIssuesReportContractList(
             hodUserIdFk: _selectedHod?.value,
-            contractIdFk: _selectedContract?.value,
-            statusFk: _selectedStatus?.value,
-            location: _selectedLocation?.value,
-            categoryFk: _selectedCategory?.value,
-            issueId: _selectedTitle?.value,
           ),
           widget.dataSource.fetchIssuesReportStatusList(
             hodUserIdFk: _selectedHod?.value,
             contractIdFk: _selectedContract?.value,
-            statusFk: _selectedStatus?.value,
-            location: _selectedLocation?.value,
-            categoryFk: _selectedCategory?.value,
-            issueId: _selectedTitle?.value,
           ),
           widget.dataSource.fetchIssuesReportLocationList(
             hodUserIdFk: _selectedHod?.value,
             contractIdFk: _selectedContract?.value,
             statusFk: _selectedStatus?.value,
-            location: _selectedLocation?.value,
-            categoryFk: _selectedCategory?.value,
-            issueId: _selectedTitle?.value,
           ),
           widget.dataSource.fetchIssuesReportCategoryList(
             hodUserIdFk: _selectedHod?.value,
             contractIdFk: _selectedContract?.value,
             statusFk: _selectedStatus?.value,
             location: _selectedLocation?.value,
-            categoryFk: _selectedCategory?.value,
-            issueId: _selectedTitle?.value,
           ),
           widget.dataSource.fetchIssuesReportTitleList(
             hodUserIdFk: _selectedHod?.value,
@@ -261,7 +240,6 @@ class _IssueDetailsReportScreenState extends State<IssueDetailsReportScreen> {
             statusFk: _selectedStatus?.value,
             location: _selectedLocation?.value,
             categoryFk: _selectedCategory?.value,
-            issueId: _selectedTitle?.value,
           ),
         ],
       );
@@ -269,23 +247,41 @@ class _IssueDetailsReportScreenState extends State<IssueDetailsReportScreen> {
         return;
       }
       setState(() {
-        _hodOptions = dedupeIssuesReportOptions(
-          responses[0].map(hodOptionFromRow),
+        _hodOptions = ensureIssuesReportOptionInList(
+          _selectedHod,
+          dedupeIssuesReportOptions(
+            responses[0].map(hodOptionFromRow),
+          ),
         );
-        _contractOptions = dedupeIssuesReportOptions(
-          responses[1].map(contractOptionFromRow),
+        _contractOptions = ensureIssuesReportOptionInList(
+          _selectedContract,
+          dedupeIssuesReportOptions(
+            responses[1].map(contractOptionFromRow),
+          ),
         );
-        _statusOptions = dedupeIssuesReportOptions(
-          responses[2].map(statusOptionFromRow),
+        _statusOptions = ensureIssuesReportOptionInList(
+          _selectedStatus,
+          dedupeIssuesReportOptions(
+            responses[2].map(statusOptionFromRow),
+          ),
         );
-        _locationOptions = dedupeIssuesReportOptions(
-          responses[3].map(locationOptionFromRow),
+        _locationOptions = ensureIssuesReportOptionInList(
+          _selectedLocation,
+          dedupeIssuesReportOptions(
+            responses[3].map(locationOptionFromRow),
+          ),
         );
-        _categoryOptions = dedupeIssuesReportOptions(
-          responses[4].map(categoryOptionFromRow),
+        _categoryOptions = ensureIssuesReportOptionInList(
+          _selectedCategory,
+          dedupeIssuesReportOptions(
+            responses[4].map(categoryOptionFromRow),
+          ),
         );
-        _titleOptions = dedupeIssuesReportOptions(
-          responses[5].map(titleOptionFromRow),
+        _titleOptions = ensureIssuesReportOptionInList(
+          _selectedTitle,
+          dedupeIssuesReportOptions(
+            responses[5].map(titleOptionFromRow),
+          ),
         );
         _selectedHod = keepIssuesReportOption(_selectedHod, _hodOptions);
         _selectedContract =

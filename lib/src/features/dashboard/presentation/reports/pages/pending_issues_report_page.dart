@@ -143,13 +143,9 @@ class _PendingIssuesReportScreenState extends State<PendingIssuesReportScreen> {
       final List<List<Map<String, dynamic>>> responses =
           await Future.wait<List<Map<String, dynamic>>>(
         <Future<List<Map<String, dynamic>>>>[
-          widget.dataSource.fetchIssuesReportHodList(
-            hodUserIdFk: _selectedHod?.value,
-            contractIdFk: _selectedContract?.value,
-          ),
+          widget.dataSource.fetchIssuesReportHodList(),
           widget.dataSource.fetchIssuesReportContractList(
             hodUserIdFk: _selectedHod?.value,
-            contractIdFk: _selectedContract?.value,
           ),
         ],
       );
@@ -157,11 +153,17 @@ class _PendingIssuesReportScreenState extends State<PendingIssuesReportScreen> {
         return;
       }
       setState(() {
-        _hodOptions = dedupeIssuesReportOptions(
-          responses[0].map(hodOptionFromRow),
+        _hodOptions = ensureIssuesReportOptionInList(
+          _selectedHod,
+          dedupeIssuesReportOptions(
+            responses[0].map(hodOptionFromRow),
+          ),
         );
-        _contractOptions = dedupeIssuesReportOptions(
-          responses[1].map(contractOptionFromRow),
+        _contractOptions = ensureIssuesReportOptionInList(
+          _selectedContract,
+          dedupeIssuesReportOptions(
+            responses[1].map(contractOptionFromRow),
+          ),
         );
         _selectedHod = keepIssuesReportOption(_selectedHod, _hodOptions);
         _selectedContract =

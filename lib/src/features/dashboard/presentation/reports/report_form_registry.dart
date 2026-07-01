@@ -5,6 +5,7 @@ import 'package:wcr_pmis_mobile/src/features/dashboard/domain/utils/report_kind.
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/reports/pages/contract_reports.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/reports/pages/issues_reports.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/reports/pages/other_reports.dart';
+import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/reports/pages/progress_reports.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/reports/widgets/report_shell_page.dart';
 
 Widget buildReportPage({
@@ -16,10 +17,7 @@ Widget buildReportPage({
       args: args,
       dataSource: dataSource,
     ),
-    ReportKind.listOfContractors => ListOfContractorsReportPage(
-      args: args,
-      dataSource: dataSource,
-    ),
+    ReportKind.listOfContractors => ReportShellPage(args: args),
     ReportKind.listOfContracts => ListOfContractsReportPage(
       args: args,
       dataSource: dataSource,
@@ -57,6 +55,8 @@ Widget buildReportPage({
       args: args,
       dataSource: dataSource,
     ),
+    ReportKind.tpcProgressReport => ReportShellPage(args: args),
+    ReportKind.stationImprovementsReport => ReportShellPage(args: args),
     ReportKind.pendingIssuesReport => PendingIssuesReportPage(
       args: args,
       dataSource: dataSource,

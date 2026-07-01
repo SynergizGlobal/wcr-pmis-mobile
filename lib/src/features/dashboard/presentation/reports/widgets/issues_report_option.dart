@@ -101,6 +101,22 @@ IssuesReportOption? titleOptionFromRow(Map<String, dynamic> row) {
   return IssuesReportOption(value: id, label: label);
 }
 
+List<IssuesReportOption> ensureIssuesReportOptionInList(
+  IssuesReportOption? selected,
+  List<IssuesReportOption> options,
+) {
+  if (selected == null) {
+    return options;
+  }
+  final bool hasSelected = options.any(
+    (IssuesReportOption option) => option.value == selected.value,
+  );
+  if (hasSelected) {
+    return options;
+  }
+  return <IssuesReportOption>[selected, ...options];
+}
+
 IssuesReportOption? keepIssuesReportOption(
   IssuesReportOption? selected,
   List<IssuesReportOption> options,

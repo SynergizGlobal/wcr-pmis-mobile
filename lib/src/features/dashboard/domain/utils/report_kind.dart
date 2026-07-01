@@ -12,6 +12,8 @@ enum ReportKind {
   contractWiseActivities,
   progressReport,
   fobProgressReport,
+  tpcProgressReport,
+  stationImprovementsReport,
   pendingIssuesReport,
   issuesSummaryReport,
   issueDetailsReport,
@@ -23,6 +25,12 @@ enum ReportKind {
 ReportKind resolveReportKind(ReportFormArgs args) {
   final String formId = args.formId.trim();
   final String url = _normalize(args.webFormUrl ?? args.mobileFormUrl ?? '');
+  final String name = _normalize(args.formName);
+
+  final ReportKind? fromName = _resolveReportKindFromName(name);
+  if (fromName != null) {
+    return fromName;
+  }
 
   return switch (formId) {
     '285' => ReportKind.contractDetail,
@@ -36,6 +44,8 @@ ReportKind resolveReportKind(ReportFormArgs args) {
     '1319' => ReportKind.contractWiseActivities,
     '275' => ReportKind.progressReport,
     '305' => ReportKind.fobProgressReport,
+    'progress-tcp' => ReportKind.tpcProgressReport,
+    'progress-station-improvements' => ReportKind.stationImprovementsReport,
     '296' => ReportKind.pendingIssuesReport,
     '297' => ReportKind.issuesSummaryReport,
     '298' => ReportKind.issueDetailsReport,
@@ -73,6 +83,13 @@ ReportKind _resolveReportKindFromUrl(String url) {
   if (url.contains('activities-export-report')) {
     return ReportKind.contractWiseActivities;
   }
+  if (url.contains('tpc-status-report') || url.contains('tcp-progress')) {
+    return ReportKind.tpcProgressReport;
+  }
+  if (url.contains('station-improvements-report') ||
+      url.contains('station-improvements')) {
+    return ReportKind.stationImprovementsReport;
+  }
   if (url.contains('progress-report') || url.contains('mcdo-progress-report')) {
     return ReportKind.progressReport;
   }
@@ -92,6 +109,20 @@ ReportKind _resolveReportKindFromUrl(String url) {
     return ReportKind.utilityReport;
   }
   return ReportKind.unknown;
+}
+
+ReportKind? _resolveReportKindFromName(String name) {
+  if (name.contains('station improvements') ||
+      name.contains('station-improvements')) {
+    return ReportKind.stationImprovementsReport;
+  }
+  if (name == 'tcp' ||
+      name.contains('tcp ') ||
+      name.startsWith('tcp') ||
+      name.contains('tpc')) {
+    return ReportKind.tpcProgressReport;
+  }
+  return null;
 }
 
 String _normalize(String value) {

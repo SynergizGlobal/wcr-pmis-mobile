@@ -7,7 +7,6 @@ import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/reports/page
     show LandAcquisitionReportScreen;
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/reports/pages/utility_shifting_report_page.dart'
     show UtilityShiftingReportScreen;
-import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/reports/widgets/report_shell_page.dart';
 
 class ContractWiseActivitiesReportPage extends StatelessWidget {
   const ContractWiseActivitiesReportPage({
@@ -25,38 +24,6 @@ class ContractWiseActivitiesReportPage extends StatelessWidget {
       args: args,
       dataSource: dataSource,
     );
-  }
-}
-
-class ProgressReportPage extends StatelessWidget {
-  const ProgressReportPage({
-    super.key,
-    required this.args,
-    required this.dataSource,
-  });
-
-  final ReportFormArgs args;
-  final DashboardRemoteDataSource dataSource;
-
-  @override
-  Widget build(BuildContext context) {
-    return ReportShellPage(args: args);
-  }
-}
-
-class FobProgressReportPage extends StatelessWidget {
-  const FobProgressReportPage({
-    super.key,
-    required this.args,
-    required this.dataSource,
-  });
-
-  final ReportFormArgs args;
-  final DashboardRemoteDataSource dataSource;
-
-  @override
-  Widget build(BuildContext context) {
-    return ReportShellPage(args: args);
   }
 }
 

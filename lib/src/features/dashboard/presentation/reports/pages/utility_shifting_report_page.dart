@@ -192,29 +192,55 @@ class _UtilityShiftingReportScreenState
   Future<void> _reloadFilters() async {
     setState(() => _loading = true);
     try {
-      final Map<String, dynamic> response =
-          await widget.dataSource.fetchUtilityReportFilters(
-        projectIdFk: _selectedProject?.value,
-        executionAgencyFk: _selectedAgency?.value,
-        contractIdFk: _selectedContract?.value,
-        hodUserIdFk: _selectedHod?.value,
+      final String? projectId = _selectedProject?.value;
+      final String? agencyId = _selectedAgency?.value;
+      final String? contractId = _selectedContract?.value;
+      final List<Map<String, dynamic>> responses =
+          await Future.wait<Map<String, dynamic>>(
+        <Future<Map<String, dynamic>>>[
+          widget.dataSource.fetchUtilityReportFilters(),
+          widget.dataSource.fetchUtilityReportFilters(
+            projectIdFk: projectId,
+          ),
+          widget.dataSource.fetchUtilityReportFilters(
+            projectIdFk: projectId,
+            executionAgencyFk: agencyId,
+          ),
+          widget.dataSource.fetchUtilityReportFilters(
+            projectIdFk: projectId,
+            executionAgencyFk: agencyId,
+            contractIdFk: contractId,
+          ),
+        ],
       );
       if (!mounted) {
         return;
       }
       setState(() {
-        _projectOptions = _dedupeOptions(
-          _rowsFromResponse(response, 'projectsList').map(_projectOption),
+        _projectOptions = _ensureOptionInList(
+          _selectedProject,
+          _dedupeOptions(
+            _rowsFromResponse(responses[0], 'projectsList').map(_projectOption),
+          ),
         );
-        _agencyOptions = _dedupeOptions(
-          _rowsFromResponse(response, 'executionAgency').map(_agencyOption),
+        _agencyOptions = _ensureOptionInList(
+          _selectedAgency,
+          _dedupeOptions(
+            _rowsFromResponse(responses[1], 'executionAgency').map(_agencyOption),
+          ),
         );
-        _contractOptions = _dedupeOptions(
-          _rowsFromResponse(response, 'impactedContractsList')
-              .map(_contractOption),
+        _contractOptions = _ensureOptionInList(
+          _selectedContract,
+          _dedupeOptions(
+            _rowsFromResponse(responses[2], 'impactedContractsList')
+                .map(_contractOption),
+          ),
         );
-        _hodOptions = _dedupeOptions(
-          _rowsFromResponse(response, 'utilityHODList').map(_hodOption),
+        _hodOptions = _ensureOptionInList(
+          _selectedHod,
+          _dedupeOptions(
+            _rowsFromResponse(responses[3], 'utilityHODList').map(_hodOption),
+          ),
         );
         _selectedProject = _keepOrClear(
           _selectedProject,
@@ -370,6 +396,22 @@ class _UtilityShiftingReportScreenState
       }
     }
     return null;
+  }
+
+  List<_UtilityReportOption> _ensureOptionInList(
+    _UtilityReportOption? selected,
+    List<_UtilityReportOption> options,
+  ) {
+    if (selected == null) {
+      return options;
+    }
+    final bool hasSelected = options.any(
+      (_UtilityReportOption option) => option.value == selected.value,
+    );
+    if (hasSelected) {
+      return options;
+    }
+    return <_UtilityReportOption>[selected, ...options];
   }
 
   List<_UtilityReportOption> _dedupeOptions(
