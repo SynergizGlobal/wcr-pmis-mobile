@@ -170,21 +170,24 @@ class _DashboardHomeSlideshowState extends State<DashboardHomeSlideshow> {
       return const SizedBox.shrink();
     }
 
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(14),
-      child: SizedBox(
-        height: 220,
-        child: Stack(
-          fit: StackFit.expand,
-          children: <Widget>[
-            if (_usesSlideAnimation)
-              _buildSlideView(context)
-            else
-              _buildFadeView(context),
-            if (_slides.length > 1) _buildPageIndicators(),
-          ],
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        ClipRRect(
+          borderRadius: BorderRadius.circular(14),
+          child: SizedBox(
+            height: 220,
+            width: double.infinity,
+            child: _usesSlideAnimation
+                ? _buildSlideView(context)
+                : _buildFadeView(context),
+          ),
         ),
-      ),
+        if (_slides.length > 1) ...<Widget>[
+          const SizedBox(height: 8),
+          _buildPageIndicators(context),
+        ],
+      ],
     );
   }
 
@@ -306,30 +309,26 @@ class _DashboardHomeSlideshowState extends State<DashboardHomeSlideshow> {
     );
   }
 
-  Widget _buildPageIndicators() {
-    return Positioned(
-      top: 8,
-      right: 8,
-      child: IgnorePointer(
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: List<Widget>.generate(_slides.length, (int index) {
-            final bool active = index == _currentPage;
-            return AnimatedContainer(
-              duration: widget.transitionDuration,
-              margin: const EdgeInsets.symmetric(horizontal: 3),
-              width: active ? 16 : 6,
-              height: 6,
-              decoration: BoxDecoration(
-                color: active
-                    ? Colors.white
-                    : Colors.white.withValues(alpha: 0.25),
-                borderRadius: BorderRadius.circular(999),
-              ),
-            );
-          }),
-        ),
-      ),
+  Widget _buildPageIndicators(BuildContext context) {
+    final ColorScheme colorScheme = Theme.of(context).colorScheme;
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: List<Widget>.generate(_slides.length, (int index) {
+        final bool active = index == _currentPage;
+        return AnimatedContainer(
+          duration: widget.transitionDuration,
+          margin: const EdgeInsets.symmetric(horizontal: 3),
+          width: active ? 16 : 6,
+          height: 6,
+          decoration: BoxDecoration(
+            color: active
+                ? colorScheme.primary
+                : colorScheme.onSurfaceVariant.withValues(alpha: 0.35),
+            borderRadius: BorderRadius.circular(999),
+          ),
+        );
+      }),
     );
   }
 }
