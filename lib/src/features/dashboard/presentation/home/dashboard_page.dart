@@ -38,6 +38,7 @@ import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/utility_shif
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/structures/structure_form_list_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/structures/structures_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/home/providers/home_dashboard_provider.dart';
+import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/home/widgets/dashboard_home_slideshow.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/home/providers/report_forms_provider.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/home/providers/update_forms_provider.dart';
 import 'package:wcr_pmis_mobile/src/features/profile/presentation/pages/profile_page.dart';
@@ -501,6 +502,11 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         return Column(
           key: viewKey,
           children: <Widget>[
+            const DashboardHomeSlideshow(
+              autoPlayInterval: Duration(milliseconds: 5000),
+              transitionDuration: Duration(milliseconds: 3000),
+            ),
+            const SizedBox(height: 12),
             _homeSummaryStats(
               projectsCount: totalProjects,
               totalLength: data.overview.totalLength,

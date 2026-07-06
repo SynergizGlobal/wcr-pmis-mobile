@@ -61,6 +61,7 @@ flutter:
   assets:
     - assets/
     - assets/update_forms_icons/
+    - assets/dashboard_slides/
 
 flutter_launcher_icons:
   android: true
