@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:wcr_pmis_mobile/src/core/network/user_friendly_error_message.dart';
+import 'package:wcr_pmis_mobile/src/features/dashboard/domain/utils/report_generate_error.dart';
 import 'package:wcr_pmis_mobile/src/core/widgets/app_dialog.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/data/datasources/dashboard_remote_data_source.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/domain/entities/report_form_args.dart';
@@ -94,9 +94,7 @@ class _IssuesSummaryReportScreenState extends State<IssuesSummaryReportScreen> {
     try {
       final ({List<int> bytes, String? fileName}) result =
           await widget.dataSource.fetchIssuesSummaryReport();
-      if (result.bytes.isEmpty) {
-        throw Exception('Empty report received from server.');
-      }
+      ensureReportHasData(result.bytes);
       final String fileName = result.fileName?.trim().isNotEmpty == true
           ? result.fileName!.trim()
           : 'issues_summary_report_${DateTime.now().millisecondsSinceEpoch}.xlsx';
@@ -121,8 +119,8 @@ class _IssuesSummaryReportScreenState extends State<IssuesSummaryReportScreen> {
       }
       await AppDialog.show(
         context: context,
-        title: 'Generate Failed',
-        message: userFriendlyErrorMessage(error),
+        title: reportErrorTitle(error),
+        message: reportErrorMessage(error),
         type: AppDialogType.error,
       );
     } finally {

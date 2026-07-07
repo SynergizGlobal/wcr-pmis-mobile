@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:wcr_pmis_mobile/src/core/network/user_friendly_error_message.dart';
+import 'package:wcr_pmis_mobile/src/features/dashboard/domain/utils/report_generate_error.dart';
 import 'package:wcr_pmis_mobile/src/core/widgets/app_dialog.dart';
 import 'package:wcr_pmis_mobile/src/core/widgets/app_select_sheet_field.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/data/datasources/dashboard_remote_data_source.dart';
@@ -364,9 +365,7 @@ class _ListOfContractsReportScreenState extends State<ListOfContractsReportScree
         contractStatusFk: _selectedWorkStatus?.value,
         hodDesignations: _selectedHod?.value,
       );
-      if (result.bytes.isEmpty) {
-        throw Exception('Empty report received from server.');
-      }
+      ensureReportHasData(result.bytes);
       final String fileName = result.fileName?.trim().isNotEmpty == true
           ? result.fileName!.trim()
           : 'list_of_contracts_${DateTime.now().millisecondsSinceEpoch}.xlsx';
@@ -391,8 +390,8 @@ class _ListOfContractsReportScreenState extends State<ListOfContractsReportScree
       }
       await AppDialog.show(
         context: context,
-        title: 'Generate Failed',
-        message: userFriendlyErrorMessage(error),
+        title: reportErrorTitle(error),
+        message: reportErrorMessage(error),
         type: AppDialogType.error,
       );
     } finally {

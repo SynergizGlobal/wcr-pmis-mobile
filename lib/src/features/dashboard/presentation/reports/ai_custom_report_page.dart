@@ -10,7 +10,7 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:wcr_pmis_mobile/src/core/widgets/app_dialog.dart';
 import 'package:wcr_pmis_mobile/src/core/widgets/app_table_pagination_footer.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/data/datasources/dashboard_remote_data_source.dart';
-import 'package:wcr_pmis_mobile/src/core/network/user_friendly_error_message.dart';
+import 'package:wcr_pmis_mobile/src/features/dashboard/domain/utils/report_generate_error.dart';
 
 class AiCustomReportPage extends StatefulWidget {
   const AiCustomReportPage({super.key, required this.dataSource});
@@ -598,8 +598,8 @@ class _AiCustomReportPageState extends State<AiCustomReportPage> {
       }
       await AppDialog.show(
         context: context,
-        title: 'Generate Failed',
-        message: userFriendlyErrorMessage(error),
+        title: reportErrorTitle(error),
+        message: reportErrorMessage(error),
         type: AppDialogType.error,
       );
     } finally {

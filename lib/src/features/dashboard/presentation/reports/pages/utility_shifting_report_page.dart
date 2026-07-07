@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:wcr_pmis_mobile/src/core/network/user_friendly_error_message.dart';
+import 'package:wcr_pmis_mobile/src/features/dashboard/domain/utils/report_generate_error.dart';
 import 'package:wcr_pmis_mobile/src/core/widgets/app_dialog.dart';
 import 'package:wcr_pmis_mobile/src/core/widgets/app_select_sheet_field.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/data/datasources/dashboard_remote_data_source.dart';
@@ -325,9 +326,7 @@ class _UtilityShiftingReportScreenState
         contractIdFk: contract.value,
         hodUserIdFk: hod.value,
       );
-      if (result.bytes.isEmpty) {
-        throw Exception('Empty report received from server.');
-      }
+      ensureReportHasData(result.bytes);
       final String fileName = result.fileName?.trim().isNotEmpty == true
           ? result.fileName!.trim()
           : 'utility_shifting_report_${DateTime.now().millisecondsSinceEpoch}.xlsx';
@@ -352,8 +351,8 @@ class _UtilityShiftingReportScreenState
       }
       await AppDialog.show(
         context: context,
-        title: 'Generate Failed',
-        message: userFriendlyErrorMessage(error),
+        title: reportErrorTitle(error),
+        message: reportErrorMessage(error),
         type: AppDialogType.error,
       );
     } finally {

@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:wcr_pmis_mobile/src/core/network/dio_client.dart';
+import 'package:wcr_pmis_mobile/src/features/dashboard/domain/utils/report_generate_error.dart';
 
 class StructureFormListResponse {
   const StructureFormListResponse({
@@ -136,12 +137,7 @@ class DashboardRemoteDataSource {
         responseType: ResponseType.bytes,
       ),
     );
-    final dynamic data = response.data;
-    final List<int> raw = data is List<int> ? data : <int>[];
-    final String? contentDisposition =
-        response.headers.value('content-disposition');
-    final String? fileName = _fileNameFromContentDisposition(contentDisposition);
-    return (bytes: Uint8List.fromList(raw), fileName: fileName);
+    return _bytesResponse(response);
   }
 
   Future<Map<String, dynamic>> fetchUtilityReportFilters({
@@ -537,12 +533,7 @@ class DashboardRemoteDataSource {
         responseType: ResponseType.bytes,
       ),
     );
-    final dynamic data = response.data;
-    final List<int> raw = data is List<int> ? data : <int>[];
-    final String? contentDisposition =
-        response.headers.value('content-disposition');
-    final String? fileName = _fileNameFromContentDisposition(contentDisposition);
-    return (bytes: Uint8List.fromList(raw), fileName: fileName);
+    return _bytesResponse(response);
   }
 
   Map<String, dynamic> _issuesReportFilterPayload({
@@ -764,8 +755,14 @@ class DashboardRemoteDataSource {
   }
 
   ({Uint8List bytes, String? fileName}) _bytesResponse(Response<dynamic> response) {
+    if (response.statusCode == 204) {
+      throw const ReportNoDataException();
+    }
     final dynamic data = response.data;
     final List<int> raw = data is List<int> ? data : <int>[];
+    if (raw.isEmpty) {
+      throw const ReportNoDataException();
+    }
     final String? contentDisposition =
         response.headers.value('content-disposition');
     final String? fileName = _fileNameFromContentDisposition(contentDisposition);

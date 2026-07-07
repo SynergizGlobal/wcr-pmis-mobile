@@ -1,7 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
-import 'package:wcr_pmis_mobile/src/core/network/user_friendly_error_message.dart';
+import 'package:wcr_pmis_mobile/src/features/dashboard/domain/utils/report_generate_error.dart';
 import 'package:wcr_pmis_mobile/src/core/widgets/app_dialog.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/domain/entities/report_form_args.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/reports/widgets/report_file_export.dart';
@@ -54,9 +54,7 @@ Future<void> runDirectReportDownload({
       return;
     }
 
-    if (result.bytes.isEmpty) {
-      throw Exception('Empty report received from server.');
-    }
+    ensureReportHasData(result.bytes);
     final String fileName = result.fileName?.trim().isNotEmpty == true
         ? result.fileName!.trim()
         : '${defaultFileName}_${DateTime.now().millisecondsSinceEpoch}.xlsx';
@@ -82,8 +80,8 @@ Future<void> runDirectReportDownload({
     if (context.mounted) {
       await AppDialog.show(
         context: context,
-        title: 'Download Failed',
-        message: userFriendlyErrorMessage(error),
+        title: reportErrorTitle(error, isDownload: true),
+        message: reportErrorMessage(error, isDownload: true),
         type: AppDialogType.error,
       );
     }
@@ -200,9 +198,7 @@ class _DirectDownloadReportScreenState extends State<DirectDownloadReportScreen>
     try {
       final ({Uint8List bytes, String? fileName}) result =
           await widget.download();
-      if (result.bytes.isEmpty) {
-        throw Exception('Empty report received from server.');
-      }
+      ensureReportHasData(result.bytes);
       final String fileName = result.fileName?.trim().isNotEmpty == true
           ? result.fileName!.trim()
           : '${widget.defaultFileName}_${DateTime.now().millisecondsSinceEpoch}.xlsx';
@@ -226,12 +222,12 @@ class _DirectDownloadReportScreenState extends State<DirectDownloadReportScreen>
         return;
       }
       setState(() {
-        _errorMessage = userFriendlyErrorMessage(error);
+        _errorMessage = reportErrorMessage(error, isDownload: true);
       });
       await AppDialog.show(
         context: context,
-        title: 'Download Failed',
-        message: userFriendlyErrorMessage(error),
+        title: reportErrorTitle(error, isDownload: true),
+        message: reportErrorMessage(error, isDownload: true),
         type: AppDialogType.error,
       );
     } finally {
