@@ -281,8 +281,8 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
             onPressed: () => context.pushNamed(SupportChatPage.routeName),
             icon: Image.asset(
               'assets/support_chat_icon.png',
-              width: 24,
-              height: 24,
+              width: 30,
+              height: 30,
               color: Theme.of(context).appBarTheme.foregroundColor,
               colorBlendMode: BlendMode.srcIn,
             ),
