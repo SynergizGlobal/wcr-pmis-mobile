@@ -53,7 +53,7 @@ class ReportFileExport {
   }) {
     return AppDialog.show(
       context: context,
-      title: 'Report Generated',
+      title: 'Report Generated Successfully',
       message: 'File saved to:\n$savedPath',
       type: AppDialogType.success,
       actions: <AppDialogAction>[

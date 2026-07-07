@@ -38,8 +38,10 @@ class AppDialog {
         colorScheme.error,
       ),
       AppDialogType.success => (
-        Icons.check_circle_outline_rounded,
-        colorScheme.tertiary,
+        Icons.check_circle_rounded,
+        theme.brightness == Brightness.dark
+            ? const Color(0xFF66BB6A)
+            : const Color(0xFF2E7D32),
       ),
       AppDialogType.info => (
         Icons.info_outline_rounded,

@@ -516,15 +516,15 @@ class DashboardRemoteDataSource {
   Future<({Uint8List bytes, String? fileName})> generateUtilityShiftingReport({
     required String projectIdFk,
     required String executionAgencyFk,
-    required String contractIdFk,
+    required String impactedContractIdFk,
     required String hodUserIdFk,
   }) async {
     final Response<dynamic> response = await _dio.post<dynamic>(
-      '/utility-report/generate',
+      '/generate-utility-report',
       data: <String, dynamic>{
         'project_id_fk': projectIdFk,
         'execution_agency_fk': executionAgencyFk,
-        'contract_id_fk': contractIdFk,
+        'impacted_contract_id_fk': impactedContractIdFk,
         'hod_user_id_fk': hodUserIdFk,
       },
       options: Options(

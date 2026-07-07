@@ -323,7 +323,7 @@ class _UtilityShiftingReportScreenState
           await widget.dataSource.generateUtilityShiftingReport(
         projectIdFk: project.value,
         executionAgencyFk: agency.value,
-        contractIdFk: contract.value,
+        impactedContractIdFk: contract.value,
         hodUserIdFk: hod.value,
       );
       ensureReportHasData(result.bytes);
