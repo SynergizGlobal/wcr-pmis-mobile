@@ -279,7 +279,13 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
           IconButton(
             tooltip: 'Support Chat',
             onPressed: () => context.pushNamed(SupportChatPage.routeName),
-            icon: const Icon(Icons.live_help_outlined),
+            icon: Image.asset(
+              'assets/support_chat_icon.png',
+              width: 24,
+              height: 24,
+              color: Theme.of(context).appBarTheme.foregroundColor,
+              colorBlendMode: BlendMode.srcIn,
+            ),
           ),
           Padding(
             padding: const EdgeInsets.only(right: 12),
