@@ -42,6 +42,7 @@ import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/home/widgets
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/home/providers/report_forms_provider.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/home/providers/update_forms_provider.dart';
 import 'package:wcr_pmis_mobile/src/features/profile/presentation/pages/profile_page.dart';
+import 'package:wcr_pmis_mobile/src/features/support_chat/presentation/pages/support_chat_page.dart';
 import 'package:wcr_pmis_mobile/src/features/settings/presentation/providers/dashboard_view_mode_provider.dart';
 import 'package:wcr_pmis_mobile/src/core/network/user_friendly_error_message.dart';
 
@@ -208,7 +209,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
       _HomeSection.documents => Icons.description_outlined,
       _HomeSection.quickLinks => Icons.link_rounded,
       _HomeSection.admin => Icons.admin_panel_settings_outlined,
-      _HomeSection.rfi => Icons.support_agent_outlined,
+      _HomeSection.rfi => Icons.fact_check_outlined,
       _ => Icons.grid_view_rounded,
     };
   }
@@ -275,6 +276,11 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
           ),
         ),
         actions: <Widget>[
+          IconButton(
+            tooltip: 'Support Chat',
+            onPressed: () => context.pushNamed(SupportChatPage.routeName),
+            icon: const Icon(Icons.live_help_outlined),
+          ),
           Padding(
             padding: const EdgeInsets.only(right: 12),
             child: InkWell(

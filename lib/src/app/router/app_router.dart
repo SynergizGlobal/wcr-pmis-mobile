@@ -39,6 +39,7 @@ import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/structures/s
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/structures/update_structure_work_form_page.dart';
 import 'package:wcr_pmis_mobile/src/features/profile/presentation/pages/profile_page.dart';
 import 'package:wcr_pmis_mobile/src/features/settings/presentation/pages/settings_page.dart';
+import 'package:wcr_pmis_mobile/src/features/support_chat/presentation/pages/support_chat_page.dart';
 
 final goRouterRefreshProvider = Provider<GoRouterRefresh>((ref) {
   final GoRouterRefresh notifier = GoRouterRefresh();
@@ -68,6 +69,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         return LoginPage.routePath;
       }
       if (!loggedIn && loc == SettingsPage.routePath) {
+        return LoginPage.routePath;
+      }
+      if (!loggedIn && loc == SupportChatPage.routePath) {
         return LoginPage.routePath;
       }
       if (!loggedIn && loc == ProjectDetailsPage.routePath) {
@@ -202,6 +206,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         name: SettingsPage.routeName,
         builder: (BuildContext context, GoRouterState state) =>
             const SettingsPage(),
+      ),
+      GoRoute(
+        path: SupportChatPage.routePath,
+        name: SupportChatPage.routeName,
+        builder: (BuildContext context, GoRouterState state) =>
+            const SupportChatPage(),
       ),
       GoRoute(
         path: ProjectDetailsPage.routePath,
