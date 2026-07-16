@@ -5,6 +5,7 @@ import 'package:wcr_pmis_mobile/src/features/auth/domain/entities/auth_session.d
 import 'package:wcr_pmis_mobile/src/features/rfi/data/repositories/rfi_repository_impl.dart';
 import 'package:wcr_pmis_mobile/src/features/rfi/domain/entities/rfi_status_counts.dart';
 import 'package:wcr_pmis_mobile/src/features/rfi/domain/rfi_list_kind.dart';
+import 'package:wcr_pmis_mobile/src/features/rfi/domain/rfi_log/rfi_log_dashboard_filter.dart';
 import 'package:wcr_pmis_mobile/src/features/rfi/domain/utils/rfi_user_role.dart';
 import 'package:wcr_pmis_mobile/src/features/rfi/presentation/pages/rfi_list_page.dart';
 import 'package:wcr_pmis_mobile/src/features/rfi/presentation/providers/rfi_providers.dart';
@@ -76,13 +77,24 @@ class RfiHomeTab extends ConsumerWidget {
               role: role,
               createdCount: snapshot.createdCount.toString(),
               counts: snapshot.statusCounts,
-              onOpen: (RfiListKind kind) {
+              onOpenList: (RfiListKind kind) {
                 context.pushNamed(
                   RfiListPage.routeName,
                   pathParameters: <String, String>{
                     'kind': kind.routeSegment,
                   },
                 );
+              },
+              onOpenInspection: ({required bool rescheduledOnly}) {
+                context.pushNamed(
+                  'rfi-inspection',
+                  extra: <String, dynamic>{
+                    'rescheduledOnly': rescheduledOnly,
+                  },
+                );
+              },
+              onOpenRfiLog: (RfiLogDashboardFilter filter) {
+                context.pushNamed('rfi-log', extra: filter);
               },
             ),
           ),
@@ -135,13 +147,17 @@ class _MetricsGrid extends StatelessWidget {
     required this.role,
     required this.createdCount,
     required this.counts,
-    required this.onOpen,
+    required this.onOpenList,
+    required this.onOpenInspection,
+    required this.onOpenRfiLog,
   });
 
   final RfiUserRole role;
   final String createdCount;
   final RfiStatusCounts counts;
-  final void Function(RfiListKind kind) onOpen;
+  final void Function(RfiListKind kind) onOpenList;
+  final void Function({required bool rescheduledOnly}) onOpenInspection;
+  final void Function(RfiLogDashboardFilter filter) onOpenRfiLog;
 
   @override
   Widget build(BuildContext context) {
@@ -152,7 +168,7 @@ class _MetricsGrid extends StatelessWidget {
         label: 'RFI Created',
         icon: Icons.check_circle_outline,
         iconColor: RfiTheme.metricCreated(scheme),
-        onTap: () => onOpen(RfiListKind.created),
+        onTap: () => onOpenList(RfiListKind.created),
       ),
       if (role.canViewScheduledRfi)
         RfiMetricCard(
@@ -160,7 +176,7 @@ class _MetricsGrid extends StatelessWidget {
           label: 'RFI Scheduled',
           icon: Icons.schedule,
           iconColor: RfiTheme.metricScheduled(scheme),
-          onTap: () => onOpen(RfiListKind.scheduled),
+          onTap: () => onOpenInspection(rescheduledOnly: false),
         ),
       if (role.canViewRescheduledRfi)
         RfiMetricCard(
@@ -168,35 +184,35 @@ class _MetricsGrid extends StatelessWidget {
           label: 'RFI Rescheduled',
           icon: Icons.calendar_month,
           iconColor: RfiTheme.metricRescheduled(scheme),
-          onTap: () => onOpen(RfiListKind.rescheduled),
+          onTap: () => onOpenInspection(rescheduledOnly: true),
         ),
       RfiMetricCard(
         count: counts.inspectedByCon.toString(),
         label: 'RFI Submitted',
         icon: Icons.send,
         iconColor: RfiTheme.metricSubmitted(scheme),
-        onTap: () => onOpen(RfiListKind.submitted),
+        onTap: () => onOpenList(RfiListKind.submitted),
       ),
       RfiMetricCard(
         count: counts.approved.toString(),
         label: 'RFI Approved',
         icon: Icons.check_circle_outline,
         iconColor: RfiTheme.metricApproved(scheme),
-        onTap: () => onOpen(RfiListKind.approved),
+        onTap: () => onOpenRfiLog(RfiLogDashboardFilter.approved),
       ),
       RfiMetricCard(
         count: counts.rejected.toString(),
         label: 'RFI Rejected',
         icon: Icons.cancel_outlined,
         iconColor: RfiTheme.metricRejected(scheme),
-        onTap: () => onOpen(RfiListKind.rejected),
+        onTap: () => onOpenRfiLog(RfiLogDashboardFilter.rejected),
       ),
       RfiMetricCard(
         count: counts.closed.toString(),
         label: 'RFI Closed',
         icon: Icons.lock_outline,
         iconColor: RfiTheme.metricClosed(scheme),
-        onTap: () => onOpen(RfiListKind.closed),
+        onTap: () => onOpenRfiLog(RfiLogDashboardFilter.closed),
       ),
     ];
 

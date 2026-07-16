@@ -31,8 +31,13 @@ final rfiListProvider = FutureProvider.family<List<RfiListItem>, RfiListKind>((
   RfiListKind kind,
 ) async {
   await ref.watch(rfiHandoffProvider.future);
-  final List<RfiListItem> items =
-      await ref.read(rfiRepositoryProvider).fetchRfiList();
+  final String? requestedFormName = switch (kind) {
+    RfiListKind.created => 'CreatedRfi',
+    _ => null,
+  };
+  final List<RfiListItem> items = await ref
+      .read(rfiRepositoryProvider)
+      .fetchRfiList(requestedFormName: requestedFormName);
   return kind.filter(items);
 });
 

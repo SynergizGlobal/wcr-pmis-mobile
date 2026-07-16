@@ -5,13 +5,46 @@ class InspectionApi {
 
   InspectionApi(this._dio);
 
-  Future<Response> getInspectionDetails() async {
+  Future<Response> getInspectionDetails({
+    String requestedFormName = 'Inspection',
+  }) async {
     try {
-      final response = await _dio.get('/rfi/rfi-details');
+      final response = await _dio.get(
+        '/rfi/rfi-details',
+        queryParameters: <String, dynamic>{
+          'requestedFormName': requestedFormName,
+        },
+      );
       return response;
     } catch (e) {
       rethrow;
     }
+  }
+
+  Future<Response> getFilterProjects({
+    String contract = '',
+    String requestedFormName = 'Inspection',
+  }) async {
+    return await _dio.get(
+      '/rfi/filter-project',
+      queryParameters: <String, dynamic>{
+        'contract': contract,
+        'requestedFormName': requestedFormName,
+      },
+    );
+  }
+
+  Future<Response> getFilterContracts({
+    String project = '',
+    String requestedFormName = 'Inspection',
+  }) async {
+    return await _dio.get(
+      '/rfi/filter-contract',
+      queryParameters: <String, dynamic>{
+        'project': project,
+        'requestedFormName': requestedFormName,
+      },
+    );
   }
 
   Future<Response> getRfiDetails(int id) async {

@@ -34,7 +34,8 @@ class RfiRepository {
     );
   }
 
-  Future<List<RfiListItem>> fetchRfiList() => _remote.fetchRfiList();
+  Future<List<RfiListItem>> fetchRfiList({String? requestedFormName}) =>
+      _remote.fetchRfiList(requestedFormName: requestedFormName);
 
   Future<Map<String, dynamic>> fetchRfiDetail(int id) =>
       _remote.fetchRfiDetail(id);

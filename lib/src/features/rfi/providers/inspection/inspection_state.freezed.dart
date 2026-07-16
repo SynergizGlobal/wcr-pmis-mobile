@@ -22,6 +22,11 @@ mixin _$InspectionState {
   bool get isLoading => throw _privateConstructorUsedError;
   String? get error => throw _privateConstructorUsedError;
   String get searchQuery => throw _privateConstructorUsedError;
+  String get projectFilter => throw _privateConstructorUsedError;
+  String get contractFilter => throw _privateConstructorUsedError;
+  List<String> get availableProjects => throw _privateConstructorUsedError;
+  List<String> get availableContracts => throw _privateConstructorUsedError;
+  bool get rescheduledOnly => throw _privateConstructorUsedError;
   int get currentPage => throw _privateConstructorUsedError;
   int get rowsPerPage => throw _privateConstructorUsedError;
 
@@ -45,6 +50,11 @@ abstract class $InspectionStateCopyWith<$Res> {
     bool isLoading,
     String? error,
     String searchQuery,
+    String projectFilter,
+    String contractFilter,
+    List<String> availableProjects,
+    List<String> availableContracts,
+    bool rescheduledOnly,
     int currentPage,
     int rowsPerPage,
   });
@@ -70,6 +80,11 @@ class _$InspectionStateCopyWithImpl<$Res, $Val extends InspectionState>
     Object? isLoading = null,
     Object? error = freezed,
     Object? searchQuery = null,
+    Object? projectFilter = null,
+    Object? contractFilter = null,
+    Object? availableProjects = null,
+    Object? availableContracts = null,
+    Object? rescheduledOnly = null,
     Object? currentPage = null,
     Object? rowsPerPage = null,
   }) {
@@ -95,6 +110,26 @@ class _$InspectionStateCopyWithImpl<$Res, $Val extends InspectionState>
                 ? _value.searchQuery
                 : searchQuery // ignore: cast_nullable_to_non_nullable
                       as String,
+            projectFilter: null == projectFilter
+                ? _value.projectFilter
+                : projectFilter // ignore: cast_nullable_to_non_nullable
+                      as String,
+            contractFilter: null == contractFilter
+                ? _value.contractFilter
+                : contractFilter // ignore: cast_nullable_to_non_nullable
+                      as String,
+            availableProjects: null == availableProjects
+                ? _value.availableProjects
+                : availableProjects // ignore: cast_nullable_to_non_nullable
+                      as List<String>,
+            availableContracts: null == availableContracts
+                ? _value.availableContracts
+                : availableContracts // ignore: cast_nullable_to_non_nullable
+                      as List<String>,
+            rescheduledOnly: null == rescheduledOnly
+                ? _value.rescheduledOnly
+                : rescheduledOnly // ignore: cast_nullable_to_non_nullable
+                      as bool,
             currentPage: null == currentPage
                 ? _value.currentPage
                 : currentPage // ignore: cast_nullable_to_non_nullable
@@ -124,6 +159,11 @@ abstract class _$$InspectionStateImplCopyWith<$Res>
     bool isLoading,
     String? error,
     String searchQuery,
+    String projectFilter,
+    String contractFilter,
+    List<String> availableProjects,
+    List<String> availableContracts,
+    bool rescheduledOnly,
     int currentPage,
     int rowsPerPage,
   });
@@ -148,6 +188,11 @@ class __$$InspectionStateImplCopyWithImpl<$Res>
     Object? isLoading = null,
     Object? error = freezed,
     Object? searchQuery = null,
+    Object? projectFilter = null,
+    Object? contractFilter = null,
+    Object? availableProjects = null,
+    Object? availableContracts = null,
+    Object? rescheduledOnly = null,
     Object? currentPage = null,
     Object? rowsPerPage = null,
   }) {
@@ -173,6 +218,26 @@ class __$$InspectionStateImplCopyWithImpl<$Res>
             ? _value.searchQuery
             : searchQuery // ignore: cast_nullable_to_non_nullable
                   as String,
+        projectFilter: null == projectFilter
+            ? _value.projectFilter
+            : projectFilter // ignore: cast_nullable_to_non_nullable
+                  as String,
+        contractFilter: null == contractFilter
+            ? _value.contractFilter
+            : contractFilter // ignore: cast_nullable_to_non_nullable
+                  as String,
+        availableProjects: null == availableProjects
+            ? _value._availableProjects
+            : availableProjects // ignore: cast_nullable_to_non_nullable
+                  as List<String>,
+        availableContracts: null == availableContracts
+            ? _value._availableContracts
+            : availableContracts // ignore: cast_nullable_to_non_nullable
+                  as List<String>,
+        rescheduledOnly: null == rescheduledOnly
+            ? _value.rescheduledOnly
+            : rescheduledOnly // ignore: cast_nullable_to_non_nullable
+                  as bool,
         currentPage: null == currentPage
             ? _value.currentPage
             : currentPage // ignore: cast_nullable_to_non_nullable
@@ -195,10 +260,17 @@ class _$InspectionStateImpl implements _InspectionState {
     this.isLoading = true,
     this.error,
     this.searchQuery = '',
+    this.projectFilter = '',
+    this.contractFilter = '',
+    final List<String> availableProjects = const [],
+    final List<String> availableContracts = const [],
+    this.rescheduledOnly = false,
     this.currentPage = 1,
     this.rowsPerPage = 5,
   }) : _allItems = allItems,
-       _filteredItems = filteredItems;
+       _filteredItems = filteredItems,
+       _availableProjects = availableProjects,
+       _availableContracts = availableContracts;
 
   final List<InspectionItem> _allItems;
   @override
@@ -228,6 +300,35 @@ class _$InspectionStateImpl implements _InspectionState {
   final String searchQuery;
   @override
   @JsonKey()
+  final String projectFilter;
+  @override
+  @JsonKey()
+  final String contractFilter;
+  final List<String> _availableProjects;
+  @override
+  @JsonKey()
+  List<String> get availableProjects {
+    if (_availableProjects is EqualUnmodifiableListView)
+      return _availableProjects;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_availableProjects);
+  }
+
+  final List<String> _availableContracts;
+  @override
+  @JsonKey()
+  List<String> get availableContracts {
+    if (_availableContracts is EqualUnmodifiableListView)
+      return _availableContracts;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_availableContracts);
+  }
+
+  @override
+  @JsonKey()
+  final bool rescheduledOnly;
+  @override
+  @JsonKey()
   final int currentPage;
   @override
   @JsonKey()
@@ -235,7 +336,7 @@ class _$InspectionStateImpl implements _InspectionState {
 
   @override
   String toString() {
-    return 'InspectionState(allItems: $allItems, filteredItems: $filteredItems, isLoading: $isLoading, error: $error, searchQuery: $searchQuery, currentPage: $currentPage, rowsPerPage: $rowsPerPage)';
+    return 'InspectionState(allItems: $allItems, filteredItems: $filteredItems, isLoading: $isLoading, error: $error, searchQuery: $searchQuery, projectFilter: $projectFilter, contractFilter: $contractFilter, availableProjects: $availableProjects, availableContracts: $availableContracts, rescheduledOnly: $rescheduledOnly, currentPage: $currentPage, rowsPerPage: $rowsPerPage)';
   }
 
   @override
@@ -253,6 +354,20 @@ class _$InspectionStateImpl implements _InspectionState {
             (identical(other.error, error) || other.error == error) &&
             (identical(other.searchQuery, searchQuery) ||
                 other.searchQuery == searchQuery) &&
+            (identical(other.projectFilter, projectFilter) ||
+                other.projectFilter == projectFilter) &&
+            (identical(other.contractFilter, contractFilter) ||
+                other.contractFilter == contractFilter) &&
+            const DeepCollectionEquality().equals(
+              other._availableProjects,
+              _availableProjects,
+            ) &&
+            const DeepCollectionEquality().equals(
+              other._availableContracts,
+              _availableContracts,
+            ) &&
+            (identical(other.rescheduledOnly, rescheduledOnly) ||
+                other.rescheduledOnly == rescheduledOnly) &&
             (identical(other.currentPage, currentPage) ||
                 other.currentPage == currentPage) &&
             (identical(other.rowsPerPage, rowsPerPage) ||
@@ -267,6 +382,11 @@ class _$InspectionStateImpl implements _InspectionState {
     isLoading,
     error,
     searchQuery,
+    projectFilter,
+    contractFilter,
+    const DeepCollectionEquality().hash(_availableProjects),
+    const DeepCollectionEquality().hash(_availableContracts),
+    rescheduledOnly,
     currentPage,
     rowsPerPage,
   );
@@ -290,6 +410,11 @@ abstract class _InspectionState implements InspectionState {
     final bool isLoading,
     final String? error,
     final String searchQuery,
+    final String projectFilter,
+    final String contractFilter,
+    final List<String> availableProjects,
+    final List<String> availableContracts,
+    final bool rescheduledOnly,
     final int currentPage,
     final int rowsPerPage,
   }) = _$InspectionStateImpl;
@@ -304,6 +429,16 @@ abstract class _InspectionState implements InspectionState {
   String? get error;
   @override
   String get searchQuery;
+  @override
+  String get projectFilter;
+  @override
+  String get contractFilter;
+  @override
+  List<String> get availableProjects;
+  @override
+  List<String> get availableContracts;
+  @override
+  bool get rescheduledOnly;
   @override
   int get currentPage;
   @override

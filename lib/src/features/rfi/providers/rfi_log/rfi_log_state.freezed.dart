@@ -26,6 +26,8 @@ mixin _$RfiLogState {
   List<String> get availableProjects => throw _privateConstructorUsedError;
   List<String> get availableWorks => throw _privateConstructorUsedError;
   List<String> get availableContracts => throw _privateConstructorUsedError;
+  RfiLogDashboardFilter get dashboardFilter =>
+      throw _privateConstructorUsedError;
   int get entriesPerPage => throw _privateConstructorUsedError;
   int get currentPage => throw _privateConstructorUsedError;
   bool get isLoading => throw _privateConstructorUsedError;
@@ -55,6 +57,7 @@ abstract class $RfiLogStateCopyWith<$Res> {
     List<String> availableProjects,
     List<String> availableWorks,
     List<String> availableContracts,
+    RfiLogDashboardFilter dashboardFilter,
     int entriesPerPage,
     int currentPage,
     bool isLoading,
@@ -86,6 +89,7 @@ class _$RfiLogStateCopyWithImpl<$Res, $Val extends RfiLogState>
     Object? availableProjects = null,
     Object? availableWorks = null,
     Object? availableContracts = null,
+    Object? dashboardFilter = null,
     Object? entriesPerPage = null,
     Object? currentPage = null,
     Object? isLoading = null,
@@ -129,6 +133,10 @@ class _$RfiLogStateCopyWithImpl<$Res, $Val extends RfiLogState>
                 ? _value.availableContracts
                 : availableContracts // ignore: cast_nullable_to_non_nullable
                       as List<String>,
+            dashboardFilter: null == dashboardFilter
+                ? _value.dashboardFilter
+                : dashboardFilter // ignore: cast_nullable_to_non_nullable
+                      as RfiLogDashboardFilter,
             entriesPerPage: null == entriesPerPage
                 ? _value.entriesPerPage
                 : entriesPerPage // ignore: cast_nullable_to_non_nullable
@@ -170,6 +178,7 @@ abstract class _$$RfiLogStateImplCopyWith<$Res>
     List<String> availableProjects,
     List<String> availableWorks,
     List<String> availableContracts,
+    RfiLogDashboardFilter dashboardFilter,
     int entriesPerPage,
     int currentPage,
     bool isLoading,
@@ -200,6 +209,7 @@ class __$$RfiLogStateImplCopyWithImpl<$Res>
     Object? availableProjects = null,
     Object? availableWorks = null,
     Object? availableContracts = null,
+    Object? dashboardFilter = null,
     Object? entriesPerPage = null,
     Object? currentPage = null,
     Object? isLoading = null,
@@ -243,6 +253,10 @@ class __$$RfiLogStateImplCopyWithImpl<$Res>
             ? _value._availableContracts
             : availableContracts // ignore: cast_nullable_to_non_nullable
                   as List<String>,
+        dashboardFilter: null == dashboardFilter
+            ? _value.dashboardFilter
+            : dashboardFilter // ignore: cast_nullable_to_non_nullable
+                  as RfiLogDashboardFilter,
         entriesPerPage: null == entriesPerPage
             ? _value.entriesPerPage
             : entriesPerPage // ignore: cast_nullable_to_non_nullable
@@ -277,6 +291,7 @@ class _$RfiLogStateImpl extends _RfiLogState {
     final List<String> availableProjects = const [],
     final List<String> availableWorks = const [],
     final List<String> availableContracts = const [],
+    this.dashboardFilter = RfiLogDashboardFilter.none,
     this.entriesPerPage = 10,
     this.currentPage = 1,
     this.isLoading = false,
@@ -349,6 +364,9 @@ class _$RfiLogStateImpl extends _RfiLogState {
 
   @override
   @JsonKey()
+  final RfiLogDashboardFilter dashboardFilter;
+  @override
+  @JsonKey()
   final int entriesPerPage;
   @override
   @JsonKey()
@@ -361,7 +379,7 @@ class _$RfiLogStateImpl extends _RfiLogState {
 
   @override
   String toString() {
-    return 'RfiLogState(allItems: $allItems, filteredItems: $filteredItems, searchQuery: $searchQuery, projectFilter: $projectFilter, workFilter: $workFilter, contractFilter: $contractFilter, availableProjects: $availableProjects, availableWorks: $availableWorks, availableContracts: $availableContracts, entriesPerPage: $entriesPerPage, currentPage: $currentPage, isLoading: $isLoading, errorMessage: $errorMessage)';
+    return 'RfiLogState(allItems: $allItems, filteredItems: $filteredItems, searchQuery: $searchQuery, projectFilter: $projectFilter, workFilter: $workFilter, contractFilter: $contractFilter, availableProjects: $availableProjects, availableWorks: $availableWorks, availableContracts: $availableContracts, dashboardFilter: $dashboardFilter, entriesPerPage: $entriesPerPage, currentPage: $currentPage, isLoading: $isLoading, errorMessage: $errorMessage)';
   }
 
   @override
@@ -394,6 +412,8 @@ class _$RfiLogStateImpl extends _RfiLogState {
               other._availableContracts,
               _availableContracts,
             ) &&
+            (identical(other.dashboardFilter, dashboardFilter) ||
+                other.dashboardFilter == dashboardFilter) &&
             (identical(other.entriesPerPage, entriesPerPage) ||
                 other.entriesPerPage == entriesPerPage) &&
             (identical(other.currentPage, currentPage) ||
@@ -416,6 +436,7 @@ class _$RfiLogStateImpl extends _RfiLogState {
     const DeepCollectionEquality().hash(_availableProjects),
     const DeepCollectionEquality().hash(_availableWorks),
     const DeepCollectionEquality().hash(_availableContracts),
+    dashboardFilter,
     entriesPerPage,
     currentPage,
     isLoading,
@@ -442,6 +463,7 @@ abstract class _RfiLogState extends RfiLogState {
     final List<String> availableProjects,
     final List<String> availableWorks,
     final List<String> availableContracts,
+    final RfiLogDashboardFilter dashboardFilter,
     final int entriesPerPage,
     final int currentPage,
     final bool isLoading,
@@ -467,6 +489,8 @@ abstract class _RfiLogState extends RfiLogState {
   List<String> get availableWorks;
   @override
   List<String> get availableContracts;
+  @override
+  RfiLogDashboardFilter get dashboardFilter;
   @override
   int get entriesPerPage;
   @override

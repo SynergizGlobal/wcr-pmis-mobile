@@ -17,8 +17,8 @@ class RfiListRepository {
 
   RfiListRepository(this.api);
 
-  Future<List<RfiListItem>> getRfiDetails() async {
-    final rawData = await api.getRfiDetails();
+  Future<List<RfiListItem>> getRfiDetails({String? requestedFormName}) async {
+    final rawData = await api.getRfiDetails(requestedFormName: requestedFormName);
     return rawData.map((json) {
       if (json['approvalStatus']?.toString() == 'Rejected') {
       }

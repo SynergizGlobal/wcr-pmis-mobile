@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/services/pdf_download_service.dart';
 import '../../providers/rfi_log/rfi_log_provider.dart';
 import 'package:wcr_pmis_mobile/src/features/rfi/presentation/rfi_theme.dart';
+import '../../domain/rfi_log/rfi_log_dashboard_filter.dart';
 import '../../domain/rfi_log/rfi_log_item.dart';
 import '../../core/widgets/app_dropdown.dart';
 import '../../core/widgets/error_state_widget.dart';
@@ -11,11 +12,31 @@ import '../../core/widgets/global_alert_dialog.dart';
 import '../../core/providers/dio_provider.dart';
 import 'widgets/rfi_preview_dialog.dart';
 
-class RfiLogScreen extends ConsumerWidget {
-  const RfiLogScreen({super.key});
+class RfiLogScreen extends ConsumerStatefulWidget {
+  const RfiLogScreen({
+    super.key,
+    this.dashboardFilter = RfiLogDashboardFilter.none,
+  });
+
+  final RfiLogDashboardFilter dashboardFilter;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<RfiLogScreen> createState() => _RfiLogScreenState();
+}
+
+class _RfiLogScreenState extends ConsumerState<RfiLogScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref
+          .read(rfiLogNotifierProvider.notifier)
+          .applyDashboardFilter(widget.dashboardFilter);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final state = ref.watch(rfiLogNotifierProvider);
     final notifier = ref.read(rfiLogNotifierProvider.notifier);
 
@@ -24,7 +45,7 @@ class RfiLogScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: RfiTheme.scaffoldBackground(context),
       appBar: AppBar(
-        title: const Text('REQUEST FOR INSPECTION LOG-(RFI LOG)'),
+        title: Text(widget.dashboardFilter.title),
       ),
       body: SafeArea(
         top: false,
@@ -123,18 +144,28 @@ class RfiLogScreen extends ConsumerWidget {
                                 Expanded(
                                   child: AppDropdown<String>(
                                     label: 'Contract',
-                                    hint: state.workFilter.isEmpty
-                                        ? 'Select Work first'
-                                        : 'All Contracts',
+                                    hint: state.filtersFromDataset
+                                        ? (state.projectFilter.isEmpty
+                                            ? 'Select Project first'
+                                            : 'All Contracts')
+                                        : (state.workFilter.isEmpty
+                                            ? 'Select Work first'
+                                            : 'All Contracts'),
                                     value: state.contractFilter.isEmpty
                                         ? null
                                         : state.contractFilter,
-                                    items: state.workFilter.isEmpty
-                                        ? []
-                                        : state.contractNames,
+                                    items: state.filtersFromDataset
+                                        ? (state.projectFilter.isEmpty
+                                            ? []
+                                            : state.contractNames)
+                                        : (state.workFilter.isEmpty
+                                            ? []
+                                            : state.contractNames),
                                     onChanged: (val) =>
                                         notifier.setContractFilter(val ?? ''),
-                                    enabled: state.workFilter.isNotEmpty,
+                                    enabled: state.filtersFromDataset
+                                        ? state.projectFilter.isNotEmpty
+                                        : state.workFilter.isNotEmpty,
                                     itemLabel: (v) => v,
                                   ),
                                 ),

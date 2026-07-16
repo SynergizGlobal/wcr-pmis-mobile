@@ -52,7 +52,16 @@ class InspectionRepository {
 
       if (response.statusCode == 200 && response.data != null) {
         final List<dynamic> dataList = response.data;
-        return dataList.map((json) => InspectionItem.fromJson(json)).toList();
+        return dataList
+            .whereType<Map>()
+            .map((Map<dynamic, dynamic> json) {
+              final Map<String, dynamic> row =
+                  Map<String, dynamic>.from(json);
+              row['project'] ??= row['projectName'];
+              row['contract'] ??= row['contractName'];
+              return InspectionItem.fromJson(row);
+            })
+            .toList();
       } else {
         throw Exception('Failed to load inspection list');
       }
@@ -61,6 +70,53 @@ class InspectionRepository {
     } catch (e) {
       throw Exception(userFriendlyErrorMessage(e));
     }
+  }
+
+  Future<List<String>> getFilterProjects({String contract = ''}) async {
+    try {
+      final response = await _api.getFilterProjects(contract: contract);
+      return _parseNameList(response.data);
+    } on DioException {
+      rethrow;
+    } catch (e) {
+      throw Exception(userFriendlyErrorMessage(e));
+    }
+  }
+
+  Future<List<String>> getFilterContracts({String project = ''}) async {
+    try {
+      final response = await _api.getFilterContracts(project: project);
+      return _parseNameList(response.data);
+    } on DioException {
+      rethrow;
+    } catch (e) {
+      throw Exception(userFriendlyErrorMessage(e));
+    }
+  }
+
+  List<String> _parseNameList(dynamic data) {
+    if (data is! List) {
+      return const <String>[];
+    }
+    final List<String> names = <String>[];
+    for (final dynamic entry in data) {
+      if (entry is String && entry.trim().isNotEmpty) {
+        names.add(entry.trim());
+      } else if (entry is Map) {
+        final String name = (entry['projectName'] ??
+                entry['contractName'] ??
+                entry['name'] ??
+                entry['label'] ??
+                '')
+            .toString()
+            .trim();
+        if (name.isNotEmpty) {
+          names.add(name);
+        }
+      }
+    }
+    names.sort();
+    return names;
   }
 
   Future<InspectionItem> getRfiDetails(int id) async {

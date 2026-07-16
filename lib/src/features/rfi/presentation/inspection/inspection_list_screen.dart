@@ -21,12 +21,34 @@ import 'package:wcr_pmis_mobile/src/core/auth/wcr_session_expired_handler.dart';
 import 'package:wcr_pmis_mobile/src/core/network/user_friendly_error_message.dart';
 import 'package:wcr_pmis_mobile/src/core/widgets/wcr_session_expired_error_listener.dart';
 import 'package:wcr_pmis_mobile/src/features/rfi/presentation/rfi_theme.dart';
+import '../../core/widgets/app_dropdown.dart';
 
-class InspectionListScreen extends ConsumerWidget {
-  const InspectionListScreen({super.key});
+class InspectionListScreen extends ConsumerStatefulWidget {
+  const InspectionListScreen({
+    super.key,
+    this.rescheduledOnly = false,
+  });
+
+  final bool rescheduledOnly;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<InspectionListScreen> createState() =>
+      _InspectionListScreenState();
+}
+
+class _InspectionListScreenState extends ConsumerState<InspectionListScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref
+          .read(inspectionProvider.notifier)
+          .configure(rescheduledOnly: widget.rescheduledOnly);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final state = ref.watch(inspectionProvider);
     final notifier = ref.read(inspectionProvider.notifier);
     final authState = ref.watch(authNotifierProvider);
@@ -47,7 +69,11 @@ class InspectionListScreen extends ConsumerWidget {
       child: Scaffold(
         backgroundColor: RfiTheme.scaffoldBackground(context),
         appBar: AppBar(
-          title: const Text('RFI INSPECTION LIST'),
+          title: Text(
+            widget.rescheduledOnly
+                ? 'RFI RESCHEDULED LIST'
+                : 'RFI INSPECTION LIST',
+          ),
           leading: IconButton(
             icon: const Icon(Icons.arrow_back),
             onPressed: () => context.pop(),
@@ -64,8 +90,59 @@ class InspectionListScreen extends ConsumerWidget {
                       child: Container(
                         padding: const EdgeInsets.all(16.0),
                         decoration: RfiTheme.surfaceCardDecoration(scheme),
-                        child: TableSearchHeader(
-                          onSearchChanged: notifier.search,
+                        child: Column(
+                          children: [
+                            TableSearchHeader(
+                              onSearchChanged: notifier.search,
+                            ),
+                            const SizedBox(height: 12),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: AppDropdown<String>(
+                                    label: 'Project',
+                                    hint: 'All Projects',
+                                    value: state.projectFilter.isEmpty
+                                        ? null
+                                        : state.projectFilter,
+                                    items: state.availableProjects,
+                                    onChanged: (String? value) =>
+                                        notifier.setProjectFilter(value),
+                                    itemLabel: (String v) => v,
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: AppDropdown<String>(
+                                    label: 'Contract',
+                                    hint: 'All Contracts',
+                                    value: state.contractFilter.isEmpty
+                                        ? null
+                                        : state.contractFilter,
+                                    items: state.availableContracts,
+                                    onChanged: (String? value) =>
+                                        notifier.setContractFilter(value),
+                                    itemLabel: (String v) => v,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            if (state.projectFilter.isNotEmpty ||
+                                state.contractFilter.isNotEmpty) ...[
+                              const SizedBox(height: 8),
+                              Align(
+                                alignment: Alignment.centerRight,
+                                child: TextButton.icon(
+                                  onPressed: notifier.clearFilters,
+                                  icon: const Icon(Icons.filter_alt_off, size: 16),
+                                  label: const Text(
+                                    'Clear Filters',
+                                    style: TextStyle(fontSize: 12),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
                         ),
                       ),
                     ),
@@ -87,6 +164,7 @@ class InspectionListScreen extends ConsumerWidget {
                     if (state.error == null && state.filteredItems.isNotEmpty)
                       TablePaginationFooter(
                         startIndex: totalItems == 0 ? 0 : startIndex,
+
                         endIndex: endIndex,
                         totalItems: totalItems,
                         currentPage: state.currentPage,

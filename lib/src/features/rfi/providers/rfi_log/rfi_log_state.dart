@@ -1,4 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import '../../domain/rfi_log/rfi_log_dashboard_filter.dart';
 import '../../domain/rfi_log/rfi_log_item.dart';
 
 part 'rfi_log_state.freezed.dart';
@@ -15,6 +16,8 @@ class RfiLogState with _$RfiLogState {
     @Default([]) List<String> availableProjects,
     @Default([]) List<String> availableWorks,
     @Default([]) List<String> availableContracts,
+    @Default(RfiLogDashboardFilter.none)
+    RfiLogDashboardFilter dashboardFilter,
     @Default(10) int entriesPerPage,
     @Default(1) int currentPage,
     @Default(false) bool isLoading,
@@ -41,4 +44,7 @@ class RfiLogState with _$RfiLogState {
   List<String> get projectNames => availableProjects;
   List<String> get workNames => availableWorks;
   List<String> get contractNames => availableContracts;
+
+  bool get filtersFromDataset =>
+      dashboardFilter != RfiLogDashboardFilter.none;
 }

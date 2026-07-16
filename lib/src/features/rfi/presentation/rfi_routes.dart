@@ -4,6 +4,7 @@ import 'package:wcr_pmis_mobile/src/features/rfi/domain/entities/rfi_list_item.d
 import 'package:wcr_pmis_mobile/src/features/rfi/domain/inspection/inspection_item.dart';
 import 'package:wcr_pmis_mobile/src/features/rfi/domain/rfi_list_kind.dart';
 import 'package:wcr_pmis_mobile/src/features/rfi/domain/utils/rfi_list_item_mapper.dart';
+import 'package:wcr_pmis_mobile/src/features/rfi/domain/rfi_log/rfi_log_dashboard_filter.dart';
 import 'package:wcr_pmis_mobile/src/features/rfi/presentation/assign_executive/assign_executive_screen.dart';
 import 'package:wcr_pmis_mobile/src/features/rfi/presentation/inspection/inspection_list_screen.dart';
 import 'package:wcr_pmis_mobile/src/features/rfi/presentation/inspection/start_inspection_online_screen.dart';
@@ -65,8 +66,12 @@ abstract final class RfiRoutes {
         GoRoute(
           path: '/rfi/log',
           name: 'rfi-log',
-          builder: (BuildContext context, GoRouterState state) =>
-              const RfiLogScreen(),
+          builder: (BuildContext context, GoRouterState state) {
+            final RfiLogDashboardFilter filter =
+                RfiLogDashboardFilterX.fromExtra(state.extra) ??
+                    RfiLogDashboardFilter.none;
+            return RfiLogScreen(dashboardFilter: filter);
+          },
         ),
         GoRoute(
           path: '/rfi/validation',
@@ -77,8 +82,16 @@ abstract final class RfiRoutes {
         GoRoute(
           path: '/rfi/inspection',
           name: 'rfi-inspection',
-          builder: (BuildContext context, GoRouterState state) =>
-              const InspectionListScreen(),
+          builder: (BuildContext context, GoRouterState state) {
+            bool rescheduledOnly = false;
+            final Object? extra = state.extra;
+            if (extra is Map && extra['rescheduledOnly'] == true) {
+              rescheduledOnly = true;
+            } else if (extra is bool) {
+              rescheduledOnly = extra;
+            }
+            return InspectionListScreen(rescheduledOnly: rescheduledOnly);
+          },
         ),
         GoRoute(
           path: '/rfi/inspection/start',

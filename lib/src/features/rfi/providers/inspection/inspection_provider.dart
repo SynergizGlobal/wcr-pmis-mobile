@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/inspection/inspection_repository.dart';
+import '../../domain/inspection/inspection_item.dart';
 import 'inspection_state.dart';
 import 'package:wcr_pmis_mobile/src/core/network/user_friendly_error_message.dart';
 
@@ -18,15 +19,57 @@ class InspectionNotifier extends StateNotifier<InspectionState> {
     fetchInspections();
   }
 
+  Future<void> configure({required bool rescheduledOnly}) async {
+    if (state.rescheduledOnly == rescheduledOnly && state.allItems.isNotEmpty) {
+      _reapplyFilters();
+      return;
+    }
+    state = state.copyWith(
+      rescheduledOnly: rescheduledOnly,
+      projectFilter: '',
+      contractFilter: '',
+      searchQuery: '',
+      currentPage: 1,
+    );
+    await fetchInspections();
+  }
+
   Future<void> fetchInspections() async {
     try {
       state = state.copyWith(isLoading: true, error: null);
-      final items = await _repository.getInspectionList();
+      final List<InspectionItem> items = await _repository.getInspectionList();
+      // Inspection grid: Scheduled/Ongoing only (exclude Closed).
+      final List<InspectionItem> openItems = items
+          .where(
+            (InspectionItem item) =>
+                (item.status ?? '').toUpperCase() != 'INSPECTION_DONE',
+          )
+          .toList();
+
+      List<String> projects = const <String>[];
+      List<String> contracts = const <String>[];
+      if (state.rescheduledOnly) {
+        final List<InspectionItem> base = _statusScoped(openItems);
+        projects = _uniqueNonEmpty(base.map((InspectionItem e) => e.project));
+        contracts = _uniqueNonEmpty(base.map((InspectionItem e) => e.contract));
+      } else {
+        try {
+          projects = await _repository.getFilterProjects();
+          contracts = await _repository.getFilterContracts();
+        } catch (_) {
+          projects = _uniqueNonEmpty(openItems.map((InspectionItem e) => e.project));
+          contracts =
+              _uniqueNonEmpty(openItems.map((InspectionItem e) => e.contract));
+        }
+      }
+
       state = state.copyWith(
-        allItems: items,
-        filteredItems: items,
+        allItems: openItems,
+        availableProjects: projects,
+        availableContracts: contracts,
         isLoading: false,
       );
+      _reapplyFilters();
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
@@ -36,43 +79,139 @@ class InspectionNotifier extends StateNotifier<InspectionState> {
   }
 
   void search(String query) {
-    if (query.isEmpty) {
-      state = state.copyWith(
-        searchQuery: query,
-        filteredItems: state.allItems,
-        currentPage: 1,
-      );
-    } else {
-      final lowerQuery = query.toLowerCase();
-      final filtered = state.allItems.where((item) {
-        return (item.rfiId?.toLowerCase().contains(lowerQuery) ?? false) ||
-            (item.structure?.toLowerCase().contains(lowerQuery) ?? false) ||
-            (item.element?.toLowerCase().contains(lowerQuery) ?? false) ||
-            (item.activity?.toLowerCase().contains(lowerQuery) ?? false) ||
-            (item.rfiDescription?.toLowerCase().contains(lowerQuery) ??
-                false) ||
-            (item.assignedPersonClient?.toLowerCase().contains(lowerQuery) ??
-                false) ||
-            (item.createdBy?.toLowerCase().contains(lowerQuery) ?? false);
-      }).toList();
+    state = state.copyWith(searchQuery: query, currentPage: 1);
+    _reapplyFilters();
+  }
 
+  Future<void> setProjectFilter(String? project) async {
+    final String value = project ?? '';
+    state = state.copyWith(
+      projectFilter: value,
+      contractFilter: '',
+      currentPage: 1,
+    );
+
+    if (!state.rescheduledOnly) {
+      try {
+        final List<String> contracts =
+            await _repository.getFilterContracts(project: value);
+        state = state.copyWith(availableContracts: contracts);
+      } catch (_) {
+        // Keep existing contracts on failure.
+      }
+    } else {
+      final List<InspectionItem> base = _statusScoped(state.allItems);
+      final List<InspectionItem> forContracts = value.isEmpty
+          ? base
+          : base
+              .where(
+                (InspectionItem item) => (item.project ?? '').trim() == value,
+              )
+              .toList();
       state = state.copyWith(
-        searchQuery: query,
-        filteredItems: filtered,
-        currentPage: 1, // Reset to first page on search
+        availableContracts: _uniqueNonEmpty(
+          forContracts.map((InspectionItem e) => e.contract),
+        ),
       );
     }
+    _reapplyFilters();
+  }
+
+  void setContractFilter(String? contract) {
+    state = state.copyWith(
+      contractFilter: contract ?? '',
+      currentPage: 1,
+    );
+    _reapplyFilters();
+  }
+
+  void clearFilters() {
+    state = state.copyWith(
+      projectFilter: '',
+      contractFilter: '',
+      searchQuery: '',
+      currentPage: 1,
+    );
+    if (state.rescheduledOnly) {
+      final List<InspectionItem> base = _statusScoped(state.allItems);
+      state = state.copyWith(
+        availableProjects:
+            _uniqueNonEmpty(base.map((InspectionItem e) => e.project)),
+        availableContracts:
+            _uniqueNonEmpty(base.map((InspectionItem e) => e.contract)),
+      );
+    }
+    _reapplyFilters();
   }
 
   void updateRowsPerPage(int rows) {
     state = state.copyWith(
       rowsPerPage: rows,
-      currentPage: 1, // Reset to first page
+      currentPage: 1,
     );
   }
 
   void updatePage(int page) {
     state = state.copyWith(currentPage: page);
+  }
+
+  List<InspectionItem> _statusScoped(List<InspectionItem> items) {
+    if (!state.rescheduledOnly) {
+      return items;
+    }
+    return items
+        .where(
+          (InspectionItem item) =>
+              (item.status ?? '').toUpperCase() == 'RESCHEDULED',
+        )
+        .toList();
+  }
+
+  void _reapplyFilters() {
+    Iterable<InspectionItem> filtered = _statusScoped(state.allItems);
+
+    if (state.projectFilter.isNotEmpty) {
+      filtered = filtered.where(
+        (InspectionItem item) =>
+            (item.project ?? '').trim() == state.projectFilter,
+      );
+    }
+    if (state.contractFilter.isNotEmpty) {
+      filtered = filtered.where(
+        (InspectionItem item) =>
+            (item.contract ?? '').trim() == state.contractFilter,
+      );
+    }
+
+    final String query = state.searchQuery.trim().toLowerCase();
+    if (query.isNotEmpty) {
+      filtered = filtered.where((InspectionItem item) {
+        return (item.rfiId?.toLowerCase().contains(query) ?? false) ||
+            (item.structure?.toLowerCase().contains(query) ?? false) ||
+            (item.element?.toLowerCase().contains(query) ?? false) ||
+            (item.activity?.toLowerCase().contains(query) ?? false) ||
+            (item.rfiDescription?.toLowerCase().contains(query) ?? false) ||
+            (item.assignedPersonClient?.toLowerCase().contains(query) ??
+                false) ||
+            (item.createdBy?.toLowerCase().contains(query) ?? false) ||
+            (item.project?.toLowerCase().contains(query) ?? false) ||
+            (item.contract?.toLowerCase().contains(query) ?? false);
+      });
+    }
+
+    state = state.copyWith(filteredItems: filtered.toList());
+  }
+
+  List<String> _uniqueNonEmpty(Iterable<String?> values) {
+    final Set<String> unique = <String>{};
+    for (final String? value in values) {
+      final String trimmed = (value ?? '').trim();
+      if (trimmed.isNotEmpty) {
+        unique.add(trimmed);
+      }
+    }
+    final List<String> sorted = unique.toList()..sort();
+    return sorted;
   }
 
   Future<void> sendForValidation(int rfiId) async {

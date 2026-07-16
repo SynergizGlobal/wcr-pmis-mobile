@@ -32,8 +32,13 @@ class RfiRemoteDataSource {
     return _parseCount(response.data);
   }
 
-  Future<List<RfiListItem>> fetchRfiList() async {
-    final Response<dynamic> response = await _dio.get<dynamic>('/rfi/rfi-details');
+  Future<List<RfiListItem>> fetchRfiList({String? requestedFormName}) async {
+    final Response<dynamic> response = await _dio.get<dynamic>(
+      '/rfi/rfi-details',
+      queryParameters: requestedFormName == null || requestedFormName.isEmpty
+          ? null
+          : <String, dynamic>{'requestedFormName': requestedFormName},
+    );
     final dynamic data = response.data;
     if (data is! List) {
       return const <RfiListItem>[];
