@@ -26,7 +26,7 @@ mixin _$InspectionState {
   String get contractFilter => throw _privateConstructorUsedError;
   List<String> get availableProjects => throw _privateConstructorUsedError;
   List<String> get availableContracts => throw _privateConstructorUsedError;
-  bool get rescheduledOnly => throw _privateConstructorUsedError;
+  InspectionListMode get listMode => throw _privateConstructorUsedError;
   int get currentPage => throw _privateConstructorUsedError;
   int get rowsPerPage => throw _privateConstructorUsedError;
 
@@ -54,7 +54,7 @@ abstract class $InspectionStateCopyWith<$Res> {
     String contractFilter,
     List<String> availableProjects,
     List<String> availableContracts,
-    bool rescheduledOnly,
+    InspectionListMode listMode,
     int currentPage,
     int rowsPerPage,
   });
@@ -84,7 +84,7 @@ class _$InspectionStateCopyWithImpl<$Res, $Val extends InspectionState>
     Object? contractFilter = null,
     Object? availableProjects = null,
     Object? availableContracts = null,
-    Object? rescheduledOnly = null,
+    Object? listMode = null,
     Object? currentPage = null,
     Object? rowsPerPage = null,
   }) {
@@ -126,10 +126,10 @@ class _$InspectionStateCopyWithImpl<$Res, $Val extends InspectionState>
                 ? _value.availableContracts
                 : availableContracts // ignore: cast_nullable_to_non_nullable
                       as List<String>,
-            rescheduledOnly: null == rescheduledOnly
-                ? _value.rescheduledOnly
-                : rescheduledOnly // ignore: cast_nullable_to_non_nullable
-                      as bool,
+            listMode: null == listMode
+                ? _value.listMode
+                : listMode // ignore: cast_nullable_to_non_nullable
+                      as InspectionListMode,
             currentPage: null == currentPage
                 ? _value.currentPage
                 : currentPage // ignore: cast_nullable_to_non_nullable
@@ -163,7 +163,7 @@ abstract class _$$InspectionStateImplCopyWith<$Res>
     String contractFilter,
     List<String> availableProjects,
     List<String> availableContracts,
-    bool rescheduledOnly,
+    InspectionListMode listMode,
     int currentPage,
     int rowsPerPage,
   });
@@ -192,7 +192,7 @@ class __$$InspectionStateImplCopyWithImpl<$Res>
     Object? contractFilter = null,
     Object? availableProjects = null,
     Object? availableContracts = null,
-    Object? rescheduledOnly = null,
+    Object? listMode = null,
     Object? currentPage = null,
     Object? rowsPerPage = null,
   }) {
@@ -234,10 +234,10 @@ class __$$InspectionStateImplCopyWithImpl<$Res>
             ? _value._availableContracts
             : availableContracts // ignore: cast_nullable_to_non_nullable
                   as List<String>,
-        rescheduledOnly: null == rescheduledOnly
-            ? _value.rescheduledOnly
-            : rescheduledOnly // ignore: cast_nullable_to_non_nullable
-                  as bool,
+        listMode: null == listMode
+            ? _value.listMode
+            : listMode // ignore: cast_nullable_to_non_nullable
+                  as InspectionListMode,
         currentPage: null == currentPage
             ? _value.currentPage
             : currentPage // ignore: cast_nullable_to_non_nullable
@@ -264,7 +264,7 @@ class _$InspectionStateImpl implements _InspectionState {
     this.contractFilter = '',
     final List<String> availableProjects = const [],
     final List<String> availableContracts = const [],
-    this.rescheduledOnly = false,
+    this.listMode = InspectionListMode.all,
     this.currentPage = 1,
     this.rowsPerPage = 5,
   }) : _allItems = allItems,
@@ -326,7 +326,7 @@ class _$InspectionStateImpl implements _InspectionState {
 
   @override
   @JsonKey()
-  final bool rescheduledOnly;
+  final InspectionListMode listMode;
   @override
   @JsonKey()
   final int currentPage;
@@ -336,7 +336,7 @@ class _$InspectionStateImpl implements _InspectionState {
 
   @override
   String toString() {
-    return 'InspectionState(allItems: $allItems, filteredItems: $filteredItems, isLoading: $isLoading, error: $error, searchQuery: $searchQuery, projectFilter: $projectFilter, contractFilter: $contractFilter, availableProjects: $availableProjects, availableContracts: $availableContracts, rescheduledOnly: $rescheduledOnly, currentPage: $currentPage, rowsPerPage: $rowsPerPage)';
+    return 'InspectionState(allItems: $allItems, filteredItems: $filteredItems, isLoading: $isLoading, error: $error, searchQuery: $searchQuery, projectFilter: $projectFilter, contractFilter: $contractFilter, availableProjects: $availableProjects, availableContracts: $availableContracts, listMode: $listMode, currentPage: $currentPage, rowsPerPage: $rowsPerPage)';
   }
 
   @override
@@ -366,8 +366,8 @@ class _$InspectionStateImpl implements _InspectionState {
               other._availableContracts,
               _availableContracts,
             ) &&
-            (identical(other.rescheduledOnly, rescheduledOnly) ||
-                other.rescheduledOnly == rescheduledOnly) &&
+            (identical(other.listMode, listMode) ||
+                other.listMode == listMode) &&
             (identical(other.currentPage, currentPage) ||
                 other.currentPage == currentPage) &&
             (identical(other.rowsPerPage, rowsPerPage) ||
@@ -386,7 +386,7 @@ class _$InspectionStateImpl implements _InspectionState {
     contractFilter,
     const DeepCollectionEquality().hash(_availableProjects),
     const DeepCollectionEquality().hash(_availableContracts),
-    rescheduledOnly,
+    listMode,
     currentPage,
     rowsPerPage,
   );
@@ -414,7 +414,7 @@ abstract class _InspectionState implements InspectionState {
     final String contractFilter,
     final List<String> availableProjects,
     final List<String> availableContracts,
-    final bool rescheduledOnly,
+    final InspectionListMode listMode,
     final int currentPage,
     final int rowsPerPage,
   }) = _$InspectionStateImpl;
@@ -438,7 +438,7 @@ abstract class _InspectionState implements InspectionState {
   @override
   List<String> get availableContracts;
   @override
-  bool get rescheduledOnly;
+  InspectionListMode get listMode;
   @override
   int get currentPage;
   @override

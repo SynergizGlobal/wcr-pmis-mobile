@@ -3,6 +3,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/inspection/inspection_repository.dart';
 import '../../domain/inspection/inspection_item.dart';
+import '../../domain/inspection/inspection_list_mode.dart';
 import 'inspection_state.dart';
 import 'package:wcr_pmis_mobile/src/core/network/user_friendly_error_message.dart';
 
@@ -19,13 +20,13 @@ class InspectionNotifier extends StateNotifier<InspectionState> {
     fetchInspections();
   }
 
-  Future<void> configure({required bool rescheduledOnly}) async {
-    if (state.rescheduledOnly == rescheduledOnly && state.allItems.isNotEmpty) {
+  Future<void> configure({required InspectionListMode listMode}) async {
+    if (state.listMode == listMode && state.allItems.isNotEmpty) {
       _reapplyFilters();
       return;
     }
     state = state.copyWith(
-      rescheduledOnly: rescheduledOnly,
+      listMode: listMode,
       projectFilter: '',
       contractFilter: '',
       searchQuery: '',
@@ -38,7 +39,7 @@ class InspectionNotifier extends StateNotifier<InspectionState> {
     try {
       state = state.copyWith(isLoading: true, error: null);
       final List<InspectionItem> items = await _repository.getInspectionList();
-      // Inspection grid: Scheduled/Ongoing only (exclude Closed).
+      // Base grid: exclude Closed (INSPECTION_DONE).
       final List<InspectionItem> openItems = items
           .where(
             (InspectionItem item) =>
@@ -48,7 +49,7 @@ class InspectionNotifier extends StateNotifier<InspectionState> {
 
       List<String> projects = const <String>[];
       List<String> contracts = const <String>[];
-      if (state.rescheduledOnly) {
+      if (state.listMode.buildsFiltersFromDataset) {
         final List<InspectionItem> base = _statusScoped(openItems);
         projects = _uniqueNonEmpty(base.map((InspectionItem e) => e.project));
         contracts = _uniqueNonEmpty(base.map((InspectionItem e) => e.contract));
@@ -57,7 +58,8 @@ class InspectionNotifier extends StateNotifier<InspectionState> {
           projects = await _repository.getFilterProjects();
           contracts = await _repository.getFilterContracts();
         } catch (_) {
-          projects = _uniqueNonEmpty(openItems.map((InspectionItem e) => e.project));
+          projects =
+              _uniqueNonEmpty(openItems.map((InspectionItem e) => e.project));
           contracts =
               _uniqueNonEmpty(openItems.map((InspectionItem e) => e.contract));
         }
@@ -91,7 +93,7 @@ class InspectionNotifier extends StateNotifier<InspectionState> {
       currentPage: 1,
     );
 
-    if (!state.rescheduledOnly) {
+    if (!state.listMode.buildsFiltersFromDataset) {
       try {
         final List<String> contracts =
             await _repository.getFilterContracts(project: value);
@@ -132,7 +134,7 @@ class InspectionNotifier extends StateNotifier<InspectionState> {
       searchQuery: '',
       currentPage: 1,
     );
-    if (state.rescheduledOnly) {
+    if (state.listMode.buildsFiltersFromDataset) {
       final List<InspectionItem> base = _statusScoped(state.allItems);
       state = state.copyWith(
         availableProjects:
@@ -156,15 +158,44 @@ class InspectionNotifier extends StateNotifier<InspectionState> {
   }
 
   List<InspectionItem> _statusScoped(List<InspectionItem> items) {
-    if (!state.rescheduledOnly) {
-      return items;
+    switch (state.listMode) {
+      case InspectionListMode.all:
+        return items;
+      case InspectionListMode.created:
+        // Web Scheduled list: CREATED + ongoing/rectification.
+        const Set<String> scheduledStatuses = <String>{
+          'CREATED',
+          'UNDER_CON_RECTIFICATION',
+          'CON_INSP_ONGOING',
+        };
+        return items
+            .where(
+              (InspectionItem item) => scheduledStatuses.contains(
+                (item.status ?? '').toUpperCase(),
+              ),
+            )
+            .toList();
+      case InspectionListMode.rescheduled:
+        return items
+            .where(
+              (InspectionItem item) =>
+                  (item.status ?? '').toUpperCase() == 'RESCHEDULED',
+            )
+            .toList();
+      case InspectionListMode.submitted:
+        // Web Submitted list: contractor-submitted inspection rows.
+        const Set<String> submittedStatuses = <String>{
+          'INSPECTED_BY_CON',
+          'SUBMITTED',
+        };
+        return items
+            .where(
+              (InspectionItem item) => submittedStatuses.contains(
+                (item.status ?? '').toUpperCase(),
+              ),
+            )
+            .toList();
     }
-    return items
-        .where(
-          (InspectionItem item) =>
-              (item.status ?? '').toUpperCase() == 'RESCHEDULED',
-        )
-        .toList();
   }
 
   void _reapplyFilters() {

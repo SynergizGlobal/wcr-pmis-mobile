@@ -22,14 +22,15 @@ import 'package:wcr_pmis_mobile/src/core/network/user_friendly_error_message.dar
 import 'package:wcr_pmis_mobile/src/core/widgets/wcr_session_expired_error_listener.dart';
 import 'package:wcr_pmis_mobile/src/features/rfi/presentation/rfi_theme.dart';
 import '../../core/widgets/app_dropdown.dart';
+import '../../domain/inspection/inspection_list_mode.dart';
 
 class InspectionListScreen extends ConsumerStatefulWidget {
   const InspectionListScreen({
     super.key,
-    this.rescheduledOnly = false,
+    this.listMode = InspectionListMode.all,
   });
 
-  final bool rescheduledOnly;
+  final InspectionListMode listMode;
 
   @override
   ConsumerState<InspectionListScreen> createState() =>
@@ -41,9 +42,7 @@ class _InspectionListScreenState extends ConsumerState<InspectionListScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref
-          .read(inspectionProvider.notifier)
-          .configure(rescheduledOnly: widget.rescheduledOnly);
+      ref.read(inspectionProvider.notifier).configure(listMode: widget.listMode);
     });
   }
 
@@ -69,11 +68,7 @@ class _InspectionListScreenState extends ConsumerState<InspectionListScreen> {
       child: Scaffold(
         backgroundColor: RfiTheme.scaffoldBackground(context),
         appBar: AppBar(
-          title: Text(
-            widget.rescheduledOnly
-                ? 'RFI RESCHEDULED LIST'
-                : 'RFI INSPECTION LIST',
-          ),
+          title: Text(widget.listMode.title),
           leading: IconButton(
             icon: const Icon(Icons.arrow_back),
             onPressed: () => context.pop(),

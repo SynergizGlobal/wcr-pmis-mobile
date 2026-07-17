@@ -28,8 +28,13 @@ class RfiStatusCounts {
       return 0;
     }
 
+    // WCR API sends SUBMITTED; older responses used INSPECTED_BY_CON.
+    final int inspectedByCon = json.containsKey('SUBMITTED')
+        ? read('SUBMITTED')
+        : read('INSPECTED_BY_CON');
+
     return RfiStatusCounts(
-      inspectedByCon: read('INSPECTED_BY_CON'),
+      inspectedByCon: inspectedByCon,
       pending: read('PENDING'),
       approved: read('APPROVED'),
       rejected: read('REJECTED'),

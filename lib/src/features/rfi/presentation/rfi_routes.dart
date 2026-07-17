@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:wcr_pmis_mobile/src/features/rfi/domain/entities/rfi_list_item.dart';
 import 'package:wcr_pmis_mobile/src/features/rfi/domain/inspection/inspection_item.dart';
+import 'package:wcr_pmis_mobile/src/features/rfi/domain/inspection/inspection_list_mode.dart';
 import 'package:wcr_pmis_mobile/src/features/rfi/domain/rfi_list_kind.dart';
 import 'package:wcr_pmis_mobile/src/features/rfi/domain/utils/rfi_list_item_mapper.dart';
 import 'package:wcr_pmis_mobile/src/features/rfi/domain/rfi_log/rfi_log_dashboard_filter.dart';
@@ -83,14 +84,9 @@ abstract final class RfiRoutes {
           path: '/rfi/inspection',
           name: 'rfi-inspection',
           builder: (BuildContext context, GoRouterState state) {
-            bool rescheduledOnly = false;
-            final Object? extra = state.extra;
-            if (extra is Map && extra['rescheduledOnly'] == true) {
-              rescheduledOnly = true;
-            } else if (extra is bool) {
-              rescheduledOnly = extra;
-            }
-            return InspectionListScreen(rescheduledOnly: rescheduledOnly);
+            final InspectionListMode mode =
+                InspectionListModeX.fromExtra(state.extra);
+            return InspectionListScreen(listMode: mode);
           },
         ),
         GoRoute(

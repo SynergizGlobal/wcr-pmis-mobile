@@ -5,6 +5,7 @@ import 'package:wcr_pmis_mobile/src/features/auth/domain/entities/auth_session.d
 import 'package:wcr_pmis_mobile/src/features/rfi/data/repositories/rfi_repository_impl.dart';
 import 'package:wcr_pmis_mobile/src/features/rfi/domain/entities/rfi_status_counts.dart';
 import 'package:wcr_pmis_mobile/src/features/rfi/domain/rfi_list_kind.dart';
+import 'package:wcr_pmis_mobile/src/features/rfi/domain/inspection/inspection_list_mode.dart';
 import 'package:wcr_pmis_mobile/src/features/rfi/domain/rfi_log/rfi_log_dashboard_filter.dart';
 import 'package:wcr_pmis_mobile/src/features/rfi/domain/utils/rfi_user_role.dart';
 import 'package:wcr_pmis_mobile/src/features/rfi/presentation/pages/rfi_list_page.dart';
@@ -85,12 +86,10 @@ class RfiHomeTab extends ConsumerWidget {
                   },
                 );
               },
-              onOpenInspection: ({required bool rescheduledOnly}) {
+              onOpenInspection: (InspectionListMode mode) {
                 context.pushNamed(
                   'rfi-inspection',
-                  extra: <String, dynamic>{
-                    'rescheduledOnly': rescheduledOnly,
-                  },
+                  extra: mode,
                 );
               },
               onOpenRfiLog: (RfiLogDashboardFilter filter) {
@@ -156,7 +155,7 @@ class _MetricsGrid extends StatelessWidget {
   final String createdCount;
   final RfiStatusCounts counts;
   final void Function(RfiListKind kind) onOpenList;
-  final void Function({required bool rescheduledOnly}) onOpenInspection;
+  final void Function(InspectionListMode mode) onOpenInspection;
   final void Function(RfiLogDashboardFilter filter) onOpenRfiLog;
 
   @override
@@ -176,7 +175,7 @@ class _MetricsGrid extends StatelessWidget {
           label: 'RFI Scheduled',
           icon: Icons.schedule,
           iconColor: RfiTheme.metricScheduled(scheme),
-          onTap: () => onOpenInspection(rescheduledOnly: false),
+          onTap: () => onOpenInspection(InspectionListMode.created),
         ),
       if (role.canViewRescheduledRfi)
         RfiMetricCard(
@@ -184,14 +183,14 @@ class _MetricsGrid extends StatelessWidget {
           label: 'RFI Rescheduled',
           icon: Icons.calendar_month,
           iconColor: RfiTheme.metricRescheduled(scheme),
-          onTap: () => onOpenInspection(rescheduledOnly: true),
+          onTap: () => onOpenInspection(InspectionListMode.rescheduled),
         ),
       RfiMetricCard(
         count: counts.inspectedByCon.toString(),
         label: 'RFI Submitted',
         icon: Icons.send,
         iconColor: RfiTheme.metricSubmitted(scheme),
-        onTap: () => onOpenList(RfiListKind.submitted),
+        onTap: () => onOpenInspection(InspectionListMode.submitted),
       ),
       RfiMetricCard(
         count: counts.approved.toString(),
