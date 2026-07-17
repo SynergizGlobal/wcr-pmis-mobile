@@ -5,6 +5,7 @@ import '../../../core/widgets/app_form_dialog.dart';
 import '../../../domain/inspection_reference/checklist_detail.dart';
 import '../../../providers/inspection_reference/inspection_reference_provider.dart';
 import '../../../core/widgets/global_alert_dialog.dart';
+import 'package:wcr_pmis_mobile/src/features/rfi/presentation/rfi_theme.dart';
 
 class ChecklistDescriptionFormDialog {
   static Future<void> show(BuildContext parentContext, WidgetRef ref,
@@ -26,19 +27,24 @@ class ChecklistDescriptionFormDialog {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Text('Checklist Description *',
-                    style:
-                        TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+                Text(
+                  'Checklist Description *',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(ctx).colorScheme.onSurface,
+                  ),
+                ),
                 const SizedBox(height: 8),
                 TextField(
                   controller: descController,
                   maxLines: 3,
-                  decoration: InputDecoration(
+                  style: TextStyle(
+                    color: Theme.of(ctx).colorScheme.onSurface,
+                  ),
+                  decoration: RfiTheme.dialogFieldDecoration(
+                    Theme.of(ctx).colorScheme,
                     hintText: 'Enter description',
-                    contentPadding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(4)),
                   ),
                 ),
               ],

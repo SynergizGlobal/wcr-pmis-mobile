@@ -275,11 +275,12 @@ class ValidationScreen extends ConsumerWidget {
                                                     },
                                                   ),
                                                 )
-                                              : const Text(
+                                              : Text(
                                                   'Validation Pending',
                                                   style: TextStyle(
                                                       fontSize: 11,
-                                                      color: Colors.grey,
+                                                      color: scheme
+                                                          .onSurfaceVariant,
                                                       fontWeight:
                                                           FontWeight.normal),
                                                 )
@@ -291,9 +292,10 @@ class ValidationScreen extends ConsumerWidget {
                                                       item.remarks!.isEmpty)
                                                   ? 'Validation Pending'
                                                   : item.remarks!,
-                                              style: const TextStyle(
+                                              style: TextStyle(
                                                   fontSize: 11,
-                                                  fontWeight: FontWeight.bold)),
+                                                  fontWeight: FontWeight.bold,
+                                                  color: scheme.onSurface)),
                                     ),
                                     if (canEdit)
                                       DataCell(
@@ -303,36 +305,16 @@ class ValidationScreen extends ConsumerWidget {
                                                 child: TextField(
                                                   maxLines: 2,
                                                   maxLength: 500,
-                                                  style: const TextStyle(
-                                                      fontSize: 11),
-                                                  decoration: InputDecoration(
-                                                    isDense: true,
-                                                    hintText: 'Enter your comment',
-                                                    hintStyle: const TextStyle(
-                                                        fontSize: 10,
-                                                        color: Colors.grey),
-                                                    fillColor: Colors.grey.shade50,
-                                                    filled: true,
-                                                    border: OutlineInputBorder(
-                                                      borderRadius:
-                                                          BorderRadius.circular(4),
-                                                      borderSide: BorderSide(
-                                                          color:
-                                                              Colors.grey.shade300),
-                                                    ),
-                                                    enabledBorder:
-                                                        OutlineInputBorder(
-                                                      borderRadius:
-                                                          BorderRadius.circular(4),
-                                                      borderSide: BorderSide(
-                                                          color:
-                                                              Colors.grey.shade300),
-                                                    ),
-                                                    contentPadding:
-                                                        const EdgeInsets.symmetric(
-                                                            horizontal: 8,
-                                                            vertical: 6),
-                                                    counterText: "",
+                                                  style: TextStyle(
+                                                    fontSize: 11,
+                                                    color: scheme.onSurface,
+                                                  ),
+                                                  cursorColor: scheme.primary,
+                                                  decoration: RfiTheme
+                                                      .compactTableFieldDecoration(
+                                                    scheme,
+                                                    hintText:
+                                                        'Enter your comment',
                                                   ),
                                                   onChanged: (val) => notifier
                                                       .updatePendingComment(
@@ -343,7 +325,8 @@ class ValidationScreen extends ConsumerWidget {
                                                 item.comment ?? '',
                                                 style: TextStyle(
                                                     fontSize: 10,
-                                                    color: Colors.grey.shade700),
+                                                    color: scheme
+                                                        .onSurfaceVariant),
                                                 maxLines: 2,
                                                 overflow: TextOverflow.ellipsis,
                                               ),
@@ -415,11 +398,12 @@ class ValidationScreen extends ConsumerWidget {
                                                         },
                                                       ),
                                                     )
-                                              : const Text(
+                                              : Text(
                                                   'Validation Pending',
                                                   style: TextStyle(
                                                       fontSize: 11,
-                                                      color: Colors.grey,
+                                                      color: scheme
+                                                          .onSurfaceVariant,
                                                       fontWeight:
                                                           FontWeight.normal),
                                                 )

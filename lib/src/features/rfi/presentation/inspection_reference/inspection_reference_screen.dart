@@ -50,7 +50,7 @@ class _InspectionReferenceScreenState
             Container(
               margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               padding: const EdgeInsets.all(16),
-              decoration: _cardDecoration(),
+              decoration: RfiTheme.surfaceCardDecoration(scheme),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -69,24 +69,11 @@ class _InspectionReferenceScreenState
 );
 }
 
-  BoxDecoration _cardDecoration() {
-    return BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(8),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withValues(alpha: 0.06),
-          blurRadius: 8,
-          offset: const Offset(0, 2),
-        ),
-      ],
-    );
-  }
-
   Widget _buildFormSelectionRow(
     InspectionReferenceState formState,
     InspectionReferenceNotifier notifier,
   ) {
+    final ColorScheme scheme = Theme.of(context).colorScheme;
     return Wrap(
       spacing: 16,
       runSpacing: 12,
@@ -137,18 +124,17 @@ class _InspectionReferenceScreenState
                   child: ElevatedButton.icon(
                     onPressed: () =>
                         ChecklistDescriptionFormDialog.show(context, ref),
-                    icon: const Icon(Icons.add, size: 18, color: Colors.white),
-                    label: const Text('Add New',
-                        style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold)),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF00897B),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 12),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(4)),
+                    icon: const Icon(Icons.add, size: 18),
+                    label: const Text('Add New'),
+                    style: RfiTheme.primaryElevated(scheme).copyWith(
+                      padding: const WidgetStatePropertyAll(
+                        EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      ),
+                      shape: WidgetStatePropertyAll(
+                        RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -245,6 +231,7 @@ class _InspectionReferenceScreenState
   }
 
   Widget _buildEnclosureListTable(List<EnclosureName> allItems) {
+    final ColorScheme scheme = Theme.of(context).colorScheme;
     final filtered = _applySearch(
       allItems,
       (item) =>
@@ -262,11 +249,11 @@ class _InspectionReferenceScreenState
         onPressed: () => EnclosureFormDialog.show(context, ref),
         icon: const Icon(Icons.add, size: 18),
         label: const Text('Add New'),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF009688),
-          foregroundColor: Colors.white,
-          minimumSize: const Size(0, 34),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+        style: RfiTheme.primaryElevated(scheme).copyWith(
+          minimumSize: const WidgetStatePropertyAll(Size(0, 34)),
+          shape: WidgetStatePropertyAll(
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+          ),
         ),
       ),
       columns: const [
@@ -328,13 +315,17 @@ class _InspectionReferenceScreenState
   }
 
   Widget _buildChecklistDescriptionTable(InspectionReferenceState formState) {
+    final ColorScheme scheme = Theme.of(context).colorScheme;
     if (formState.selectedSubOption == null) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 24),
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 24),
         child: Center(
           child: Text(
             'Please select a Sub Option to view checklist descriptions.',
-            style: TextStyle(color: Colors.grey, fontStyle: FontStyle.italic),
+            style: TextStyle(
+              color: scheme.onSurfaceVariant,
+              fontStyle: FontStyle.italic,
+            ),
           ),
         ),
       );
@@ -356,16 +347,17 @@ class _InspectionReferenceScreenState
           width: double.infinity,
           padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
           margin: const EdgeInsets.only(bottom: 12),
-          decoration: const BoxDecoration(
-            border:
-                Border(left: BorderSide(color: Color(0xFF00897B), width: 4)),
+          decoration: BoxDecoration(
+            border: Border(
+              left: BorderSide(color: scheme.primary, width: 4),
+            ),
           ),
           child: Text(
             subTitle,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w600,
-              color: Color(0xFF00897B),
+              color: scheme.primary,
             ),
           ),
         ),
@@ -418,6 +410,7 @@ class _InspectionReferenceScreenState
   }
 
   Widget _buildReferenceFormTable(List<ReferenceFormItem> allItems) {
+    final ColorScheme scheme = Theme.of(context).colorScheme;
     final filtered = _applySearch(
       allItems,
       (item) =>
@@ -435,18 +428,17 @@ class _InspectionReferenceScreenState
           children: [
             ElevatedButton.icon(
               onPressed: () => ReferenceFormDialog.show(context, ref),
-              icon: const Icon(Icons.add, size: 18, color: Colors.white),
-              label: const Text('Add New',
-                  style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold)),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF00897B),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(4)),
+              icon: const Icon(Icons.add, size: 18),
+              label: const Text('Add New'),
+              style: RfiTheme.primaryElevated(scheme).copyWith(
+                padding: const WidgetStatePropertyAll(
+                  EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                ),
+                shape: WidgetStatePropertyAll(
+                  RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
               ),
             ),
           ],
@@ -516,6 +508,7 @@ class _InspectionReferenceScreenState
       {VoidCallback? onEdit,
       Future<void> Function()? onDelete,
       bool hideDelete = false}) {
+    final ColorScheme scheme = Theme.of(context).colorScheme;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -535,14 +528,14 @@ class _InspectionReferenceScreenState
               }
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF007BFF),
+              backgroundColor: scheme.primary,
+              foregroundColor: scheme.onPrimary,
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
               minimumSize: const Size(0, 28),
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(4)),
             ),
-            child: const Text('Edit',
-                style: TextStyle(color: Colors.white, fontSize: 12)),
+            child: const Text('Edit', style: TextStyle(fontSize: 12)),
           ),
         ),
         if (!hideDelete) ...[
@@ -553,21 +546,34 @@ class _InspectionReferenceScreenState
               onPressed: () async {
                 final confirm = await showDialog<bool>(
                   context: context,
-                  builder: (ctx) => AlertDialog(
-                    title: const Text('Confirm Delete'),
-                    content: Text('Are you sure you want to delete "$name"?'),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(ctx, false),
-                        child: const Text('Cancel'),
+                  builder: (ctx) {
+                    final ColorScheme dialogScheme =
+                        Theme.of(ctx).colorScheme;
+                    return AlertDialog(
+                      backgroundColor: dialogScheme.surface,
+                      title: Text(
+                        'Confirm Delete',
+                        style: TextStyle(color: dialogScheme.onSurface),
                       ),
-                      TextButton(
-                        onPressed: () => Navigator.pop(ctx, true),
-                        child: const Text('Delete',
-                            style: TextStyle(color: Colors.red)),
+                      content: Text(
+                        'Are you sure you want to delete "$name"?',
+                        style: TextStyle(color: dialogScheme.onSurface),
                       ),
-                    ],
-                  ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(ctx, false),
+                          child: const Text('Cancel'),
+                        ),
+                        TextButton(
+                          onPressed: () => Navigator.pop(ctx, true),
+                          child: Text(
+                            'Delete',
+                            style: TextStyle(color: dialogScheme.error),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
                 );
 
                 if (confirm == true) {
@@ -592,15 +598,15 @@ class _InspectionReferenceScreenState
                 }
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFDC3545),
+                backgroundColor: scheme.error,
+                foregroundColor: scheme.onError,
                 padding:
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                 minimumSize: const Size(0, 28),
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(4)),
               ),
-              child: const Text('Delete',
-                  style: TextStyle(color: Colors.white, fontSize: 12)),
+              child: const Text('Delete', style: TextStyle(fontSize: 12)),
             ),
           ),
         ],
@@ -616,6 +622,8 @@ class _InspectionReferenceScreenState
     required String emptyMessage,
     Widget? customAction,
   }) {
+    final ColorScheme scheme = Theme.of(context).colorScheme;
+    final TextTheme textTheme = Theme.of(context).textTheme;
     final totalPages = (filteredLength / _rowsPerPage).ceil();
     final startIndex = _currentPage * _rowsPerPage;
     final endIndex = (startIndex + _rowsPerPage).clamp(0, filteredLength);
@@ -639,16 +647,25 @@ class _InspectionReferenceScreenState
                     width: 140,
                     height: 34,
                     child: TextField(
-                      decoration: InputDecoration(
+                      decoration: RfiTheme.compactTableFieldDecoration(
+                        scheme,
                         hintText: 'Search...',
-                        hintStyle: const TextStyle(fontSize: 14),
+                        counterText: null,
+                      ).copyWith(
+                        hintStyle: TextStyle(
+                          fontSize: 14,
+                          color: scheme.onSurfaceVariant,
+                        ),
                         contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 5, vertical: 8),
-                        border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(4)),
-                        isDense: true,
+                          horizontal: 8,
+                          vertical: 8,
+                        ),
                       ),
-                      style: const TextStyle(fontSize: 13),
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: scheme.onSurface,
+                      ),
+                      cursorColor: scheme.primary,
                       onChanged: (v) => setState(() {
                         _searchQuery = v;
                         _currentPage = 0;
@@ -669,7 +686,11 @@ class _InspectionReferenceScreenState
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: DataTable(
-            headingRowColor: WidgetStateProperty.all(const Color(0xFFE8E8E8)),
+            headingRowColor: WidgetStateProperty.all(
+              RfiTheme.tableHeaderBackground(scheme),
+            ),
+            headingTextStyle: RfiTheme.tableHeaderTextStyle(textTheme, scheme),
+            dataTextStyle: RfiTheme.tableCellTextStyle(textTheme, scheme),
             columnSpacing: 16,
             columns: columns,
             rows: pageData.isEmpty
@@ -682,9 +703,9 @@ class _InspectionReferenceScreenState
                               ? Center(
                                   child: Text(
                                     emptyMessage,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontStyle: FontStyle.italic,
-                                      color: Colors.grey,
+                                      color: scheme.onSurfaceVariant,
                                     ),
                                   ),
                                 )

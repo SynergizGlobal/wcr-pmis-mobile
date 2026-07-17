@@ -203,6 +203,64 @@ abstract final class RfiTheme {
     );
   }
 
+  /// Compact filled field for table cells (theme-aware for light/dark).
+  static InputDecoration compactTableFieldDecoration(
+    ColorScheme scheme, {
+    String? hintText,
+    String? counterText = '',
+  }) {
+    return InputDecoration(
+      isDense: true,
+      hintText: hintText,
+      hintStyle: TextStyle(
+        fontSize: 10,
+        color: scheme.onSurfaceVariant,
+      ),
+      filled: true,
+      fillColor: scheme.surfaceContainerHighest,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(4),
+        borderSide: BorderSide(color: scheme.outlineVariant),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(4),
+        borderSide: BorderSide(color: scheme.outlineVariant),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(4),
+        borderSide: BorderSide(color: scheme.primary, width: 1.5),
+      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      counterText: counterText,
+    );
+  }
+
+  static InputDecoration dialogFieldDecoration(
+    ColorScheme scheme, {
+    String? hintText,
+    int? maxLines,
+  }) {
+    return InputDecoration(
+      hintText: hintText,
+      hintStyle: TextStyle(color: scheme.onSurfaceVariant, fontSize: 14),
+      filled: true,
+      fillColor: scheme.surfaceContainerHighest,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(4),
+        borderSide: BorderSide(color: scheme.outlineVariant),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(4),
+        borderSide: BorderSide(color: scheme.outlineVariant),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(4),
+        borderSide: BorderSide(color: scheme.primary, width: 1.5),
+      ),
+    );
+  }
+
   static ShapeBorder dialogShape() => RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
       );

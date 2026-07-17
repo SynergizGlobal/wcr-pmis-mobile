@@ -52,12 +52,8 @@ extension RfiListKindX on RfiListKind {
       case RfiListKind.created:
         return items;
       case RfiListKind.updated:
-        return items
-            .where(
-              (RfiListItem item) =>
-                  item.status == 'UPDATED' || item.status == 'REASSIGNED',
-            )
-            .toList();
+        // UpdateForm API already returns the Updated RFI dataset.
+        return items;
       case RfiListKind.scheduled:
         return items
             .where(

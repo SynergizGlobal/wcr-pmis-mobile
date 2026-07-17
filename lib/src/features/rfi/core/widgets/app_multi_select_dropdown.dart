@@ -62,6 +62,8 @@ class AppMultiSelectDropdownState<T> extends State<AppMultiSelectDropdown<T>> {
 
   @override
   Widget build(BuildContext context) {
+    final ColorScheme scheme = Theme.of(context).colorScheme;
+    final TextTheme textTheme = Theme.of(context).textTheme;
     final displayString = _localSelected.isEmpty
         ? widget.hint
         : _localSelected.map((e) => widget.itemLabel(e)).join(', ');
@@ -70,17 +72,22 @@ class AppMultiSelectDropdownState<T> extends State<AppMultiSelectDropdown<T>> {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(widget.label,
-            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+        Text(
+          widget.label,
+          style: textTheme.labelLarge?.copyWith(
+            fontWeight: FontWeight.bold,
+            color: scheme.onSurface,
+          ),
+        ),
         const SizedBox(height: 8),
         InkWell(
           onTap: () => _showMultiSelect(context),
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
             decoration: BoxDecoration(
-              border: Border.all(color: Colors.grey.shade400),
+              border: Border.all(color: scheme.outlineVariant),
               borderRadius: BorderRadius.circular(4),
-              color: Colors.white,
+              color: scheme.surfaceContainerHighest,
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -90,15 +97,14 @@ class AppMultiSelectDropdownState<T> extends State<AppMultiSelectDropdown<T>> {
                     displayString,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 14,
+                    style: textTheme.bodyMedium?.copyWith(
                       color: _localSelected.isEmpty
-                          ? Colors.grey.shade600
-                          : Colors.black87,
+                          ? scheme.onSurfaceVariant
+                          : scheme.onSurface,
                     ),
                   ),
                 ),
-                const Icon(Icons.arrow_drop_down, color: Colors.grey),
+                Icon(Icons.arrow_drop_down, color: scheme.onSurfaceVariant),
               ],
             ),
           ),
@@ -152,11 +158,19 @@ class _MultiSelectDialogState<T> extends State<_MultiSelectDialog<T>> {
 
   @override
   Widget build(BuildContext context) {
+    final ColorScheme scheme = Theme.of(context).colorScheme;
+    final TextTheme textTheme = Theme.of(context).textTheme;
+
     return AlertDialog(
-      backgroundColor: Colors.white,
+      backgroundColor: scheme.surface,
       surfaceTintColor: Colors.transparent,
-      title: const Text('Select items',
-          style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
+      title: Text(
+        'Select items',
+        style: textTheme.titleMedium?.copyWith(
+          fontWeight: FontWeight.w600,
+          color: scheme.onSurface,
+        ),
+      ),
       contentPadding: const EdgeInsets.only(top: 12, bottom: 4),
       content: SizedBox(
         width: double.maxFinite,
@@ -167,8 +181,10 @@ class _MultiSelectDialogState<T> extends State<_MultiSelectDialog<T>> {
             final item = widget.items[index];
             return CheckboxListTile(
               value: _selectedItems.contains(item),
-              title: Text(widget.itemLabel(item),
-                  style: const TextStyle(fontSize: 14)),
+              title: Text(
+                widget.itemLabel(item),
+                style: textTheme.bodyMedium?.copyWith(color: scheme.onSurface),
+              ),
               controlAffinity: ListTileControlAffinity.leading,
               onChanged: (checked) =>
                   _onItemCheckedChange(item, checked ?? false),
@@ -184,12 +200,13 @@ class _MultiSelectDialogState<T> extends State<_MultiSelectDialog<T>> {
         ElevatedButton(
           onPressed: _onSubmitTap,
           style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF00897B),
+            backgroundColor: scheme.primary,
+            foregroundColor: scheme.onPrimary,
             shape:
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
             padding: const EdgeInsets.symmetric(horizontal: 16),
           ),
-          child: const Text('Ok', style: TextStyle(color: Colors.white)),
+          child: const Text('Ok'),
         ),
       ],
     );

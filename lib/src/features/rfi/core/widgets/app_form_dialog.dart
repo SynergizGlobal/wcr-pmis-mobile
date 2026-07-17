@@ -7,7 +7,7 @@ class AppFormDialog extends StatelessWidget {
   final VoidCallback? onCancel;
   final String confirmText;
   final String cancelText;
-  final Color confirmColor;
+  final Color? confirmColor;
   final double width;
 
   const AppFormDialog({
@@ -18,16 +18,25 @@ class AppFormDialog extends StatelessWidget {
     this.onCancel,
     this.confirmText = 'Save',
     this.cancelText = 'Cancel',
-    this.confirmColor = const Color(0xFF009688),
+    this.confirmColor,
     this.width = 400,
   });
 
   @override
   Widget build(BuildContext context) {
+    final ColorScheme scheme = Theme.of(context).colorScheme;
+    final TextTheme textTheme = Theme.of(context).textTheme;
+
     return AlertDialog(
-      backgroundColor: Colors.white,
-      surfaceTintColor: Colors.transparent, // Disable Material 3 surface tint
-      title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
+      backgroundColor: scheme.surface,
+      surfaceTintColor: Colors.transparent,
+      title: Text(
+        title,
+        style: textTheme.titleMedium?.copyWith(
+          fontWeight: FontWeight.w600,
+          color: scheme.onSurface,
+        ),
+      ),
       content: SizedBox(
         width: width,
         child: content,
@@ -41,8 +50,8 @@ class AppFormDialog extends StatelessWidget {
         ElevatedButton(
           onPressed: onConfirm,
           style: ElevatedButton.styleFrom(
-            backgroundColor: confirmColor,
-            foregroundColor: Colors.white,
+            backgroundColor: confirmColor ?? scheme.primary,
+            foregroundColor: scheme.onPrimary,
           ),
           child: Text(confirmText),
         ),

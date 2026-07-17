@@ -33,6 +33,7 @@ final rfiListProvider = FutureProvider.family<List<RfiListItem>, RfiListKind>((
   await ref.watch(rfiHandoffProvider.future);
   final String? requestedFormName = switch (kind) {
     RfiListKind.created => 'CreatedRfi',
+    RfiListKind.updated => 'UpdateForm',
     _ => null,
   };
   final List<RfiListItem> items = await ref

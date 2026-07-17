@@ -6,6 +6,7 @@ import '../../../core/widgets/app_form_dialog.dart';
 import '../../../domain/inspection_reference/enclosure_name.dart';
 import '../../../providers/inspection_reference/inspection_reference_provider.dart';
 import '../../../core/widgets/global_alert_dialog.dart';
+import 'package:wcr_pmis_mobile/src/features/rfi/presentation/rfi_theme.dart';
 
 class EnclosureFormDialog {
   static Future<void> show(BuildContext parentContext, WidgetRef ref,
@@ -27,18 +28,23 @@ class EnclosureFormDialog {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Text('Enclosure Name *',
-                      style:
-                          TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+                  Text(
+                    'Enclosure Name *',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                  ),
                   const SizedBox(height: 8),
                   TextField(
                     controller: nameController,
-                    decoration: InputDecoration(
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                    decoration: RfiTheme.dialogFieldDecoration(
+                      Theme.of(context).colorScheme,
                       hintText: 'Enter enclosure name',
-                      contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 8),
-                      border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(4)),
                     ),
                   ),
                   const SizedBox(height: 16),

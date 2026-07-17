@@ -7,6 +7,7 @@ import '../../../domain/inspection_reference/enclosure_name.dart';
 import '../../../domain/inspection_reference/reference_form_item.dart';
 import '../../../providers/inspection_reference/inspection_reference_provider.dart';
 import '../../../core/widgets/global_alert_dialog.dart';
+import 'package:wcr_pmis_mobile/src/features/rfi/presentation/rfi_theme.dart';
 
 class ReferenceFormDialog {
   static Future<void> show(BuildContext parentContext, WidgetRef ref,
@@ -54,33 +55,43 @@ class ReferenceFormDialog {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      const Text('Activity *',
-                          style: TextStyle(
-                              fontSize: 13, fontWeight: FontWeight.bold)),
+                      Text(
+                        'Activity *',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                          color: Theme.of(context).colorScheme.onSurface,
+                        ),
+                      ),
                       const SizedBox(height: 8),
                       TextField(
                         controller: activityController,
-                        decoration: InputDecoration(
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.onSurface,
+                        ),
+                        decoration: RfiTheme.dialogFieldDecoration(
+                          Theme.of(context).colorScheme,
                           hintText: 'Enter activity',
-                          contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 8),
-                          border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(4)),
                         ),
                       ),
                       const SizedBox(height: 16),
-                      const Text('RFI Description *',
-                          style: TextStyle(
-                              fontSize: 13, fontWeight: FontWeight.bold)),
+                      Text(
+                        'RFI Description *',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                          color: Theme.of(context).colorScheme.onSurface,
+                        ),
+                      ),
                       const SizedBox(height: 8),
                       TextField(
                         controller: descController,
-                        decoration: InputDecoration(
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.onSurface,
+                        ),
+                        decoration: RfiTheme.dialogFieldDecoration(
+                          Theme.of(context).colorScheme,
                           hintText: 'Enter RFI description',
-                          contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 8),
-                          border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(4)),
                         ),
                       ),
                       const SizedBox(height: 16),
