@@ -1,7 +1,10 @@
 package com.synergiz.wcr.pmis
 
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import android.content.ContentValues
 import android.os.Build
+import android.os.Bundle
 import android.os.Environment
 import android.provider.MediaStore
 import io.flutter.embedding.android.FlutterActivity
@@ -10,6 +13,26 @@ import io.flutter.plugin.common.MethodChannel
 
 class MainActivity : FlutterActivity() {
     private val fileExportChannel = "wcr_pmis_mobile/file_export"
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        createDefaultNotificationChannel()
+    }
+
+    private fun createDefaultNotificationChannel() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+            return
+        }
+        val channel = NotificationChannel(
+            "wcr_pmis_default",
+            "WCR PMIS Notifications",
+            NotificationManager.IMPORTANCE_HIGH,
+        ).apply {
+            description = "RFI and system notifications"
+        }
+        val manager = getSystemService(NotificationManager::class.java)
+        manager?.createNotificationChannel(channel)
+    }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
