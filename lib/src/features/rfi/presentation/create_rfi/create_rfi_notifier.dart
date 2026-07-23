@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:wcr_pmis_mobile/src/features/auth/domain/entities/auth_session.dart';
@@ -32,6 +34,11 @@ class CreateRfiNotifier extends StateNotifier<CreateRfiState> {
   }
 
   Future<void> _bootstrap() async {
+    try {
+      await _ref.read(rfiHandoffProvider.future);
+    } catch (_) {
+      // Continue; individual fetches will surface errors.
+    }
     await Future.wait(<Future<void>>[
       _fetchProjects(initial: true),
       _fetchRepresentatives(),
@@ -153,6 +160,9 @@ class CreateRfiNotifier extends StateNotifier<CreateRfiState> {
 
   Future<void> retryInitialLoad() async {
     state = state.copyWith(clearInitialLoadError: true);
+    try {
+      await _ref.read(rfiHandoffProvider.future);
+    } catch (_) {}
     await Future.wait(<Future<void>>[
       _fetchProjects(initial: true),
       _fetchRepresentatives(),
@@ -185,7 +195,8 @@ class CreateRfiNotifier extends StateNotifier<CreateRfiState> {
             await _repository.fetchCreateRepresentatives();
         state = state.copyWith(representatives: list);
       });
-    } catch (_) {
+    } catch (error, stack) {
+      debugPrint('regularUsers fetch failed: $error\n$stack');
       state = state.copyWith(representatives: const <RfiDropdownItem>[]);
     }
   }
@@ -489,10 +500,15 @@ class CreateRfiNotifier extends StateNotifier<CreateRfiState> {
 
   void advanceStep() {
     if (state.currentStep < 2) {
+      final int nextStep = state.currentStep + 1;
       state = state.copyWith(
-        currentStep: state.currentStep + 1,
+        currentStep: nextStep,
         clearErrorMessage: true,
       );
+      // Always refresh representatives when entering step 2.
+      if (nextStep == 1) {
+        unawaited(_fetchRepresentatives());
+      }
     }
   }
 

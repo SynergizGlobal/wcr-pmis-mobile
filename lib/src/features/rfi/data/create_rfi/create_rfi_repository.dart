@@ -31,6 +31,7 @@ class CreateRfiRepository {
 
       final idValue = json['id'] ??
           json['userId'] ??
+          json['user_id'] ??
           json['projectId'] ??
           json['workId'] ??
           json['contractIdFk'] ?? // Corrected user key
@@ -40,10 +41,18 @@ class CreateRfiRepository {
           json['elementId'] ??
           json['activityId'] ??
           json['rfiDescription'] ??
+          json['username'] ??
+          json['login'] ??
+          json['emailId'] ??
+          json['email'] ??
           '';
 
       final nameValue = json['name'] ??
           json['userName'] ??
+          json['user_name'] ??
+          json['fullName'] ??
+          json['fullname'] ??
+          json['displayName'] ??
           json['projectName'] ??
           json['workName'] ??
           json['contractShortName'] ?? // Corrected user key
@@ -53,6 +62,10 @@ class CreateRfiRepository {
           json['element'] ??
           json['activity'] ??
           json['rfiDescription'] ??
+          json['username'] ??
+          json['login'] ??
+          json['emailId'] ??
+          json['email'] ??
           '';
 
       List<String>? enclosures;
@@ -78,9 +91,15 @@ class CreateRfiRepository {
       final String? pmisCalcFk =
           json['pmisCalcFk']?.toString() ?? json['pmis_calc_fk']?.toString();
 
+      final String id = idValue.toString().trim();
+      String name = nameValue.toString().trim();
+      if (name.isEmpty && id.isNotEmpty) {
+        name = id;
+      }
+
       return DropdownItem(
-        id: idValue.toString().trim(),
-        name: nameValue.toString(),
+        id: id,
+        name: name,
         enclosures: enclosures,
         p6ActivityIdFk: p6ActivityIdFk,
         pmisCalcFk: pmisCalcFk,

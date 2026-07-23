@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:wcr_pmis_mobile/src/core/constants/api_constants.dart';
@@ -63,6 +61,10 @@ class AuthRemoteDataSource {
       },
       options: _unauthenticatedOptions,
     );
+  }
+
+  Future<void> logoutSession() async {
+    await _dio.post<dynamic>(ApiConstants.authLogoutPath);
   }
 }
 

@@ -1,10 +1,13 @@
-import 'package:dio/dio.dart';
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:wcr_pmis_mobile/src/core/network/dio_client.dart';
 import 'package:wcr_pmis_mobile/src/core/network/session_cookie_manager.dart';
+import 'package:wcr_pmis_mobile/src/core/notifications/device_token_sync.dart';
 import 'package:wcr_pmis_mobile/src/core/result/failure.dart';
 import 'package:wcr_pmis_mobile/src/core/result/result.dart';
 import 'package:wcr_pmis_mobile/src/features/auth/data/datasources/auth_local_data_source.dart';
+import 'package:wcr_pmis_mobile/src/features/auth/data/datasources/auth_remote_data_source.dart';
 import 'package:wcr_pmis_mobile/src/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:wcr_pmis_mobile/src/features/auth/domain/entities/auth_session.dart';
 import 'package:wcr_pmis_mobile/src/features/auth/domain/usecases/login_usecase.dart';
@@ -19,14 +22,16 @@ class AuthController extends StateNotifier<AsyncValue<AuthSession?>> {
     this._ref,
     this._loginUseCase,
     this._local,
-    this._dio,
+    this._remote,
+    this._deviceTokenSync,
     this._cookieManager,
   ) : super(const AsyncData<AuthSession?>(null));
 
   final Ref _ref;
   final LoginUseCase _loginUseCase;
   final AuthLocalDataSource _local;
-  final Dio _dio;
+  final AuthRemoteDataSource _remote;
+  final DeviceTokenSync _deviceTokenSync;
   final SessionCookieManager? _cookieManager;
   bool _autoLoginAttempted = false;
 
@@ -37,6 +42,10 @@ class AuthController extends StateNotifier<AsyncValue<AuthSession?>> {
     if (token.isEmpty) {
       _ref.read(rfiAuthTokenProvider.notifier).state = null;
     }
+  }
+
+  void _syncRfiDeviceToken() {
+    unawaited(_deviceTokenSync.ensureRfiSessionAndRegister());
   }
 
   Future<Failure?> tryAutoLoginIfRemembered() async {
@@ -69,6 +78,7 @@ class AuthController extends StateNotifier<AsyncValue<AuthSession?>> {
         password: password,
         session: session,
       );
+      _syncRfiDeviceToken();
       return null;
     });
   }
@@ -103,14 +113,17 @@ class AuthController extends StateNotifier<AsyncValue<AuthSession?>> {
           password: password,
           session: session,
         );
+        _syncRfiDeviceToken();
         return null;
       },
     );
   }
 
   Future<void> logout() async {
+    // Deactivate on RFI while RFI auth/cookies are still valid.
+    await _deviceTokenSync.deactivate();
     try {
-      await _dio.post('/logout');
+      await _remote.logoutSession();
     } catch (_) {}
     if (_cookieManager != null) {
       await _cookieManager.clearSessionCookies();
@@ -127,7 +140,8 @@ final authControllerProvider =
         ref,
         ref.watch(loginUseCaseProvider),
         ref.watch(authLocalDataSourceProvider),
-        ref.watch(dioProvider),
+        ref.watch(authRemoteDataSourceProvider),
+        ref.watch(deviceTokenSyncProvider),
         ref.watch(sessionCookieManagerProvider).valueOrNull,
       );
     });

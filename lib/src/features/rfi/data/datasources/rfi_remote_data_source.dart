@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:wcr_pmis_mobile/src/core/network/rfi_dio_client.dart';
 import 'package:wcr_pmis_mobile/src/features/rfi/data/mappers/rfi_dropdown_mapper.dart';
@@ -148,7 +149,7 @@ class RfiRemoteDataSource {
         'structureType': structureType,
         'structure': structureName,
         'component': componentName,
-        'component_id': componentId,
+        'componentIds[]': componentId,
       },
     );
     return RfiDropdownMapper.fromList(response.data);
@@ -157,13 +158,32 @@ class RfiRemoteDataSource {
   Future<List<RfiDropdownItem>> fetchRfiDescriptions(String activityName) async {
     final Response<dynamic> response = await _dio.get<dynamic>(
       'rfi/rfi-descriptions',
-      queryParameters: <String, String>{'activity': activityName},
+      queryParameters: <String, String>{'activity[]': activityName},
     );
     return RfiDropdownMapper.fromList(response.data);
   }
 
   Future<List<RfiDropdownItem>> fetchRegularUsers() async {
-    return _fetchDropdownList('rfi/regularUsers');
+    final Response<dynamic> response =
+        await _dio.get<dynamic>('rfi/regularUsers');
+    if (kDebugMode) {
+      debugPrint(
+        'regularUsers status=${response.statusCode} '
+        'type=${response.data.runtimeType}',
+      );
+      debugPrint('regularUsers body=${response.data}');
+    }
+    final List<RfiDropdownItem> mapped =
+        RfiDropdownMapper.fromList(response.data);
+    if (kDebugMode) {
+      debugPrint('regularUsers mapped count=${mapped.length}');
+      if (mapped.isNotEmpty) {
+        debugPrint(
+          'regularUsers sample="${mapped.first.name}" id=${mapped.first.id}',
+        );
+      }
+    }
+    return mapped;
   }
 
   Future<dynamic> createRfi(Map<String, dynamic> body) async {

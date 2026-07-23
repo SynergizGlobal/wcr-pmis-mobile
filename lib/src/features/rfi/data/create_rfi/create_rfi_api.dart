@@ -65,14 +65,14 @@ class CreateRfiApi {
       "structureType": structureType,
       "structure": structureName,
       "component": componentName,
-      "component_id": componentId,
+      "componentIds[]": componentId,
     });
     return response.data;
   }
 
   Future<List<dynamic>> getRfiDescriptions(String activityName) async {
     final response = await dio.get("rfi/rfi-descriptions", queryParameters: {
-      "activity": activityName,
+      "activity[]": activityName,
     });
     return response.data;
   }

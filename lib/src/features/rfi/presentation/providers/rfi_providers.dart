@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:wcr_pmis_mobile/src/core/auth/wcr_unauthorized.dart';
+import 'package:wcr_pmis_mobile/src/core/notifications/device_token_sync.dart';
 import 'package:wcr_pmis_mobile/src/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:wcr_pmis_mobile/src/features/auth/presentation/providers/auth_token_provider.dart';
 import 'package:wcr_pmis_mobile/src/features/rfi/data/datasources/rfi_handoff_data_source.dart';
@@ -13,6 +16,7 @@ final rfiHandoffProvider = FutureProvider<void>((ref) async {
     final RfiHandoffResult result =
         await ref.read(rfiHandoffDataSourceProvider).performRedirect();
     ref.read(rfiAuthTokenProvider.notifier).state = result.token;
+    unawaited(ref.read(deviceTokenSyncProvider).register());
   } on DioException catch (error) {
     if (isWcrUnauthorizedError(error)) {
       await ref.read(authControllerProvider.notifier).logout();

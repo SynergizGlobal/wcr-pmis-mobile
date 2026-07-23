@@ -340,6 +340,10 @@ class _InspectionPlanStep extends StatelessWidget {
           items: state.representatives.map((RfiDropdownItem e) => e.name).toList(),
           value: state.contractorRepresentative,
           onChanged: notifier.setContractorRepresentative,
+          hint: state.representatives.isEmpty
+              ? 'No representatives loaded'
+              : 'Select…',
+          enabled: state.representatives.isNotEmpty,
         ),
         const SizedBox(height: 16),
         _DateField(

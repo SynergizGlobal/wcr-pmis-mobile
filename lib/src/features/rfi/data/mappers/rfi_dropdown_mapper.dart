@@ -2,12 +2,45 @@ import 'package:wcr_pmis_mobile/src/features/rfi/domain/entities/rfi_dropdown_it
 
 abstract final class RfiDropdownMapper {
   static List<RfiDropdownItem> fromList(dynamic data) {
-    if (data is! List || data.isEmpty) {
+    if (data == null) {
       return const <RfiDropdownItem>[];
     }
+
+    // Plain map of id -> name (no nested list).
+    if (data is Map && !_looksLikeWrappedList(data)) {
+      final List<RfiDropdownItem> fromEntries = <RfiDropdownItem>[];
+      data.forEach((dynamic key, dynamic value) {
+        if (value is Map) {
+          fromEntries.add(fromJson(Map<String, dynamic>.from(value)));
+          return;
+        }
+        final String id = key.toString().trim();
+        final String name = value?.toString().trim() ?? '';
+        if (id.isEmpty && name.isEmpty) {
+          return;
+        }
+        fromEntries.add(
+          RfiDropdownItem(
+            id: id.isNotEmpty ? id : name,
+            name: name.isNotEmpty ? name : id,
+          ),
+        );
+      });
+      return dedupeById(
+        fromEntries
+            .where((RfiDropdownItem item) => item.name.isNotEmpty)
+            .toList(),
+      );
+    }
+
+    final List<dynamic>? list = _asList(data);
+    if (list == null || list.isEmpty) {
+      return const <RfiDropdownItem>[];
+    }
+
     final List<RfiDropdownItem> mapped;
-    if (data.first is String) {
-      mapped = data
+    if (list.first is String || list.first is num) {
+      mapped = list
           .map(
             (dynamic value) => RfiDropdownItem(
               id: value.toString(),
@@ -16,7 +49,7 @@ abstract final class RfiDropdownMapper {
           )
           .toList();
     } else {
-      mapped = data
+      mapped = list
           .whereType<Map>()
           .map(
             (Map<dynamic, dynamic> row) =>
@@ -26,6 +59,44 @@ abstract final class RfiDropdownMapper {
           .toList();
     }
     return dedupeById(mapped);
+  }
+
+  static bool _looksLikeWrappedList(Map<dynamic, dynamic> data) {
+    for (final String key in <String>[
+      'data',
+      'content',
+      'users',
+      'result',
+      'items',
+      'list',
+    ]) {
+      if (data[key] is List) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  static List<dynamic>? _asList(dynamic data) {
+    if (data is List) {
+      return data;
+    }
+    if (data is Map) {
+      for (final String key in <String>[
+        'data',
+        'content',
+        'users',
+        'result',
+        'items',
+        'list',
+      ]) {
+        final dynamic nested = data[key];
+        if (nested is List) {
+          return nested;
+        }
+      }
+    }
+    return null;
   }
 
   static List<RfiDropdownItem> dedupeById(List<RfiDropdownItem> items) {
@@ -39,6 +110,8 @@ abstract final class RfiDropdownMapper {
   static RfiDropdownItem fromJson(Map<String, dynamic> json) {
     final dynamic idValue = json['id'] ??
         json['userId'] ??
+        json['user_id'] ??
+        json['value'] ??
         json['projectId'] ??
         json['workId'] ??
         json['contractIdFk'] ??
@@ -49,10 +122,21 @@ abstract final class RfiDropdownMapper {
         json['elementId'] ??
         json['activityId'] ??
         json['rfiDescription'] ??
+        json['username'] ??
+        json['login'] ??
+        json['emailId'] ??
+        json['email'] ??
         '';
 
     final dynamic nameValue = json['name'] ??
         json['userName'] ??
+        json['user_name'] ??
+        json['fullName'] ??
+        json['fullname'] ??
+        json['displayName'] ??
+        json['text'] ??
+        json['label'] ??
+        json['title'] ??
         json['projectName'] ??
         json['workName'] ??
         json['contractShortName'] ??
@@ -63,6 +147,12 @@ abstract final class RfiDropdownMapper {
         json['element'] ??
         json['activity'] ??
         json['rfiDescription'] ??
+        json['username'] ??
+        json['login'] ??
+        _combinedPersonName(json) ??
+        json['emailId'] ??
+        json['email'] ??
+        json['value'] ??
         '';
 
     final List<String> enclosures = <String>[];
@@ -92,9 +182,12 @@ abstract final class RfiDropdownMapper {
         json['pmisCalcFk']?.toString() ?? json['pmis_calc_fk']?.toString();
 
     String id = idValue.toString().trim();
-    final String name = nameValue.toString().trim();
+    String name = nameValue.toString().trim();
     if (id.isEmpty && name.isNotEmpty) {
       id = name;
+    }
+    if (name.isEmpty && id.isNotEmpty) {
+      name = id;
     }
 
     return RfiDropdownItem(
@@ -104,5 +197,15 @@ abstract final class RfiDropdownMapper {
       p6ActivityIdFk: p6ActivityIdFk,
       pmisCalcFk: pmisCalcFk,
     );
+  }
+
+  static String? _combinedPersonName(Map<String, dynamic> json) {
+    final String first = (json['firstName'] ?? json['firstname'] ?? '')
+        .toString()
+        .trim();
+    final String last =
+        (json['lastName'] ?? json['lastname'] ?? '').toString().trim();
+    final String combined = '$first $last'.trim();
+    return combined.isEmpty ? null : combined;
   }
 }

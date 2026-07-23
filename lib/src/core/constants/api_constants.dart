@@ -18,6 +18,11 @@ class ApiConstants {
   static const String forgotSendOtpPath = '/api/forgot/send-otp';
   static const String forgotVerifyOtpPath = '/api/forgot/verify-otp';
   static const String forgotResetPasswordPath = '/api/forgot/reset-password';
+  static const String deviceTokenRegisterPath =
+      '/api/auth/device-tokens/register';
+  static const String deviceTokenDeactivatePath =
+      '/api/auth/device-tokens/deactivate';
+  static const String authLogoutPath = '/logout';
   static const String wcrRfiRedirectPath = 'rfi/redirect';
   static const String rfiSsoLoginPath = '/api/auth/login';
   static const String rfiDashboardPath = 'dashboard';
