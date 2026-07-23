@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:wcr_pmis_mobile/src/app/router/go_router_refresh.dart';
+import 'package:wcr_pmis_mobile/src/core/notifications/notification_route_resolver.dart';
+import 'package:wcr_pmis_mobile/src/core/notifications/pending_notification_location.dart';
 import 'package:wcr_pmis_mobile/src/features/auth/domain/entities/auth_session.dart';
 import 'package:wcr_pmis_mobile/src/features/auth/presentation/controllers/auth_controller.dart';
+import 'package:wcr_pmis_mobile/src/features/rfi/domain/utils/rfi_user_role.dart';
 import 'package:wcr_pmis_mobile/src/features/auth/presentation/pages/forgot_password_page.dart';
 import 'package:wcr_pmis_mobile/src/features/auth/presentation/pages/login_page.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/data/datasources/dashboard_remote_data_source.dart';
@@ -167,6 +170,19 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       }
       if (!loggedIn && loc.startsWith('/rfi')) {
         return LoginPage.routePath;
+      }
+      if (loggedIn) {
+        final String? pendingType =
+            container.read(pendingNotificationTypeProvider);
+        if (pendingType != null && pendingType.isNotEmpty) {
+          container.read(pendingNotificationTypeProvider.notifier).state = null;
+          final AuthSession? session =
+              container.read(authControllerProvider).valueOrNull;
+          return NotificationRouteResolver.resolve(
+            type: pendingType == '__default__' ? null : pendingType,
+            role: RfiUserRole.fromSession(session),
+          );
+        }
       }
       if (loggedIn && loc == LoginPage.routePath) {
         return DashboardPage.routePath;
