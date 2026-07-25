@@ -1,5 +1,15 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// Pending FCM `data.type` from a notification tap before auth is ready.
-/// Resolved to a route only after login, using the real user role.
-final pendingNotificationTypeProvider = StateProvider<String?>((ref) => null);
+/// Pending FCM navigation payload before auth is ready.
+class PendingNotificationNav {
+  const PendingNotificationNav({
+    this.type,
+    this.referenceType,
+  });
+
+  final String? type;
+  final String? referenceType;
+}
+
+final pendingNotificationNavProvider =
+    StateProvider<PendingNotificationNav?>((ref) => null);

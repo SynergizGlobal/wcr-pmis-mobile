@@ -11,7 +11,7 @@ import 'package:wcr_pmis_mobile/src/features/auth/domain/entities/auth_session.d
 import 'package:wcr_pmis_mobile/src/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:wcr_pmis_mobile/src/features/rfi/domain/utils/rfi_user_role.dart';
 
-/// Listens for notification taps and navigates to the matching RFI screen.
+/// Listens for notification taps and navigates to the matching screen.
 class FcmNotificationNavigator {
   FcmNotificationNavigator(this._ref);
 
@@ -37,21 +37,24 @@ class FcmNotificationNavigator {
   void _handleMessage(RemoteMessage message) {
     final Map<String, dynamic> data = Map<String, dynamic>.from(message.data);
     final String? type = NotificationRouteResolver.typeFromData(data);
+    final String? referenceType =
+        NotificationRouteResolver.referenceTypeFromData(data);
     final AuthSession? session =
         _ref.read(authControllerProvider).valueOrNull;
 
     if (kDebugMode) {
       debugPrint(
-        'FCM tap → type=$type '
+        'FCM tap → type=$type referenceType=$referenceType '
         'rfiId=${NotificationRouteResolver.rfiIdFromData(data)} '
         'loggedIn=${session != null}',
       );
     }
 
-    // Always stash type first so login redirect can resolve with the real role
-    // (important for RFI_VALIDATION).
-    _ref.read(pendingNotificationTypeProvider.notifier).state =
-        type ?? '__default__';
+    _ref.read(pendingNotificationNavProvider.notifier).state =
+        PendingNotificationNav(
+      type: type,
+      referenceType: referenceType,
+    );
 
     if (session == null) {
       return;
@@ -60,11 +63,12 @@ class FcmNotificationNavigator {
     final String location = NotificationRouteResolver.resolve(
       type: type,
       role: RfiUserRole.fromSession(session),
+      referenceType: referenceType,
     );
     scheduleMicrotask(() {
       try {
         _ref.read(appRouterProvider).go(location);
-        _ref.read(pendingNotificationTypeProvider.notifier).state = null;
+        _ref.read(pendingNotificationNavProvider.notifier).state = null;
       } catch (error, stack) {
         if (kDebugMode) {
           debugPrint('FCM navigation failed: $error\n$stack');

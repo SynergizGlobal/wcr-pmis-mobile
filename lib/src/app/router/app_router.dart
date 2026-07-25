@@ -172,15 +172,16 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         return LoginPage.routePath;
       }
       if (loggedIn) {
-        final String? pendingType =
-            container.read(pendingNotificationTypeProvider);
-        if (pendingType != null && pendingType.isNotEmpty) {
-          container.read(pendingNotificationTypeProvider.notifier).state = null;
+        final PendingNotificationNav? pending =
+            container.read(pendingNotificationNavProvider);
+        if (pending != null) {
+          container.read(pendingNotificationNavProvider.notifier).state = null;
           final AuthSession? session =
               container.read(authControllerProvider).valueOrNull;
           return NotificationRouteResolver.resolve(
-            type: pendingType == '__default__' ? null : pendingType,
+            type: pending.type,
             role: RfiUserRole.fromSession(session),
+            referenceType: pending.referenceType,
           );
         }
       }
@@ -359,10 +360,19 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: ValidateDataPage.routePath,
         name: ValidateDataPage.routeName,
-        builder: (BuildContext context, GoRouterState state) =>
-            ValidateDataPage(
-              dataSource: ref.read(dashboardRemoteDataSourceProvider),
-            ),
+        builder: (BuildContext context, GoRouterState state) {
+          final String tab =
+              state.uri.queryParameters['tab']?.trim().toLowerCase() ?? '';
+          final ValidateDataTab initialTab = switch (tab) {
+            'approved' => ValidateDataTab.approved,
+            'rejected' => ValidateDataTab.rejected,
+            _ => ValidateDataTab.pending,
+          };
+          return ValidateDataPage(
+            dataSource: ref.read(dashboardRemoteDataSourceProvider),
+            initialTab: initialTab,
+          );
+        },
       ),
       GoRoute(
         path: UtilityShiftingPage.routePath,

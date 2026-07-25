@@ -27,12 +27,17 @@ class _FilterOption {
 }
 
 class ValidateDataPage extends StatefulWidget {
-  const ValidateDataPage({super.key, required this.dataSource});
+  const ValidateDataPage({
+    super.key,
+    required this.dataSource,
+    this.initialTab = ValidateDataTab.pending,
+  });
 
   static const String routeName = 'validate-data';
   static const String routePath = '/validate-data';
 
   final DashboardRemoteDataSource dataSource;
+  final ValidateDataTab initialTab;
 
   @override
   State<ValidateDataPage> createState() => _ValidateDataPageState();
@@ -45,7 +50,11 @@ class _ValidateDataPageState extends State<ValidateDataPage>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(
+      length: ValidateDataTab.values.length,
+      vsync: this,
+      initialIndex: widget.initialTab.index,
+    );
   }
 
   @override
