@@ -68,4 +68,27 @@ abstract final class NotificationRouteResolver {
     final String value = raw?.toString().trim() ?? '';
     return value.isEmpty ? null : value;
   }
+
+  static String? userIdFromData(Map<String, dynamic> data) {
+    final dynamic raw = data['userId'] ?? data['user_id'] ?? data['uid'];
+    final String value = raw?.toString().trim() ?? '';
+    return value.isEmpty ? null : value;
+  }
+
+  /// When FCM includes [notificationUserId], it must match the session user.
+  /// Missing FCM userId is allowed (older payloads).
+  static bool isIntendedForUser({
+    required String? notificationUserId,
+    required String? sessionUserId,
+  }) {
+    final String target = (notificationUserId ?? '').trim();
+    if (target.isEmpty) {
+      return true;
+    }
+    final String current = (sessionUserId ?? '').trim();
+    if (current.isEmpty) {
+      return true;
+    }
+    return target.toUpperCase() == current.toUpperCase();
+  }
 }

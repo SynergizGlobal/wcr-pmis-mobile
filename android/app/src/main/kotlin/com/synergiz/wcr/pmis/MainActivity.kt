@@ -13,6 +13,7 @@ import io.flutter.plugin.common.MethodChannel
 
 class MainActivity : FlutterActivity() {
     private val fileExportChannel = "wcr_pmis_mobile/file_export"
+    private val notificationsChannel = "wcr_pmis_mobile/notifications"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -88,6 +89,22 @@ class MainActivity : FlutterActivity() {
                     result.success("${Environment.DIRECTORY_DOWNLOADS}/$subdirectory/$fileName")
                 } catch (error: Throwable) {
                     result.error("EXPORT_FAILED", error.message, null)
+                }
+            }
+
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, notificationsChannel)
+            .setMethodCallHandler { call, result ->
+                if (call.method != "clearAll") {
+                    result.notImplemented()
+                    return@setMethodCallHandler
+                }
+                try {
+                    val manager =
+                        getSystemService(NotificationManager::class.java)
+                    manager?.cancelAll()
+                    result.success(null)
+                } catch (error: Throwable) {
+                    result.error("CLEAR_FAILED", error.message, null)
                 }
             }
     }

@@ -39,21 +39,39 @@ class FcmNotificationNavigator {
     final String? type = NotificationRouteResolver.typeFromData(data);
     final String? referenceType =
         NotificationRouteResolver.referenceTypeFromData(data);
+    final String? notificationUserId =
+        NotificationRouteResolver.userIdFromData(data);
     final AuthSession? session =
         _ref.read(authControllerProvider).valueOrNull;
 
     if (kDebugMode) {
       debugPrint(
         'FCM tap → type=$type referenceType=$referenceType '
+        'userId=$notificationUserId '
         'rfiId=${NotificationRouteResolver.rfiIdFromData(data)} '
         'loggedIn=${session != null}',
       );
+    }
+
+    if (session != null &&
+        !NotificationRouteResolver.isIntendedForUser(
+          notificationUserId: notificationUserId,
+          sessionUserId: session.userId,
+        )) {
+      if (kDebugMode) {
+        debugPrint(
+          'FCM tap ignored: notification userId=$notificationUserId '
+          '!= session=${session.userId}',
+        );
+      }
+      return;
     }
 
     _ref.read(pendingNotificationNavProvider.notifier).state =
         PendingNotificationNav(
       type: type,
       referenceType: referenceType,
+      userId: notificationUserId,
     );
 
     if (session == null) {

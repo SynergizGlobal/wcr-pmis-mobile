@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:wcr_pmis_mobile/src/core/network/dio_client.dart';
 import 'package:wcr_pmis_mobile/src/core/network/session_cookie_manager.dart';
 import 'package:wcr_pmis_mobile/src/core/notifications/device_token_sync.dart';
+import 'package:wcr_pmis_mobile/src/core/notifications/notification_tray_clearer.dart';
+import 'package:wcr_pmis_mobile/src/core/notifications/pending_notification_location.dart';
 import 'package:wcr_pmis_mobile/src/core/result/failure.dart';
 import 'package:wcr_pmis_mobile/src/core/result/result.dart';
 import 'package:wcr_pmis_mobile/src/features/auth/data/datasources/auth_local_data_source.dart';
@@ -120,6 +122,11 @@ class AuthController extends StateNotifier<AsyncValue<AuthSession?>> {
   }
 
   Future<void> logout() async {
+    // Drop any tap-to-navigate that belonged to this session.
+    _ref.read(pendingNotificationNavProvider.notifier).state = null;
+    // Clear tray so the next user does not see prior notifications.
+    unawaited(NotificationTrayClearer.clearAll());
+
     // Deactivate on RFI while RFI auth/cookies are still valid.
     await _deviceTokenSync.deactivate();
     try {

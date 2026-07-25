@@ -178,6 +178,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           container.read(pendingNotificationNavProvider.notifier).state = null;
           final AuthSession? session =
               container.read(authControllerProvider).valueOrNull;
+          if (!NotificationRouteResolver.isIntendedForUser(
+            notificationUserId: pending.userId,
+            sessionUserId: session?.userId,
+          )) {
+            return DashboardPage.routePath;
+          }
           return NotificationRouteResolver.resolve(
             type: pending.type,
             role: RfiUserRole.fromSession(session),
