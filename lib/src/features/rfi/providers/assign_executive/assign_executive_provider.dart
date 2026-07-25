@@ -184,6 +184,7 @@ class AssignExecutiveForm extends _$AssignExecutiveForm {
         "assignedPersonClient": s.selectedExecutive!.userName,
         "department": s.selectedExecutive!.department,
         "userId": s.selectedExecutive!.userId,
+        "email": s.selectedExecutive!.email,
       });
 
       state = state.copyWith(

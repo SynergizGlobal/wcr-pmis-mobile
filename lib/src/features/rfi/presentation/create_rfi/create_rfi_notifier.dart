@@ -5,7 +5,6 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:wcr_pmis_mobile/src/features/auth/domain/entities/auth_session.dart';
 import 'package:wcr_pmis_mobile/src/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:wcr_pmis_mobile/src/features/rfi/data/repositories/rfi_repository_impl.dart';
 import 'package:wcr_pmis_mobile/src/features/rfi/domain/entities/rfi_dropdown_item.dart';
@@ -674,11 +673,6 @@ class CreateRfiNotifier extends StateNotifier<CreateRfiState> {
 
     state = state.copyWith(isSubmitting: true, clearErrorMessage: true);
     try {
-      final AuthSession? session =
-          _ref.read(authControllerProvider).valueOrNull;
-      final String userId = session?.userId ?? 'UNKNOWN';
-      final String dyHodUserId = userId;
-
       final DateTime now = DateTime.now();
       final String defaultSubmissionDate =
           '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
@@ -690,11 +684,16 @@ class CreateRfiNotifier extends StateNotifier<CreateRfiState> {
               ? state.selectedActivity!.pmisCalcFk!.trim()
               : 'No';
 
+      final RfiDropdownItem? contract = state.selectedContract;
+      final RfiDropdownItem? representative = _findRepresentativeByName(
+        state.contractorRepresentative,
+      );
+
       final Map<String, dynamic> body = <String, dynamic>{
         'project': state.selectedProject?.name ?? '',
         'work': '',
-        'contract': state.selectedContract?.name ?? '',
-        'contractId': state.selectedContract?.id ?? '',
+        'contract': contract?.name ?? '',
+        'contractId': contract?.id ?? '',
         'structureType': state.selectedStructureType?.name ?? '',
         'structure': state.selectedStructure?.name ?? '',
         'component': state.selectedComponent?.name ?? '',
@@ -706,6 +705,8 @@ class CreateRfiNotifier extends StateNotifier<CreateRfiState> {
         'action': state.action ?? '',
         'typeOfRFI': _mapTypeOfRfiForApi(state.typeOfRfi),
         'nameOfRepresentative': state.contractorRepresentative ?? '',
+        'userIdOfRepresentative': representative?.id ?? '',
+        'emailOfRepresentative': representative?.email ?? '',
         'timeOfInspection':
             _formatTimeForApi(state.timeOfInspection, defaultTime),
         'rfi_Id': '',
@@ -716,7 +717,15 @@ class CreateRfiNotifier extends StateNotifier<CreateRfiState> {
         'enclosures': state.selectedEnclosures,
         'location': '',
         'description': state.rfiDescriptionText ?? '',
-        'dyHodUserId': dyHodUserId,
+        'dyHodUserId': contract?.dyHodUserId ?? '',
+        'dyHodUserName': contract?.dyHodUserName ?? '',
+        'dyHodEmail': contract?.dyHodEmail ?? '',
+        'hodUserId': contract?.hodUserId ?? '',
+        'hodUserName': contract?.hodUserName ?? '',
+        'hodEmail': contract?.hodEmail ?? '',
+        'caoUserId': contract?.caoUserId ?? '',
+        'caoUserName': contract?.caoUserName ?? '',
+        'caoEmail': contract?.caoEmail ?? '',
         'projectId': state.selectedProject?.id ?? '',
       };
 
@@ -827,6 +836,16 @@ class CreateRfiNotifier extends StateNotifier<CreateRfiState> {
       'enclosures': item.enclosures,
       'p6ActivityIdFk': item.p6ActivityIdFk,
       'pmisCalcFk': item.pmisCalcFk,
+      'email': item.email,
+      'dyHodUserId': item.dyHodUserId,
+      'dyHodUserName': item.dyHodUserName,
+      'dyHodEmail': item.dyHodEmail,
+      'hodUserId': item.hodUserId,
+      'hodUserName': item.hodUserName,
+      'hodEmail': item.hodEmail,
+      'caoUserId': item.caoUserId,
+      'caoUserName': item.caoUserName,
+      'caoEmail': item.caoEmail,
     };
   }
 
@@ -844,7 +863,30 @@ class CreateRfiNotifier extends StateNotifier<CreateRfiState> {
           const <String>[],
       p6ActivityIdFk: json['p6ActivityIdFk'] as int?,
       pmisCalcFk: json['pmisCalcFk'] as String?,
+      email: json['email'] as String?,
+      dyHodUserId: json['dyHodUserId'] as String?,
+      dyHodUserName: json['dyHodUserName'] as String?,
+      dyHodEmail: json['dyHodEmail'] as String?,
+      hodUserId: json['hodUserId'] as String?,
+      hodUserName: json['hodUserName'] as String?,
+      hodEmail: json['hodEmail'] as String?,
+      caoUserId: json['caoUserId'] as String?,
+      caoUserName: json['caoUserName'] as String?,
+      caoEmail: json['caoEmail'] as String?,
     );
+  }
+
+  RfiDropdownItem? _findRepresentativeByName(String? name) {
+    final String target = name?.trim() ?? '';
+    if (target.isEmpty) {
+      return null;
+    }
+    for (final RfiDropdownItem item in state.representatives) {
+      if (item.name.trim() == target) {
+        return item;
+      }
+    }
+    return null;
   }
 
   String _mapTypeOfRfiForApi(String? ui) {

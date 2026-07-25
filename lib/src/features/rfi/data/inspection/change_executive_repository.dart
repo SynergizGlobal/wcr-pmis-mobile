@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:wcr_pmis_mobile/src/features/rfi/domain/entities/rfi_engineer_option.dart';
 import '../../core/providers/dio_provider.dart';
 import 'change_executive_api.dart';
 
@@ -17,13 +18,16 @@ class ChangeExecutiveRepository {
 
   ChangeExecutiveRepository(this._api);
 
-  Future<List<String>> getEngineerNames(String userId, String contractId) async {
+  Future<List<RfiEngineerOption>> getEngineerNames(
+    String userId,
+    String contractId,
+  ) async {
     try {
       final response = await _api.getEngineerNames(userId, contractId);
       if (response.statusCode == 200 && response.data != null) {
-        return List<String>.from(response.data);
+        return RfiEngineerOption.parseList(response.data);
       }
-      return [];
+      return const <RfiEngineerOption>[];
     } catch (e) {
       throw Exception('Failed to fetch engineer names: $e');
     }

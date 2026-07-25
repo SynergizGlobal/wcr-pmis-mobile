@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:wcr_pmis_mobile/src/core/network/user_friendly_error_message.dart';
+import 'package:wcr_pmis_mobile/src/features/rfi/domain/entities/rfi_engineer_option.dart';
 
 import '../../domain/rfi_list/rfi_list_item.dart';
 import '../../providers/rfi_list/assign_client_person_provider.dart';
@@ -18,13 +19,7 @@ class AssignExecutiveDialog extends ConsumerStatefulWidget {
 }
 
 class _AssignExecutiveDialogState extends ConsumerState<AssignExecutiveDialog> {
-  String? selectedExecutive;
-
-  @override
-  void initState() {
-    super.initState();
-    selectedExecutive = widget.item.assignedPersonClient;
-  }
+  RfiEngineerOption? selectedExecutive;
 
   @override
   Widget build(BuildContext context) {
@@ -47,35 +42,25 @@ class _AssignExecutiveDialogState extends ConsumerState<AssignExecutiveDialog> {
             style: TextStyle(color: Theme.of(context).colorScheme.error),
           ),
         ),
-        data: (names) {
-          if (names.isEmpty) {
+        data: (engineers) {
+          if (engineers.isEmpty) {
             return const Text('No executives found for this contract.');
           }
-          final uniqueNames = names.toSet().toList(); // Ensure unique
-          if (selectedExecutive != null &&
-              selectedExecutive!.isNotEmpty &&
-              !uniqueNames.contains(selectedExecutive)) {
-            uniqueNames.insert(0,
-                selectedExecutive!); // keep current value even if not in list
-          }
 
-          return DropdownButtonFormField<String>(
+          return DropdownButtonFormField<RfiEngineerOption>(
             isExpanded: true,
-            initialValue:
-                (selectedExecutive != null && selectedExecutive!.isNotEmpty)
-                    ? selectedExecutive
-                    : null,
+            initialValue: selectedExecutive,
             decoration: const InputDecoration(
               labelText: 'Select Executive',
               border: OutlineInputBorder(),
             ),
-            items: uniqueNames.map((name) {
-              return DropdownMenuItem(
-                value: name,
-                child: Text(name),
+            items: engineers.map((RfiEngineerOption engineer) {
+              return DropdownMenuItem<RfiEngineerOption>(
+                value: engineer,
+                child: Text(engineer.name),
               );
             }).toList(),
-            onChanged: (val) {
+            onChanged: (RfiEngineerOption? val) {
               setState(() {
                 selectedExecutive = val;
               });
@@ -90,9 +75,7 @@ class _AssignExecutiveDialogState extends ConsumerState<AssignExecutiveDialog> {
           child: const Text('Cancel'),
         ),
         ElevatedButton(
-          onPressed: (assignState.isLoading ||
-                  selectedExecutive == null ||
-                  selectedExecutive!.isEmpty)
+          onPressed: (assignState.isLoading || selectedExecutive == null)
               ? null
               : () async {
                   await ref

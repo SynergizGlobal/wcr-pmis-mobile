@@ -196,7 +196,25 @@ abstract final class RfiDropdownMapper {
       enclosures: enclosures,
       p6ActivityIdFk: p6ActivityIdFk,
       pmisCalcFk: pmisCalcFk,
+      email: _nullableTrim(json['email'] ?? json['emailId']),
+      dyHodUserId: _nullableTrim(json['dyHodUserId']),
+      dyHodUserName: _nullableTrim(json['dyHodUserName']),
+      dyHodEmail: _nullableTrim(json['dyHodEmail']),
+      hodUserId: _nullableTrim(json['hodUserId']),
+      hodUserName: _nullableTrim(json['hodUserName']),
+      hodEmail: _nullableTrim(json['hodEmail']),
+      caoUserId: _nullableTrim(json['caoUserId']),
+      caoUserName: _nullableTrim(json['caoUserName']),
+      caoEmail: _nullableTrim(json['caoEmail']),
     );
+  }
+
+  static String? _nullableTrim(dynamic value) {
+    if (value == null) {
+      return null;
+    }
+    final String text = value.toString().trim();
+    return text.isEmpty ? null : text;
   }
 
   static String? _combinedPersonName(Map<String, dynamic> json) {

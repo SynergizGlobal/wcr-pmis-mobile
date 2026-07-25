@@ -46,6 +46,8 @@ class _DeleteRfiDialogState extends ConsumerState<DeleteRfiDialog> {
   Future<void> _submit() async {
     setState(() => _loading = true);
     try {
+      // Close/delete require an active RFI login session (cookies).
+      await ref.read(rfiHandoffProvider.future);
       final repository = ref.read(rfiRepositoryProvider);
       if (widget.isClose) {
         await repository.closeRfi(widget.item.rfiId);

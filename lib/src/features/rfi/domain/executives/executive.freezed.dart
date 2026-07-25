@@ -24,6 +24,7 @@ mixin _$Executive {
   String get userName => throw _privateConstructorUsedError;
   String get userId => throw _privateConstructorUsedError;
   String get department => throw _privateConstructorUsedError;
+  String get email => throw _privateConstructorUsedError;
 
   /// Serializes this Executive to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -40,7 +41,7 @@ abstract class $ExecutiveCopyWith<$Res> {
   factory $ExecutiveCopyWith(Executive value, $Res Function(Executive) then) =
       _$ExecutiveCopyWithImpl<$Res, Executive>;
   @useResult
-  $Res call({String userName, String userId, String department});
+  $Res call({String userName, String userId, String department, String email});
 }
 
 /// @nodoc
@@ -61,6 +62,7 @@ class _$ExecutiveCopyWithImpl<$Res, $Val extends Executive>
     Object? userName = null,
     Object? userId = null,
     Object? department = null,
+    Object? email = null,
   }) {
     return _then(
       _value.copyWith(
@@ -75,6 +77,10 @@ class _$ExecutiveCopyWithImpl<$Res, $Val extends Executive>
             department: null == department
                 ? _value.department
                 : department // ignore: cast_nullable_to_non_nullable
+                      as String,
+            email: null == email
+                ? _value.email
+                : email // ignore: cast_nullable_to_non_nullable
                       as String,
           )
           as $Val,
@@ -91,7 +97,7 @@ abstract class _$$ExecutiveImplCopyWith<$Res>
   ) = __$$ExecutiveImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({String userName, String userId, String department});
+  $Res call({String userName, String userId, String department, String email});
 }
 
 /// @nodoc
@@ -111,6 +117,7 @@ class __$$ExecutiveImplCopyWithImpl<$Res>
     Object? userName = null,
     Object? userId = null,
     Object? department = null,
+    Object? email = null,
   }) {
     return _then(
       _$ExecutiveImpl(
@@ -126,6 +133,10 @@ class __$$ExecutiveImplCopyWithImpl<$Res>
             ? _value.department
             : department // ignore: cast_nullable_to_non_nullable
                   as String,
+        email: null == email
+            ? _value.email
+            : email // ignore: cast_nullable_to_non_nullable
+                  as String,
       ),
     );
   }
@@ -138,6 +149,7 @@ class _$ExecutiveImpl implements _Executive {
     required this.userName,
     required this.userId,
     required this.department,
+    this.email = '',
   });
 
   factory _$ExecutiveImpl.fromJson(Map<String, dynamic> json) =>
@@ -149,10 +161,13 @@ class _$ExecutiveImpl implements _Executive {
   final String userId;
   @override
   final String department;
+  @override
+  @JsonKey()
+  final String email;
 
   @override
   String toString() {
-    return 'Executive(userName: $userName, userId: $userId, department: $department)';
+    return 'Executive(userName: $userName, userId: $userId, department: $department, email: $email)';
   }
 
   @override
@@ -164,12 +179,14 @@ class _$ExecutiveImpl implements _Executive {
                 other.userName == userName) &&
             (identical(other.userId, userId) || other.userId == userId) &&
             (identical(other.department, department) ||
-                other.department == department));
+                other.department == department) &&
+            (identical(other.email, email) || other.email == email));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, userName, userId, department);
+  int get hashCode =>
+      Object.hash(runtimeType, userName, userId, department, email);
 
   /// Create a copy of Executive
   /// with the given fields replaced by the non-null parameter values.
@@ -190,6 +207,7 @@ abstract class _Executive implements Executive {
     required final String userName,
     required final String userId,
     required final String department,
+    final String email,
   }) = _$ExecutiveImpl;
 
   factory _Executive.fromJson(Map<String, dynamic> json) =
@@ -201,6 +219,8 @@ abstract class _Executive implements Executive {
   String get userId;
   @override
   String get department;
+  @override
+  String get email;
 
   /// Create a copy of Executive
   /// with the given fields replaced by the non-null parameter values.

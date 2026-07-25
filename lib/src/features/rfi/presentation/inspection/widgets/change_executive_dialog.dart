@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:wcr_pmis_mobile/src/features/rfi/domain/entities/rfi_engineer_option.dart';
 import '../../../providers/inspection/change_executive_provider.dart';
 import '../../../providers/inspection/inspection_provider.dart';
 import '../../../providers/auth/auth_provider.dart';
@@ -26,7 +27,7 @@ class ChangeExecutiveDialog extends ConsumerStatefulWidget {
 
 class _ChangeExecutiveDialogState extends ConsumerState<ChangeExecutiveDialog>
     with SingleTickerProviderStateMixin {
-  String? _selectedPerson;
+  RfiEngineerOption? _selectedPerson;
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
 
@@ -118,7 +119,7 @@ class _ChangeExecutiveDialogState extends ConsumerState<ChangeExecutiveDialog>
                       },
                     )
                   else
-                    DropdownButtonFormField<String>(
+                    DropdownButtonFormField<RfiEngineerOption>(
                       value: _selectedPerson,
                       borderRadius: BorderRadius.circular(16),
                       dropdownColor: scheme.surface,
@@ -140,10 +141,10 @@ class _ChangeExecutiveDialogState extends ConsumerState<ChangeExecutiveDialog>
                         ),
                       ),
                       isExpanded: true,
-                      items: state.engineerNames.map((String name) {
-                        final bool selected = _selectedPerson == name;
-                        return DropdownMenuItem<String>(
-                          value: name,
+                      items: state.engineers.map((RfiEngineerOption engineer) {
+                        final bool selected = _selectedPerson == engineer;
+                        return DropdownMenuItem<RfiEngineerOption>(
+                          value: engineer,
                           child: Row(
                             children: <Widget>[
                               Icon(
@@ -156,7 +157,7 @@ class _ChangeExecutiveDialogState extends ConsumerState<ChangeExecutiveDialog>
                               const SizedBox(width: 14),
                               Expanded(
                                 child: Text(
-                                  name,
+                                  engineer.name,
                                   style: textTheme.bodyLarge?.copyWith(
                                     fontWeight: selected
                                         ? FontWeight.bold
@@ -171,7 +172,7 @@ class _ChangeExecutiveDialogState extends ConsumerState<ChangeExecutiveDialog>
                           ),
                         );
                       }).toList(),
-                      onChanged: (value) {
+                      onChanged: (RfiEngineerOption? value) {
                         setState(() {
                           _selectedPerson = value;
                         });
@@ -212,8 +213,7 @@ class _ChangeExecutiveDialogState extends ConsumerState<ChangeExecutiveDialog>
                                 .read(changeExecutiveProvider.notifier)
                                 .assignExecutive(
                                   rfiId: widget.rfiId,
-                                  personName: _selectedPerson!,
-                                  department: 'engg',
+                                  engineer: _selectedPerson!,
                                 );
 
                             if (!mounted) return;

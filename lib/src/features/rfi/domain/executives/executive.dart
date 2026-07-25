@@ -9,6 +9,7 @@ class Executive with _$Executive {
     required String userName,
     required String userId,
     required String department,
+    @Default('') String email,
   }) = _Executive;
 
   factory Executive.fromJson(Map<String, dynamic> json) =>

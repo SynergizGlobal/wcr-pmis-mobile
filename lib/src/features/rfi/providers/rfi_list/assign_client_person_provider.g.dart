@@ -35,7 +35,7 @@ class _SystemHash {
 const assignExecutiveNamesProvider = AssignExecutiveNamesFamily();
 
 /// See also [assignExecutiveNames].
-class AssignExecutiveNamesFamily extends Family<AsyncValue<List<String>>> {
+class AssignExecutiveNamesFamily extends Family<AsyncValue<List<RfiEngineerOption>>> {
   /// See also [assignExecutiveNames].
   const AssignExecutiveNamesFamily();
 
@@ -68,7 +68,7 @@ class AssignExecutiveNamesFamily extends Family<AsyncValue<List<String>>> {
 
 /// See also [assignExecutiveNames].
 class AssignExecutiveNamesProvider
-    extends AutoDisposeFutureProvider<List<String>> {
+    extends AutoDisposeFutureProvider<List<RfiEngineerOption>> {
   /// See also [assignExecutiveNames].
   AssignExecutiveNamesProvider(String contractId)
     : this._internal(
@@ -99,7 +99,7 @@ class AssignExecutiveNamesProvider
 
   @override
   Override overrideWith(
-    FutureOr<List<String>> Function(AssignExecutiveNamesRef provider) create,
+    FutureOr<List<RfiEngineerOption>> Function(AssignExecutiveNamesRef provider) create,
   ) {
     return ProviderOverride(
       origin: this,
@@ -116,7 +116,7 @@ class AssignExecutiveNamesProvider
   }
 
   @override
-  AutoDisposeFutureProviderElement<List<String>> createElement() {
+  AutoDisposeFutureProviderElement<List<RfiEngineerOption>> createElement() {
     return _AssignExecutiveNamesProviderElement(this);
   }
 
@@ -137,13 +137,13 @@ class AssignExecutiveNamesProvider
 
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
-mixin AssignExecutiveNamesRef on AutoDisposeFutureProviderRef<List<String>> {
+mixin AssignExecutiveNamesRef on AutoDisposeFutureProviderRef<List<RfiEngineerOption>> {
   /// The parameter `contractId` of this provider.
   String get contractId;
 }
 
 class _AssignExecutiveNamesProviderElement
-    extends AutoDisposeFutureProviderElement<List<String>>
+    extends AutoDisposeFutureProviderElement<List<RfiEngineerOption>>
     with AssignExecutiveNamesRef {
   _AssignExecutiveNamesProviderElement(super.provider);
 

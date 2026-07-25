@@ -14,14 +14,21 @@ class RfiApi {
     return response.data as int;
   }
 
-  Future<void> assignClientPerson(
-      String rfiId, String assignedPersonClient) async {
+  Future<void> assignClientPerson({
+    required String rfiId,
+    required String clientUserId,
+    required String assignedPersonClient,
+    required String clientDepartment,
+    required String email,
+  }) async {
     await dio.post(
       "rfi/assign-client-person",
       data: {
         "rfi_Id": rfiId,
+        "clientUserId": clientUserId,
         "assignedPersonClient": assignedPersonClient,
-        "clientDepartment": "",
+        "clientDepartment": clientDepartment,
+        "email": email,
       },
     );
   }

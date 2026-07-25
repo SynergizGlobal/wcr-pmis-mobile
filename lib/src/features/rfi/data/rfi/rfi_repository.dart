@@ -14,8 +14,20 @@ class RfiRepository {
     return api.getRfiCount();
   }
 
-  Future<void> assignClientPerson(String rfiId, String assignedPersonClient) {
-    return api.assignClientPerson(rfiId, assignedPersonClient);
+  Future<void> assignClientPerson({
+    required String rfiId,
+    required String clientUserId,
+    required String assignedPersonClient,
+    required String clientDepartment,
+    required String email,
+  }) {
+    return api.assignClientPerson(
+      rfiId: rfiId,
+      clientUserId: clientUserId,
+      assignedPersonClient: assignedPersonClient,
+      clientDepartment: clientDepartment,
+      email: email,
+    );
   }
 
   Future<void> deleteRfi(int id, String description) {

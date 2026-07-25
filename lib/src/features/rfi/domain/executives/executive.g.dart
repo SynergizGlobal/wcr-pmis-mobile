@@ -11,6 +11,7 @@ _$ExecutiveImpl _$$ExecutiveImplFromJson(Map<String, dynamic> json) =>
       userName: json['userName'] as String,
       userId: json['userId'] as String,
       department: json['department'] as String,
+      email: json['email'] as String? ?? '',
     );
 
 Map<String, dynamic> _$$ExecutiveImplToJson(_$ExecutiveImpl instance) =>
@@ -18,4 +19,5 @@ Map<String, dynamic> _$$ExecutiveImplToJson(_$ExecutiveImpl instance) =>
       'userName': instance.userName,
       'userId': instance.userId,
       'department': instance.department,
+      'email': instance.email,
     };

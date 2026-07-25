@@ -1,4 +1,5 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:wcr_pmis_mobile/src/features/rfi/presentation/providers/rfi_providers.dart';
 
 import '../rfi/rfi_provider.dart';
 
@@ -12,6 +13,7 @@ class DeleteRfiController extends _$DeleteRfiController {
   Future<void> delete(int rfiId, String description) async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
+      await ref.read(rfiHandoffProvider.future);
       final repo = ref.read(rfiRepositoryProvider);
       await repo.deleteRfi(rfiId, description);
     });
@@ -20,6 +22,7 @@ class DeleteRfiController extends _$DeleteRfiController {
   Future<void> close(int rfiId) async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
+      await ref.read(rfiHandoffProvider.future);
       final repo = ref.read(rfiRepositoryProvider);
       await repo.closeRfi(rfiId);
     });
