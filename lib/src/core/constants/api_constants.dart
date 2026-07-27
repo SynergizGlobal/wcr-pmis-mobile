@@ -22,6 +22,10 @@ class ApiConstants {
       '/api/auth/device-tokens/register';
   static const String deviceTokenDeactivatePath =
       '/api/auth/device-tokens/deactivate';
+  static const String emailNotificationStatusPath =
+      '/api/notifications/get-email-status';
+  static const String emailNotificationUpdatePath =
+      '/api/notifications/update-email-status';
   static const String authLogoutPath = '/logout';
   static const String wcrRfiRedirectPath = 'rfi/redirect';
   static const String rfiSsoLoginPath = '/api/auth/login';

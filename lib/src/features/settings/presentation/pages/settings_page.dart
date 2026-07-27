@@ -8,6 +8,7 @@ import 'package:wcr_pmis_mobile/src/core/constants/legal_constants.dart';
 import 'package:wcr_pmis_mobile/src/core/widgets/app_action_card.dart';
 import 'package:wcr_pmis_mobile/src/core/widgets/app_dialog.dart';
 import 'package:wcr_pmis_mobile/src/features/settings/presentation/providers/dashboard_view_mode_provider.dart';
+import 'package:wcr_pmis_mobile/src/features/settings/presentation/providers/email_notification_provider.dart';
 
 class SettingsPage extends ConsumerWidget {
   const SettingsPage({super.key});
@@ -19,6 +20,8 @@ class SettingsPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final ThemeMode themeMode = ref.watch(themeModeProvider);
     final DashboardViewMode viewMode = ref.watch(dashboardViewModeProvider);
+    final AsyncValue<bool> emailNotification =
+        ref.watch(emailNotificationProvider);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Settings')),
@@ -30,6 +33,10 @@ class SettingsPage extends ConsumerWidget {
           _themeSelector(context, ref, themeMode),
           const SizedBox(height: 12),
           _viewModeSelector(context, ref, viewMode),
+          const SizedBox(height: 18),
+          _sectionTitle(context, 'Notifications'),
+          const SizedBox(height: 8),
+          _emailNotificationToggle(context, ref, emailNotification),
           const SizedBox(height: 18),
           _sectionTitle(context, 'General'),
           const SizedBox(height: 8),
@@ -59,6 +66,49 @@ class SettingsPage extends ConsumerWidget {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _emailNotificationToggle(
+    BuildContext context,
+    WidgetRef ref,
+    AsyncValue<bool> emailNotification,
+  ) {
+    final bool? enabled = emailNotification.asData?.value;
+    final bool loading = emailNotification.isLoading && enabled == null;
+    final bool hasError = emailNotification.hasError && enabled == null;
+
+    return AppActionCard(
+      title: hasError ? 'Email notifications (tap to retry)' : 'Email notifications',
+      icon: Icons.email_outlined,
+      onTap: hasError
+          ? () => ref.invalidate(emailNotificationProvider)
+          : null,
+      rightPlaceholder: loading
+          ? const SizedBox(
+              width: 22,
+              height: 22,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          : Switch.adaptive(
+              value: enabled ?? false,
+              onChanged: enabled == null
+                  ? null
+                  : (bool next) async {
+                      final String? error = await ref
+                          .read(emailNotificationProvider.notifier)
+                          .setEnabled(next);
+                      if (error == null || !context.mounted) {
+                        return;
+                      }
+                      await AppDialog.show(
+                        context: context,
+                        title: 'Error',
+                        message: error,
+                        type: AppDialogType.error,
+                      );
+                    },
+            ),
     );
   }
 
