@@ -41,13 +41,14 @@ class AuthController extends StateNotifier<AsyncValue<AuthSession?>> {
     final String token = session?.token.trim() ?? '';
     _ref.read(authTokenProvider.notifier).state =
         token.isEmpty ? null : token;
-    if (token.isEmpty) {
+    _ref.read(wcrSessionActiveProvider.notifier).state = session != null;
+    if (token.isEmpty && session == null) {
       _ref.read(rfiAuthTokenProvider.notifier).state = null;
     }
   }
 
-  void _syncRfiDeviceToken() {
-    unawaited(_deviceTokenSync.ensureRfiSessionAndRegister());
+  void _syncDeviceTokens() {
+    unawaited(_deviceTokenSync.ensureSessionsAndRegister());
   }
 
   Future<Failure?> tryAutoLoginIfRemembered() async {
@@ -80,7 +81,7 @@ class AuthController extends StateNotifier<AsyncValue<AuthSession?>> {
         password: password,
         session: session,
       );
-      _syncRfiDeviceToken();
+      _syncDeviceTokens();
       return null;
     });
   }
@@ -115,7 +116,7 @@ class AuthController extends StateNotifier<AsyncValue<AuthSession?>> {
           password: password,
           session: session,
         );
-        _syncRfiDeviceToken();
+        _syncDeviceTokens();
         return null;
       },
     );
@@ -127,7 +128,7 @@ class AuthController extends StateNotifier<AsyncValue<AuthSession?>> {
     // Clear tray so the next user does not see prior notifications.
     unawaited(NotificationTrayClearer.clearAll());
 
-    // Deactivate on RFI while RFI auth/cookies are still valid.
+    // Deactivate on WCR + RFI while sessions/cookies are still valid.
     await _deviceTokenSync.deactivate();
     try {
       await _remote.logoutSession();

@@ -39,6 +39,8 @@ class FcmNotificationNavigator {
     final String? type = NotificationRouteResolver.typeFromData(data);
     final String? referenceType =
         NotificationRouteResolver.referenceTypeFromData(data);
+    final String? referenceId =
+        NotificationRouteResolver.referenceIdFromData(data);
     final String? notificationUserId =
         NotificationRouteResolver.userIdFromData(data);
     final AuthSession? session =
@@ -47,8 +49,7 @@ class FcmNotificationNavigator {
     if (kDebugMode) {
       debugPrint(
         'FCM tap → type=$type referenceType=$referenceType '
-        'userId=$notificationUserId '
-        'rfiId=${NotificationRouteResolver.rfiIdFromData(data)} '
+        'referenceId=$referenceId userId=$notificationUserId '
         'loggedIn=${session != null}',
       );
     }
@@ -71,6 +72,7 @@ class FcmNotificationNavigator {
         PendingNotificationNav(
       type: type,
       referenceType: referenceType,
+      referenceId: referenceId,
       userId: notificationUserId,
     );
 
@@ -82,6 +84,7 @@ class FcmNotificationNavigator {
       type: type,
       role: RfiUserRole.fromSession(session),
       referenceType: referenceType,
+      referenceId: referenceId,
     );
     scheduleMicrotask(() {
       try {

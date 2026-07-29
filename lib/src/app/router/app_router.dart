@@ -188,6 +188,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             type: pending.type,
             role: RfiUserRole.fromSession(session),
             referenceType: pending.referenceType,
+            referenceId: pending.referenceId,
           );
         }
       }

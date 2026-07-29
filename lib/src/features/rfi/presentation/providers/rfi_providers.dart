@@ -19,7 +19,7 @@ final rfiHandoffProvider = FutureProvider<void>((ref) async {
     final RfiHandoffResult result =
         await ref.read(rfiHandoffDataSourceProvider).performRedirect();
     ref.read(rfiAuthTokenProvider.notifier).state = result.token;
-    unawaited(ref.read(deviceTokenSyncProvider).register());
+    unawaited(ref.read(deviceTokenSyncProvider).registerWhereverReady());
   } on DioException catch (error) {
     if (isWcrUnauthorizedError(error)) {
       await ref.read(authControllerProvider.notifier).logout();

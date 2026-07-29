@@ -1,6 +1,6 @@
 import 'package:wcr_pmis_mobile/src/features/rfi/domain/utils/rfi_user_role.dart';
 
-/// Maps FCM `data.type` (+ optional `referenceType`) to an in-app route.
+/// Maps FCM `data.type` (+ optional `referenceType` / `referenceId`) to a route.
 abstract final class NotificationRouteResolver {
   static const String createdRfiListPath = '/rfi/list/created';
   static const String inspectionPath = '/rfi/inspection';
@@ -9,6 +9,7 @@ abstract final class NotificationRouteResolver {
   static const String rfiHomePath = '/rfi/dashboard';
   static const String wcrHomePath = '/';
   static const String qualityInspectionPath = '/quality-inspections';
+  static const String qualityInspectionDetailPath = '/add-quality-inspection';
   static const String validateDataApprovedPath = '/validate-data?tab=approved';
   static const String validateDataRejectedPath = '/validate-data?tab=rejected';
 
@@ -16,6 +17,7 @@ abstract final class NotificationRouteResolver {
     required String? type,
     required RfiUserRole role,
     String? referenceType,
+    String? referenceId,
   }) {
     switch ((type ?? '').trim().toUpperCase()) {
       case 'RFI_CREATED':
@@ -29,7 +31,7 @@ abstract final class NotificationRouteResolver {
       case 'RFI_DELETED':
         return rfiLogPath;
       case 'QUALITY_INSPECTION':
-        return qualityInspectionPath;
+        return _qualityInspectionPath(referenceId);
       case 'PROGRESS_VALIDATION_APPROVED':
         return validateDataApprovedPath;
       case 'PROGRESS_VALIDATION_REJECTED':
@@ -37,6 +39,15 @@ abstract final class NotificationRouteResolver {
       default:
         return _homeForReferenceType(referenceType);
     }
+  }
+
+  static String _qualityInspectionPath(String? referenceId) {
+    final String id = (referenceId ?? '').trim();
+    if (id.isEmpty) {
+      return qualityInspectionPath;
+    }
+    return '$qualityInspectionDetailPath'
+        '?inspection_id=${Uri.encodeQueryComponent(id)}';
   }
 
   static String _homeForReferenceType(String? referenceType) {
@@ -63,10 +74,18 @@ abstract final class NotificationRouteResolver {
     return value.isEmpty ? null : value;
   }
 
-  static String? rfiIdFromData(Map<String, dynamic> data) {
-    final dynamic raw = data['rfiId'] ?? data['rfi_id'] ?? data['id'];
+  static String? referenceIdFromData(Map<String, dynamic> data) {
+    final dynamic raw = data['referenceId'] ??
+        data['reference_id'] ??
+        data['rfiId'] ??
+        data['rfi_id'] ??
+        data['id'];
     final String value = raw?.toString().trim() ?? '';
     return value.isEmpty ? null : value;
+  }
+
+  static String? rfiIdFromData(Map<String, dynamic> data) {
+    return referenceIdFromData(data);
   }
 
   static String? userIdFromData(Map<String, dynamic> data) {
