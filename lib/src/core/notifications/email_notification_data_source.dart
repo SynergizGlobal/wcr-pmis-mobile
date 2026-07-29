@@ -1,9 +1,9 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:wcr_pmis_mobile/src/core/constants/api_constants.dart';
-import 'package:wcr_pmis_mobile/src/core/network/rfi_dio_client.dart';
+import 'package:wcr_pmis_mobile/src/core/network/dio_client.dart';
 
-/// Email notification preference APIs on RFI (`rfiSystem`).
+/// Email notification preference APIs on WCR (`wcrpmis`).
 class EmailNotificationDataSource {
   const EmailNotificationDataSource(this._dio);
 
@@ -47,5 +47,5 @@ class EmailNotificationDataSource {
 
 final emailNotificationDataSourceProvider =
     Provider<EmailNotificationDataSource>((ref) {
-  return EmailNotificationDataSource(ref.watch(rfiDioProvider));
+  return EmailNotificationDataSource(ref.watch(dioProvider));
 });

@@ -1,7 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:wcr_pmis_mobile/src/core/network/user_friendly_error_message.dart';
 import 'package:wcr_pmis_mobile/src/core/notifications/email_notification_data_source.dart';
-import 'package:wcr_pmis_mobile/src/features/rfi/presentation/providers/rfi_providers.dart';
 
 final emailNotificationProvider =
     AsyncNotifierProvider<EmailNotificationNotifier, bool>(
@@ -11,7 +10,6 @@ final emailNotificationProvider =
 class EmailNotificationNotifier extends AsyncNotifier<bool> {
   @override
   Future<bool> build() async {
-    await ref.watch(rfiHandoffProvider.future);
     return ref.read(emailNotificationDataSourceProvider).getEnabled();
   }
 
@@ -20,7 +18,6 @@ class EmailNotificationNotifier extends AsyncNotifier<bool> {
     final bool? previous = state.valueOrNull;
     state = AsyncData<bool>(enabled);
     try {
-      await ref.read(rfiHandoffProvider.future);
       final bool ok = await ref
           .read(emailNotificationDataSourceProvider)
           .updateEnabled(enabled);
