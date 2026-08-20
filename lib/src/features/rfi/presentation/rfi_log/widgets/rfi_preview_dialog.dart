@@ -164,7 +164,7 @@ class RfiPreviewDialog extends ConsumerWidget {
             children: [
               Expanded(
                 child:
-                    _buildInfoItem('Client:', 'Mumbai Rail Vikas Corporation'),
+                    _buildInfoItem('Client:', 'West Central Railway'),
               ),
               Expanded(
                 child: Column(

@@ -7,7 +7,7 @@ part of 'assign_client_person_provider.dart';
 // **************************************************************************
 
 String _$assignExecutiveNamesHash() =>
-    r'a01a38c893804234f86c182cf78c4799b5062e7c';
+    r'8385a6362d72e83b14bd549eed768bf65c64d8ed';
 
 /// Copied from Dart SDK
 class _SystemHash {
@@ -35,7 +35,8 @@ class _SystemHash {
 const assignExecutiveNamesProvider = AssignExecutiveNamesFamily();
 
 /// See also [assignExecutiveNames].
-class AssignExecutiveNamesFamily extends Family<AsyncValue<List<RfiEngineerOption>>> {
+class AssignExecutiveNamesFamily
+    extends Family<AsyncValue<List<RfiEngineerOption>>> {
   /// See also [assignExecutiveNames].
   const AssignExecutiveNamesFamily();
 
@@ -99,7 +100,8 @@ class AssignExecutiveNamesProvider
 
   @override
   Override overrideWith(
-    FutureOr<List<RfiEngineerOption>> Function(AssignExecutiveNamesRef provider) create,
+    FutureOr<List<RfiEngineerOption>> Function(AssignExecutiveNamesRef provider)
+    create,
   ) {
     return ProviderOverride(
       origin: this,
@@ -137,7 +139,8 @@ class AssignExecutiveNamesProvider
 
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
-mixin AssignExecutiveNamesRef on AutoDisposeFutureProviderRef<List<RfiEngineerOption>> {
+mixin AssignExecutiveNamesRef
+    on AutoDisposeFutureProviderRef<List<RfiEngineerOption>> {
   /// The parameter `contractId` of this provider.
   String get contractId;
 }
@@ -152,7 +155,7 @@ class _AssignExecutiveNamesProviderElement
 }
 
 String _$assignClientPersonControllerHash() =>
-    r'e393799a4126fa89feb67289c3ef2f19ff7a4b98';
+    r'822d8e82d6ce35aa8ca231dc8d0bca72df8ae6e0';
 
 /// See also [AssignClientPersonController].
 @ProviderFor(AssignClientPersonController)

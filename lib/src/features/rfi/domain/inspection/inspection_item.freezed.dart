@@ -1206,6 +1206,7 @@ mixin _$InspectionItem {
   String? get approvalStatus => throw _privateConstructorUsedError;
   String? get dateOfSubmission => throw _privateConstructorUsedError;
   String? get contractorSubmittedOn => throw _privateConstructorUsedError;
+  String? get engineerSubmittedOn => throw _privateConstructorUsedError;
   String? get validationStatus => throw _privateConstructorUsedError;
   @JsonKey(name: 'remarks')
   String? get validationRemarks => throw _privateConstructorUsedError;
@@ -1270,6 +1271,7 @@ abstract class $InspectionItemCopyWith<$Res> {
     String? approvalStatus,
     String? dateOfSubmission,
     String? contractorSubmittedOn,
+    String? engineerSubmittedOn,
     String? validationStatus,
     @JsonKey(name: 'remarks') String? validationRemarks,
     String? validationComments,
@@ -1331,6 +1333,7 @@ class _$InspectionItemCopyWithImpl<$Res, $Val extends InspectionItem>
     Object? approvalStatus = freezed,
     Object? dateOfSubmission = freezed,
     Object? contractorSubmittedOn = freezed,
+    Object? engineerSubmittedOn = freezed,
     Object? validationStatus = freezed,
     Object? validationRemarks = freezed,
     Object? validationComments = freezed,
@@ -1459,6 +1462,10 @@ class _$InspectionItemCopyWithImpl<$Res, $Val extends InspectionItem>
                 ? _value.contractorSubmittedOn
                 : contractorSubmittedOn // ignore: cast_nullable_to_non_nullable
                       as String?,
+            engineerSubmittedOn: freezed == engineerSubmittedOn
+                ? _value.engineerSubmittedOn
+                : engineerSubmittedOn // ignore: cast_nullable_to_non_nullable
+                      as String?,
             validationStatus: freezed == validationStatus
                 ? _value.validationStatus
                 : validationStatus // ignore: cast_nullable_to_non_nullable
@@ -1570,6 +1577,7 @@ abstract class _$$InspectionItemImplCopyWith<$Res>
     String? approvalStatus,
     String? dateOfSubmission,
     String? contractorSubmittedOn,
+    String? engineerSubmittedOn,
     String? validationStatus,
     @JsonKey(name: 'remarks') String? validationRemarks,
     String? validationComments,
@@ -1631,6 +1639,7 @@ class __$$InspectionItemImplCopyWithImpl<$Res>
     Object? approvalStatus = freezed,
     Object? dateOfSubmission = freezed,
     Object? contractorSubmittedOn = freezed,
+    Object? engineerSubmittedOn = freezed,
     Object? validationStatus = freezed,
     Object? validationRemarks = freezed,
     Object? validationComments = freezed,
@@ -1759,6 +1768,10 @@ class __$$InspectionItemImplCopyWithImpl<$Res>
             ? _value.contractorSubmittedOn
             : contractorSubmittedOn // ignore: cast_nullable_to_non_nullable
                   as String?,
+        engineerSubmittedOn: freezed == engineerSubmittedOn
+            ? _value.engineerSubmittedOn
+            : engineerSubmittedOn // ignore: cast_nullable_to_non_nullable
+                  as String?,
         validationStatus: freezed == validationStatus
             ? _value.validationStatus
             : validationStatus // ignore: cast_nullable_to_non_nullable
@@ -1849,6 +1862,7 @@ class _$InspectionItemImpl implements _InspectionItem {
     this.approvalStatus,
     this.dateOfSubmission,
     this.contractorSubmittedOn,
+    this.engineerSubmittedOn,
     this.validationStatus,
     @JsonKey(name: 'remarks') this.validationRemarks,
     this.validationComments,
@@ -1927,6 +1941,8 @@ class _$InspectionItemImpl implements _InspectionItem {
   @override
   final String? contractorSubmittedOn;
   @override
+  final String? engineerSubmittedOn;
+  @override
   final String? validationStatus;
   @override
   @JsonKey(name: 'remarks')
@@ -1982,7 +1998,7 @@ class _$InspectionItemImpl implements _InspectionItem {
 
   @override
   String toString() {
-    return 'InspectionItem(id: $id, element: $element, status: $status, imgClient: $imgClient, contractId: $contractId, contract: $contract, structure: $structure, assignedPersonClient: $assignedPersonClient, action: $action, rfiId: $rfiId, activity: $activity, rfiDescription: $rfiDescription, description: $description, timeOfInspection: $timeOfInspection, nameOfRepresentative: $nameOfRepresentative, inspectionStatus: $inspectionStatus, measurementType: $measurementType, totalQty: $totalQty, createdBy: $createdBy, dateOfInspection: $dateOfInspection, project: $project, work: $work, structureType: $structureType, component: $component, typeOfRFI: $typeOfRFI, approvalStatus: $approvalStatus, dateOfSubmission: $dateOfSubmission, contractorSubmittedOn: $contractorSubmittedOn, validationStatus: $validationStatus, validationRemarks: $validationRemarks, validationComments: $validationComments, validationAuthor: $validationAuthor, validationDate: $validationDate, imgContractor: $imgContractor, representativeReportingToContractor: $representativeReportingToContractor, testResCon: $testResCon, testResEngg: $testResEngg, enclosuresList: $enclosuresList, enclosure: $enclosure, inspectionDetails: $inspectionDetails, measurements: $measurements)';
+    return 'InspectionItem(id: $id, element: $element, status: $status, imgClient: $imgClient, contractId: $contractId, contract: $contract, structure: $structure, assignedPersonClient: $assignedPersonClient, action: $action, rfiId: $rfiId, activity: $activity, rfiDescription: $rfiDescription, description: $description, timeOfInspection: $timeOfInspection, nameOfRepresentative: $nameOfRepresentative, inspectionStatus: $inspectionStatus, measurementType: $measurementType, totalQty: $totalQty, createdBy: $createdBy, dateOfInspection: $dateOfInspection, project: $project, work: $work, structureType: $structureType, component: $component, typeOfRFI: $typeOfRFI, approvalStatus: $approvalStatus, dateOfSubmission: $dateOfSubmission, contractorSubmittedOn: $contractorSubmittedOn, engineerSubmittedOn: $engineerSubmittedOn, validationStatus: $validationStatus, validationRemarks: $validationRemarks, validationComments: $validationComments, validationAuthor: $validationAuthor, validationDate: $validationDate, imgContractor: $imgContractor, representativeReportingToContractor: $representativeReportingToContractor, testResCon: $testResCon, testResEngg: $testResEngg, enclosuresList: $enclosuresList, enclosure: $enclosure, inspectionDetails: $inspectionDetails, measurements: $measurements)';
   }
 
   @override
@@ -2039,6 +2055,8 @@ class _$InspectionItemImpl implements _InspectionItem {
                 other.dateOfSubmission == dateOfSubmission) &&
             (identical(other.contractorSubmittedOn, contractorSubmittedOn) ||
                 other.contractorSubmittedOn == contractorSubmittedOn) &&
+            (identical(other.engineerSubmittedOn, engineerSubmittedOn) ||
+                other.engineerSubmittedOn == engineerSubmittedOn) &&
             (identical(other.validationStatus, validationStatus) ||
                 other.validationStatus == validationStatus) &&
             (identical(other.validationRemarks, validationRemarks) ||
@@ -2109,6 +2127,7 @@ class _$InspectionItemImpl implements _InspectionItem {
     approvalStatus,
     dateOfSubmission,
     contractorSubmittedOn,
+    engineerSubmittedOn,
     validationStatus,
     validationRemarks,
     validationComments,
@@ -2171,6 +2190,7 @@ abstract class _InspectionItem implements InspectionItem {
     final String? approvalStatus,
     final String? dateOfSubmission,
     final String? contractorSubmittedOn,
+    final String? engineerSubmittedOn,
     final String? validationStatus,
     @JsonKey(name: 'remarks') final String? validationRemarks,
     final String? validationComments,
@@ -2246,6 +2266,8 @@ abstract class _InspectionItem implements InspectionItem {
   String? get dateOfSubmission;
   @override
   String? get contractorSubmittedOn;
+  @override
+  String? get engineerSubmittedOn;
   @override
   String? get validationStatus;
   @override

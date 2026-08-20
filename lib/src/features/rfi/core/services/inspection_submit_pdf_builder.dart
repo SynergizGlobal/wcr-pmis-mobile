@@ -13,10 +13,11 @@ import 'package:pdfx/pdfx.dart' as pdfr;
 import '../../domain/inspection/enclosure_checklist.dart';
 import '../../domain/inspection/inspection_item.dart';
 import '../../providers/inspection/inspection_form_state.dart';
+import '../utils/app_assets.dart';
 import '../utils/rfi_preview_fetch.dart';
 import '../utils/user_role.dart';
 
-/// Builds the inspection submit PDF (MRVC-style Part I–III) and appends
+/// Builds the inspection submit PDF (WCR-style Part I–III) and appends
 /// enclosure/supporting PDFs, then checklist tables (online only).
 class InspectionSubmitPdfBuilder {
   static const _margin = 30.0;
@@ -44,7 +45,7 @@ class InspectionSubmitPdfBuilder {
 
     final font = pw.Font.helvetica();
     final fontBold = pw.Font.helveticaBold();
-    final logo = await _loadAssetImage('assets/images/mrvc_logo.png');
+    final logo = await _loadAssetImage(AppAssets.wcrLogo);
 
     final pdf = pw.Document();
     final enclosureNames = _enclosureNames(state, rfi);
@@ -231,13 +232,13 @@ class InspectionSubmitPdfBuilder {
                     child: pw.Column(
                       children: [
                         pw.Text(
-                          'MUMBAI RAILWAY VIKAS CORPORATION LTD.',
+                          'WEST CENTRAL RAILWAY',
                           style: pw.TextStyle(font: fontBold, fontSize: 14),
                           textAlign: pw.TextAlign.center,
                         ),
                         pw.SizedBox(height: 4),
                         pw.Text(
-                          '(A PSU of Government of India, Ministry of Railways)',
+                          '(A Zone of Indian Railways)',
                           style: pw.TextStyle(font: font, fontSize: 9),
                           textAlign: pw.TextAlign.center,
                         ),
@@ -258,7 +259,7 @@ class InspectionSubmitPdfBuilder {
               ),
               pw.SizedBox(height: 4),
               pw.Text(
-                'Engineer :- M/s. Mumbai Railway Vikas Corporation',
+                'Engineer :- West Central Railway',
                 style: pw.TextStyle(font: font, fontSize: 10),
               ),
               pw.SizedBox(height: 4),
@@ -340,8 +341,8 @@ class InspectionSubmitPdfBuilder {
     final remarks = _engineerRemarksForPdf(state);
     final contractorRepName =
         isEngineer ? _resolveContractorRepresentativeName(state, rfi) : '';
-    final mrvcRepName = isEngineer
-        ? _resolveMrvcRepresentativeName(
+    final wcrRepName = isEngineer
+        ? _resolveWcrRepresentativeName(
             rfi: rfi,
             submitUser: submitUser,
             isEngineer: isEngineer,
@@ -380,8 +381,8 @@ class InspectionSubmitPdfBuilder {
           ),
           pw.SizedBox(width: 28),
           _signatureBlock(
-            title: 'MRVC Representative',
-            representativeName: mrvcRepName,
+            title: 'WCR Representative',
+            representativeName: wcrRepName,
             font: font,
             fontBold: fontBold,
           ),
@@ -1028,7 +1029,7 @@ class InspectionSubmitPdfBuilder {
     return '';
   }
 
-  static String _resolveMrvcRepresentativeName({
+  static String _resolveWcrRepresentativeName({
     required InspectionItem rfi,
     required Map<String, dynamic>? submitUser,
     required bool isEngineer,

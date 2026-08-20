@@ -43,14 +43,7 @@ class StartInspectionOnlineScreen extends ConsumerStatefulWidget {
 
 class _StartInspectionOnlineScreenState
     extends ConsumerState<StartInspectionOnlineScreen> {
-  final PageController _pageController = PageController();
   final Set<String> _hiddenReadonlySupportingPaths = <String>{};
-
-  @override
-  void dispose() {
-    _pageController.dispose();
-    super.dispose();
-  }
 
   static const double _footerBtnHeight = 46;
   static const double _footerBtnRadius = 14;
@@ -62,41 +55,12 @@ class _StartInspectionOnlineScreenState
 
   void _goToInspectionStep1(InspectionFormNotifier notifier) {
     notifier.updateStep(1);
-    _pageController.animateToPage(
-      0,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
-    );
-  }
-
-  void _scheduleSyncPageToStep(int step) {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted || !_pageController.hasClients) return;
-      final index = (step - 1).clamp(0, 1);
-      final current = _pageController.page?.round() ?? _pageController.initialPage;
-      if (current != index) {
-        _pageController.jumpToPage(index);
-      }
-    });
   }
 
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(inspectionFormProvider(widget.item.id));
     final notifier = ref.read(inspectionFormProvider(widget.item.id).notifier);
-
-    ref.listen<InspectionFormState>(
-      inspectionFormProvider(widget.item.id),
-      (InspectionFormState? previous, InspectionFormState next) {
-        final stepChanged =
-            previous == null || previous.currentStep != next.currentStep;
-        final finishedInitialLoad =
-            previous != null && previous.isLoading && !next.isLoading;
-        if (stepChanged || finishedInitialLoad) {
-          _scheduleSyncPageToStep(next.currentStep);
-        }
-      },
-    );
 
     final bool isBusy = state.isSubmitting || state.isUploadingFile;
     final ColorScheme scheme = Theme.of(context).colorScheme;
@@ -143,14 +107,11 @@ class _StartInspectionOnlineScreenState
                       color: Theme.of(context).dividerColor,
                     ),
                     Expanded(
-                      child: PageView(
-                        controller: _pageController,
-                        physics: const NeverScrollableScrollPhysics(),
-                        children: [
-                          _buildStep1(context, state, notifier),
-                          _buildStep2(context, state, notifier),
-                        ],
-                      ),
+                      // Show one step at a time. PageView animate/jump during
+                      // rebuild was blanking step 2 and throwing layout asserts.
+                      child: state.currentStep == 1
+                          ? _buildStep1(context, state, notifier)
+                          : _buildStep2(context, state, notifier),
                     ),
                     _buildStickyFooter(context, state, notifier),
                   ],
@@ -586,12 +547,7 @@ class _StartInspectionOnlineScreenState
                   onPressed: _hasCapturedSelfie(state) &&
                           !state.isSubmitting &&
                           !state.isUploadingFile
-                      ? () {
-                          notifier.updateStep(2);
-                          _pageController.animateToPage(1,
-                              duration: const Duration(milliseconds: 300),
-                              curve: Curves.easeInOut);
-                        }
+                      ? () => notifier.updateStep(2)
                       : null,
                   style: RfiTheme.primaryElevated(scheme).copyWith(
                     shape: WidgetStatePropertyAll(
@@ -692,13 +648,18 @@ class _StartInspectionOnlineScreenState
                     ),
                     const SizedBox(width: 8),
                     SizedBox(
+                      width: 48,
                       height: 48,
                       child: ElevatedButton(
                         onPressed: () => notifier.fetchLocation(),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF50589C),
                           foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          padding: EdgeInsets.zero,
+                          // Theme uses Size.fromHeight(54) (= infinite width).
+                          // That breaks inside a Row; keep this button compact.
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8)),
                         ),
@@ -828,11 +789,14 @@ class _StartInspectionOnlineScreenState
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                title,
-                style: RfiTheme.cardTitleStyle(textTheme, scheme)
-                    ?.copyWith(fontSize: 15),
+              Expanded(
+                child: Text(
+                  title,
+                  style: RfiTheme.cardTitleStyle(textTheme, scheme)
+                      ?.copyWith(fontSize: 15),
+                ),
               ),
+              const SizedBox(width: 8),
               ElevatedButton.icon(
                 onPressed: state.isUploadingFile ? null : onUpload,
                 icon: state.isUploadingFile
@@ -847,6 +811,9 @@ class _StartInspectionOnlineScreenState
                 label:
                     Text(state.isUploadingFile ? 'Uploading...' : 'Add Image'),
                 style: RfiTheme.primaryElevated(scheme).copyWith(
+                  // Theme minimumSize is full-width; that breaks inside a Row.
+                  minimumSize: const WidgetStatePropertyAll(Size.zero),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   padding: const WidgetStatePropertyAll(
                     EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   ),
@@ -1173,17 +1140,20 @@ class _StartInspectionOnlineScreenState
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    isClientSide
-                        ? 'Your Supporting Documents'
-                        : 'Supporting Documents',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 15,
-                      color: Color(0xFF50589C),
+                  Expanded(
+                    child: Text(
+                      isClientSide
+                          ? 'Your Supporting Documents'
+                          : 'Supporting Documents',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                        color: Color(0xFF50589C),
+                      ),
                     ),
                   ),
-                  if (isContractorRep || isClientSide)
+                  if (isContractorRep || isClientSide) ...[
+                    const SizedBox(width: 8),
                     ElevatedButton.icon(
                       onPressed: () => _pickFiles(notifier),
                       icon: const Icon(Icons.attach_file, size: 18),
@@ -1195,11 +1165,14 @@ class _StartInspectionOnlineScreenState
                           horizontal: 12,
                           vertical: 8,
                         ),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
                       ),
                     ),
+                  ],
                 ],
               ),
               if (state.supportingDocuments.isNotEmpty) ...[

@@ -9,6 +9,7 @@ import 'package:printing/printing.dart';
 import 'package:pdfx/pdfx.dart' as pdfr;
 import '../../domain/rfi_log/rfi_report_details.dart';
 import '../../core/network/environment.dart';
+import '../../core/utils/app_assets.dart';
 import '../../core/utils/rfi_file_paths.dart';
 import '../../core/utils/rfi_media_utils.dart';
 import '../../core/utils/rfi_preview_fetch.dart';
@@ -38,12 +39,12 @@ class RfiPdfGenerator {
     final info = data.reportDetails;
 
     final List<pw.MemoryImage?> initialAssets = await Future.wait([
-      _loadAssetImage('assets/images/mrvc_logo.png'),
+      _loadAssetImage(AppAssets.wcrLogo),
       _loadImage(info.selfieContractor, dio),
       _loadImage(info.selfieClient, dio),
     ]);
 
-    final mrvcLogo = initialAssets[0];
+    final wcrLogo = initialAssets[0];
     final contractorSelfie = initialAssets[1];
     final inspectorSelfie = initialAssets[2];
 
@@ -158,7 +159,7 @@ class RfiPdfGenerator {
           ];
 
           return [
-            _buildHeaderSection(data, mrvcLogo, font, fontBold),
+            _buildHeaderSection(data, wcrLogo, font, fontBold),
             pw.SizedBox(height: 10),
             pw.Center(
               child: pw.Text(
@@ -521,7 +522,7 @@ class RfiPdfGenerator {
                 crossAxisAlignment: pw.CrossAxisAlignment.start,
                 children: [
                   pw.Text(
-                    'Mumbai Rail Vikas Corporation',
+                    'West Central Railway',
                     style: pw.TextStyle(font: fontBold, fontSize: 16),
                   ),
                   pw.SizedBox(height: 2),
@@ -530,14 +531,14 @@ class RfiPdfGenerator {
                     style: pw.TextStyle(font: font, fontSize: 10, color: PdfColors.grey700),
                   ),
                   pw.Text(
-                    'Mumbai Rail Vikas Corporation',
+                    'West Central Railway',
                     style: pw.TextStyle(font: fontBold, fontSize: 11),
                   ),
                 ],
               ),
             ),
             if (logo != null)
-              pw.Image(logo, height: 40, width: 80, fit: pw.BoxFit.contain),
+              pw.Image(logo, height: 48, width: 48, fit: pw.BoxFit.contain),
           ],
         ),
         pw.SizedBox(height: 5),

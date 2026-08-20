@@ -221,6 +221,7 @@ class _InspectionListScreenState extends ConsumerState<InspectionListScreen> {
               DataColumn(label: Text('Raised Date')),
               DataColumn(label: Text('Scheduled On')),
               DataColumn(label: Text('Contractor\nSubmitted on')),
+              DataColumn(label: Text('Engineer\nSubmitted on')),
               DataColumn(label: Text('Structure')),
               DataColumn(label: Text('Element')),
               DataColumn(label: Text('Activity')),
@@ -256,6 +257,7 @@ class _InspectionListScreenState extends ConsumerState<InspectionListScreen> {
         DataCell(Text(item.dateOfSubmission ?? '---', style: cellStyle)),
         DataCell(Text(_scheduledOn(item), style: cellStyle)),
         DataCell(Text(_contractorSubmittedOn(item), style: cellStyle)),
+        DataCell(Text(_engineerSubmittedOn(item), style: cellStyle)),
         DataCell(Container(
             width: 100,
             padding: const EdgeInsets.symmetric(vertical: 8),
@@ -566,6 +568,12 @@ class _InspectionListScreenState extends ConsumerState<InspectionListScreen> {
 
   String _contractorSubmittedOn(InspectionItem item) {
     final value = item.contractorSubmittedOn;
+    if (value == null || value.isEmpty) return '---';
+    return value;
+  }
+
+  String _engineerSubmittedOn(InspectionItem item) {
+    final value = item.engineerSubmittedOn;
     if (value == null || value.isEmpty) return '---';
     return value;
   }

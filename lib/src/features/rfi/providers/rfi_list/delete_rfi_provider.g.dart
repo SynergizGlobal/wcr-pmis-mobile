@@ -7,7 +7,7 @@ part of 'delete_rfi_provider.dart';
 // **************************************************************************
 
 String _$deleteRfiControllerHash() =>
-    r'775874c76756b94d7f3e6a6b0dd39eaa8411ec5e';
+    r'dd45f7ba71cdd0d10c62a2d7e867183ee6d295bf';
 
 /// See also [DeleteRfiController].
 @ProviderFor(DeleteRfiController)
