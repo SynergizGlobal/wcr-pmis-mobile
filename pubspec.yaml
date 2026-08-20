@@ -1,7 +1,7 @@
 name: wcr_pmis_mobile
 description: "IMPACT-WCR — West Central Railway Project Management Information System."
 publish_to: 'none'
-version: 1.0.4+6
+version: 1.0.5+7
 
 environment:
   sdk: ^3.11.4
