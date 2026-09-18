@@ -2,6 +2,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../core/providers/dio_provider.dart';
 import '../../core/utils/rfi_file_paths.dart';
 import '../../core/utils/rfi_log_pdf_paths.dart';
+import '../../domain/common/filter_option.dart';
 import '../../domain/rfi_log/rfi_log_item.dart';
 import '../../domain/rfi_log/rfi_report_details.dart';
 import 'rfi_log_api.dart';
@@ -27,6 +28,19 @@ class RfiLogRepository {
     }
 
     return rawData.map((json) {
+      final String? projectId = _cleanText(
+        json['projectId'] ?? json['project_id'],
+      );
+      final String? contractId = _cleanText(
+        json['contractId'] ?? json['contract_id'],
+      );
+      final String? projectName = _cleanText(
+        json['projectName'] ?? json['project'],
+      );
+      final String? contractName = _cleanText(
+        json['contractName'] ?? json['contract'],
+      );
+
       return RfiLogItem(
         id: json['id'] is int
             ? json['id'] as int
@@ -50,16 +64,32 @@ class RfiLogRepository {
         status: json['status']?.toString() ?? 'UNKNOWN',
         notes: json['notes']?.toString(),
         validationStatus: json['validationStatus']?.toString(),
-        project: json['project']?.toString() ?? 'N/A',
-        work: json['work']?.toString() ?? 'N/A',
-        contract: json['contractId']?.toString() ?? 
-            json['contract']?.toString() ?? 
-            'N/A',
+        project: projectName ?? projectId ?? '',
+        projectId: projectId,
+        work: _cleanText(json['work']) ?? '',
+        contract: contractName ?? contractId ?? '',
+        contractId: contractId,
         nameOfRepresentative: json['nameOfRepresentative']?.toString() ?? 'N/A',
         txnId: json['txnId']?.toString(),
         estatus: json['estatus']?.toString(),
       );
     }).toList();
+  }
+
+  /// Treats empty / placeholder API values as missing.
+  static String? _cleanText(dynamic value) {
+    if (value == null) return null;
+    final String text = value.toString().trim();
+    if (text.isEmpty) return null;
+    final String lower = text.toLowerCase();
+    if (lower == 'n/a' ||
+        lower == 'na' ||
+        lower == 'null' ||
+        lower == 'undefined' ||
+        lower == '-') {
+      return null;
+    }
+    return text;
   }
 
   Future<RfiReportDetailsData> fetchRfiReportDetails(String id) async {
@@ -146,6 +176,28 @@ class RfiLogRepository {
     } catch (_) {
       return [];
     }
+  }
+
+  Future<List<FilterOption>> getFilterProjects({
+    String project = '',
+    String contract = '',
+  }) async {
+    final raw = await api.filterListProjects(
+      project: project,
+      contract: contract,
+    );
+    return FilterOption.parseList(raw, isProject: true);
+  }
+
+  Future<List<FilterOption>> getFilterContracts({
+    String project = '',
+    String contract = '',
+  }) async {
+    final raw = await api.filterListContracts(
+      project: project,
+      contract: contract,
+    );
+    return FilterOption.parseList(raw, isProject: false);
   }
 
   Future<Map<String, dynamic>> getFilterList() async {

@@ -13,6 +13,37 @@ class RfiLogApi {
     return response.data;
   }
 
+  Future<List<dynamic>> filterListProjects({
+    String project = '',
+    String contract = '',
+  }) async {
+    final response = await dio.post(
+      'api/rfiLog/filter-list-project',
+      data: <String, dynamic>{
+        'project': project,
+        'contract': contract,
+      },
+      options: Options(extra: const <String, dynamic>{'silentError': true}),
+    );
+    return response.data is List ? response.data as List<dynamic> : <dynamic>[];
+  }
+
+  Future<List<dynamic>> filterListContracts({
+    String project = '',
+    String contract = '',
+  }) async {
+    final response = await dio.post(
+      'api/rfiLog/filter-list-contract',
+      data: <String, dynamic>{
+        'project': project,
+        'contract': contract,
+      },
+      options: Options(extra: const <String, dynamic>{'silentError': true}),
+    );
+    return response.data is List ? response.data as List<dynamic> : <dynamic>[];
+  }
+
+  @Deprecated('Use filterListProjects / filterListContracts')
   Future<Map<String, dynamic>> getFilterList() async {
     final response = await dio.get("api/rfiLog/filter-list");
     return (response.data as Map<String, dynamic>?) ?? {};

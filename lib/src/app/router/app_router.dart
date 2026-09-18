@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:wcr_pmis_mobile/src/app/router/go_router_refresh.dart';
+import 'package:wcr_pmis_mobile/src/core/navigation/app_navigator_key.dart';
 import 'package:wcr_pmis_mobile/src/core/notifications/notification_route_resolver.dart';
 import 'package:wcr_pmis_mobile/src/core/notifications/pending_notification_location.dart';
 import 'package:wcr_pmis_mobile/src/features/auth/domain/entities/auth_session.dart';
@@ -58,6 +59,7 @@ final goRouterRefreshProvider = Provider<GoRouterRefresh>((ref) {
 final appRouterProvider = Provider<GoRouter>((ref) {
   final GoRouterRefresh refresh = ref.watch(goRouterRefreshProvider);
   return GoRouter(
+    navigatorKey: appNavigatorKey,
     initialLocation: LoginPage.routePath,
     refreshListenable: refresh,
     redirect: (BuildContext context, GoRouterState state) {

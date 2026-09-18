@@ -21,16 +21,17 @@ mixin _$RfiLogState {
   List<RfiLogItem> get filteredItems => throw _privateConstructorUsedError;
   String get searchQuery => throw _privateConstructorUsedError;
   String get projectFilter => throw _privateConstructorUsedError;
-  String get workFilter => throw _privateConstructorUsedError;
   String get contractFilter => throw _privateConstructorUsedError;
-  List<String> get availableProjects => throw _privateConstructorUsedError;
-  List<String> get availableWorks => throw _privateConstructorUsedError;
-  List<String> get availableContracts => throw _privateConstructorUsedError;
+  List<FilterOption> get availableProjects =>
+      throw _privateConstructorUsedError;
+  List<FilterOption> get availableContracts =>
+      throw _privateConstructorUsedError;
   RfiLogDashboardFilter get dashboardFilter =>
       throw _privateConstructorUsedError;
   int get entriesPerPage => throw _privateConstructorUsedError;
   int get currentPage => throw _privateConstructorUsedError;
   bool get isLoading => throw _privateConstructorUsedError;
+  bool get isLoadingFilters => throw _privateConstructorUsedError;
   String? get errorMessage => throw _privateConstructorUsedError;
 
   /// Create a copy of RfiLogState
@@ -52,15 +53,14 @@ abstract class $RfiLogStateCopyWith<$Res> {
     List<RfiLogItem> filteredItems,
     String searchQuery,
     String projectFilter,
-    String workFilter,
     String contractFilter,
-    List<String> availableProjects,
-    List<String> availableWorks,
-    List<String> availableContracts,
+    List<FilterOption> availableProjects,
+    List<FilterOption> availableContracts,
     RfiLogDashboardFilter dashboardFilter,
     int entriesPerPage,
     int currentPage,
     bool isLoading,
+    bool isLoadingFilters,
     String? errorMessage,
   });
 }
@@ -84,15 +84,14 @@ class _$RfiLogStateCopyWithImpl<$Res, $Val extends RfiLogState>
     Object? filteredItems = null,
     Object? searchQuery = null,
     Object? projectFilter = null,
-    Object? workFilter = null,
     Object? contractFilter = null,
     Object? availableProjects = null,
-    Object? availableWorks = null,
     Object? availableContracts = null,
     Object? dashboardFilter = null,
     Object? entriesPerPage = null,
     Object? currentPage = null,
     Object? isLoading = null,
+    Object? isLoadingFilters = null,
     Object? errorMessage = freezed,
   }) {
     return _then(
@@ -113,10 +112,6 @@ class _$RfiLogStateCopyWithImpl<$Res, $Val extends RfiLogState>
                 ? _value.projectFilter
                 : projectFilter // ignore: cast_nullable_to_non_nullable
                       as String,
-            workFilter: null == workFilter
-                ? _value.workFilter
-                : workFilter // ignore: cast_nullable_to_non_nullable
-                      as String,
             contractFilter: null == contractFilter
                 ? _value.contractFilter
                 : contractFilter // ignore: cast_nullable_to_non_nullable
@@ -124,15 +119,11 @@ class _$RfiLogStateCopyWithImpl<$Res, $Val extends RfiLogState>
             availableProjects: null == availableProjects
                 ? _value.availableProjects
                 : availableProjects // ignore: cast_nullable_to_non_nullable
-                      as List<String>,
-            availableWorks: null == availableWorks
-                ? _value.availableWorks
-                : availableWorks // ignore: cast_nullable_to_non_nullable
-                      as List<String>,
+                      as List<FilterOption>,
             availableContracts: null == availableContracts
                 ? _value.availableContracts
                 : availableContracts // ignore: cast_nullable_to_non_nullable
-                      as List<String>,
+                      as List<FilterOption>,
             dashboardFilter: null == dashboardFilter
                 ? _value.dashboardFilter
                 : dashboardFilter // ignore: cast_nullable_to_non_nullable
@@ -148,6 +139,10 @@ class _$RfiLogStateCopyWithImpl<$Res, $Val extends RfiLogState>
             isLoading: null == isLoading
                 ? _value.isLoading
                 : isLoading // ignore: cast_nullable_to_non_nullable
+                      as bool,
+            isLoadingFilters: null == isLoadingFilters
+                ? _value.isLoadingFilters
+                : isLoadingFilters // ignore: cast_nullable_to_non_nullable
                       as bool,
             errorMessage: freezed == errorMessage
                 ? _value.errorMessage
@@ -173,15 +168,14 @@ abstract class _$$RfiLogStateImplCopyWith<$Res>
     List<RfiLogItem> filteredItems,
     String searchQuery,
     String projectFilter,
-    String workFilter,
     String contractFilter,
-    List<String> availableProjects,
-    List<String> availableWorks,
-    List<String> availableContracts,
+    List<FilterOption> availableProjects,
+    List<FilterOption> availableContracts,
     RfiLogDashboardFilter dashboardFilter,
     int entriesPerPage,
     int currentPage,
     bool isLoading,
+    bool isLoadingFilters,
     String? errorMessage,
   });
 }
@@ -204,15 +198,14 @@ class __$$RfiLogStateImplCopyWithImpl<$Res>
     Object? filteredItems = null,
     Object? searchQuery = null,
     Object? projectFilter = null,
-    Object? workFilter = null,
     Object? contractFilter = null,
     Object? availableProjects = null,
-    Object? availableWorks = null,
     Object? availableContracts = null,
     Object? dashboardFilter = null,
     Object? entriesPerPage = null,
     Object? currentPage = null,
     Object? isLoading = null,
+    Object? isLoadingFilters = null,
     Object? errorMessage = freezed,
   }) {
     return _then(
@@ -233,10 +226,6 @@ class __$$RfiLogStateImplCopyWithImpl<$Res>
             ? _value.projectFilter
             : projectFilter // ignore: cast_nullable_to_non_nullable
                   as String,
-        workFilter: null == workFilter
-            ? _value.workFilter
-            : workFilter // ignore: cast_nullable_to_non_nullable
-                  as String,
         contractFilter: null == contractFilter
             ? _value.contractFilter
             : contractFilter // ignore: cast_nullable_to_non_nullable
@@ -244,15 +233,11 @@ class __$$RfiLogStateImplCopyWithImpl<$Res>
         availableProjects: null == availableProjects
             ? _value._availableProjects
             : availableProjects // ignore: cast_nullable_to_non_nullable
-                  as List<String>,
-        availableWorks: null == availableWorks
-            ? _value._availableWorks
-            : availableWorks // ignore: cast_nullable_to_non_nullable
-                  as List<String>,
+                  as List<FilterOption>,
         availableContracts: null == availableContracts
             ? _value._availableContracts
             : availableContracts // ignore: cast_nullable_to_non_nullable
-                  as List<String>,
+                  as List<FilterOption>,
         dashboardFilter: null == dashboardFilter
             ? _value.dashboardFilter
             : dashboardFilter // ignore: cast_nullable_to_non_nullable
@@ -268,6 +253,10 @@ class __$$RfiLogStateImplCopyWithImpl<$Res>
         isLoading: null == isLoading
             ? _value.isLoading
             : isLoading // ignore: cast_nullable_to_non_nullable
+                  as bool,
+        isLoadingFilters: null == isLoadingFilters
+            ? _value.isLoadingFilters
+            : isLoadingFilters // ignore: cast_nullable_to_non_nullable
                   as bool,
         errorMessage: freezed == errorMessage
             ? _value.errorMessage
@@ -286,20 +275,18 @@ class _$RfiLogStateImpl extends _RfiLogState {
     final List<RfiLogItem> filteredItems = const [],
     this.searchQuery = '',
     this.projectFilter = '',
-    this.workFilter = '',
     this.contractFilter = '',
-    final List<String> availableProjects = const [],
-    final List<String> availableWorks = const [],
-    final List<String> availableContracts = const [],
+    final List<FilterOption> availableProjects = const [],
+    final List<FilterOption> availableContracts = const [],
     this.dashboardFilter = RfiLogDashboardFilter.none,
     this.entriesPerPage = 10,
     this.currentPage = 1,
     this.isLoading = false,
+    this.isLoadingFilters = false,
     this.errorMessage,
   }) : _allItems = allItems,
        _filteredItems = filteredItems,
        _availableProjects = availableProjects,
-       _availableWorks = availableWorks,
        _availableContracts = availableContracts,
        super._();
 
@@ -329,33 +316,21 @@ class _$RfiLogStateImpl extends _RfiLogState {
   final String projectFilter;
   @override
   @JsonKey()
-  final String workFilter;
-  @override
-  @JsonKey()
   final String contractFilter;
-  final List<String> _availableProjects;
+  final List<FilterOption> _availableProjects;
   @override
   @JsonKey()
-  List<String> get availableProjects {
+  List<FilterOption> get availableProjects {
     if (_availableProjects is EqualUnmodifiableListView)
       return _availableProjects;
     // ignore: implicit_dynamic_type
     return EqualUnmodifiableListView(_availableProjects);
   }
 
-  final List<String> _availableWorks;
+  final List<FilterOption> _availableContracts;
   @override
   @JsonKey()
-  List<String> get availableWorks {
-    if (_availableWorks is EqualUnmodifiableListView) return _availableWorks;
-    // ignore: implicit_dynamic_type
-    return EqualUnmodifiableListView(_availableWorks);
-  }
-
-  final List<String> _availableContracts;
-  @override
-  @JsonKey()
-  List<String> get availableContracts {
+  List<FilterOption> get availableContracts {
     if (_availableContracts is EqualUnmodifiableListView)
       return _availableContracts;
     // ignore: implicit_dynamic_type
@@ -375,11 +350,14 @@ class _$RfiLogStateImpl extends _RfiLogState {
   @JsonKey()
   final bool isLoading;
   @override
+  @JsonKey()
+  final bool isLoadingFilters;
+  @override
   final String? errorMessage;
 
   @override
   String toString() {
-    return 'RfiLogState(allItems: $allItems, filteredItems: $filteredItems, searchQuery: $searchQuery, projectFilter: $projectFilter, workFilter: $workFilter, contractFilter: $contractFilter, availableProjects: $availableProjects, availableWorks: $availableWorks, availableContracts: $availableContracts, dashboardFilter: $dashboardFilter, entriesPerPage: $entriesPerPage, currentPage: $currentPage, isLoading: $isLoading, errorMessage: $errorMessage)';
+    return 'RfiLogState(allItems: $allItems, filteredItems: $filteredItems, searchQuery: $searchQuery, projectFilter: $projectFilter, contractFilter: $contractFilter, availableProjects: $availableProjects, availableContracts: $availableContracts, dashboardFilter: $dashboardFilter, entriesPerPage: $entriesPerPage, currentPage: $currentPage, isLoading: $isLoading, isLoadingFilters: $isLoadingFilters, errorMessage: $errorMessage)';
   }
 
   @override
@@ -396,17 +374,11 @@ class _$RfiLogStateImpl extends _RfiLogState {
                 other.searchQuery == searchQuery) &&
             (identical(other.projectFilter, projectFilter) ||
                 other.projectFilter == projectFilter) &&
-            (identical(other.workFilter, workFilter) ||
-                other.workFilter == workFilter) &&
             (identical(other.contractFilter, contractFilter) ||
                 other.contractFilter == contractFilter) &&
             const DeepCollectionEquality().equals(
               other._availableProjects,
               _availableProjects,
-            ) &&
-            const DeepCollectionEquality().equals(
-              other._availableWorks,
-              _availableWorks,
             ) &&
             const DeepCollectionEquality().equals(
               other._availableContracts,
@@ -420,6 +392,8 @@ class _$RfiLogStateImpl extends _RfiLogState {
                 other.currentPage == currentPage) &&
             (identical(other.isLoading, isLoading) ||
                 other.isLoading == isLoading) &&
+            (identical(other.isLoadingFilters, isLoadingFilters) ||
+                other.isLoadingFilters == isLoadingFilters) &&
             (identical(other.errorMessage, errorMessage) ||
                 other.errorMessage == errorMessage));
   }
@@ -431,15 +405,14 @@ class _$RfiLogStateImpl extends _RfiLogState {
     const DeepCollectionEquality().hash(_filteredItems),
     searchQuery,
     projectFilter,
-    workFilter,
     contractFilter,
     const DeepCollectionEquality().hash(_availableProjects),
-    const DeepCollectionEquality().hash(_availableWorks),
     const DeepCollectionEquality().hash(_availableContracts),
     dashboardFilter,
     entriesPerPage,
     currentPage,
     isLoading,
+    isLoadingFilters,
     errorMessage,
   );
 
@@ -458,15 +431,14 @@ abstract class _RfiLogState extends RfiLogState {
     final List<RfiLogItem> filteredItems,
     final String searchQuery,
     final String projectFilter,
-    final String workFilter,
     final String contractFilter,
-    final List<String> availableProjects,
-    final List<String> availableWorks,
-    final List<String> availableContracts,
+    final List<FilterOption> availableProjects,
+    final List<FilterOption> availableContracts,
     final RfiLogDashboardFilter dashboardFilter,
     final int entriesPerPage,
     final int currentPage,
     final bool isLoading,
+    final bool isLoadingFilters,
     final String? errorMessage,
   }) = _$RfiLogStateImpl;
   const _RfiLogState._() : super._();
@@ -480,15 +452,11 @@ abstract class _RfiLogState extends RfiLogState {
   @override
   String get projectFilter;
   @override
-  String get workFilter;
-  @override
   String get contractFilter;
   @override
-  List<String> get availableProjects;
+  List<FilterOption> get availableProjects;
   @override
-  List<String> get availableWorks;
-  @override
-  List<String> get availableContracts;
+  List<FilterOption> get availableContracts;
   @override
   RfiLogDashboardFilter get dashboardFilter;
   @override
@@ -497,6 +465,8 @@ abstract class _RfiLogState extends RfiLogState {
   int get currentPage;
   @override
   bool get isLoading;
+  @override
+  bool get isLoadingFilters;
   @override
   String? get errorMessage;
 

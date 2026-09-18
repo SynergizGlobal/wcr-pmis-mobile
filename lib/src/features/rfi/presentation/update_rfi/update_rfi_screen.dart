@@ -195,31 +195,20 @@ class _UpdateRfiScreenState extends ConsumerState<UpdateRfiScreen> {
                     'Project', state.selectedProject?.name)),
             const SizedBox(width: 16),
             Expanded(
-                child: _buildDisabledField('Work', state.selectedWork?.name)),
+                child: _buildDisabledField(
+                    'Contract', state.selectedContract?.name)),
           ],
         ),
         const SizedBox(height: 16),
         Row(
           children: [
-            Expanded(
-                child: _buildDisabledField(
-                    'Contract', state.selectedContract?.name)),
-            const SizedBox(width: 16),
             Expanded(
                 child: _buildDisabledField(
                     'Structure Type', state.selectedStructureType?.name)),
-          ],
-        ),
-        const SizedBox(height: 16),
-        Row(
-          children: [
+            const SizedBox(width: 16),
             Expanded(
                 child: _buildDisabledField(
                     'Structure', state.selectedStructure?.name)),
-            const SizedBox(width: 16),
-            Expanded(
-                child: _buildDisabledField(
-                    'Component', state.selectedComponent?.name)),
           ],
         ),
         const SizedBox(height: 16),
@@ -227,11 +216,21 @@ class _UpdateRfiScreenState extends ConsumerState<UpdateRfiScreen> {
           children: [
             Expanded(
                 child: _buildDisabledField(
-                    'Element', state.selectedElement?.name)),
+                    'Component', state.selectedComponent?.name)),
             const SizedBox(width: 16),
             Expanded(
                 child: _buildDisabledField(
+                    'Element', state.selectedElement?.name)),
+          ],
+        ),
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            Expanded(
+                child: _buildDisabledField(
                     'Activity', state.selectedActivity?.name)),
+            const SizedBox(width: 16),
+            const Expanded(child: SizedBox.shrink()),
           ],
         ),
         const SizedBox(height: 16),

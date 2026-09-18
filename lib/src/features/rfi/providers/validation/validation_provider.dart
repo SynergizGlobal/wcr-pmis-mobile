@@ -7,30 +7,67 @@ import 'package:wcr_pmis_mobile/src/core/network/user_friendly_error_message.dar
 
 part 'validation_provider.g.dart';
 
+String validationProjectFilterId(ValidationItem item) {
+  final String id = (item.projectId ?? '').trim();
+  if (id.isNotEmpty) return id;
+  return (item.project ?? '').trim();
+}
+
+String validationContractFilterId(ValidationItem item) {
+  final String id = (item.contractId ?? '').trim();
+  if (id.isNotEmpty) return id;
+  return (item.contract ?? '').trim();
+}
+
 @riverpod
 class ValidationNotifier extends _$ValidationNotifier {
   @override
   ValidationState build() {
-    Future.microtask(() {
-      fetchValidations();
-    });
+    Future.microtask(fetchValidations);
     return const ValidationState();
   }
 
+  Future<void> fetchFilterLists() async {
+    state = state.copyWith(isLoadingFilters: true);
+    try {
+      final repository = ref.read(validationRepositoryProvider);
+      final projects = await repository.getFilterProjects(
+        contract: state.contractFilter,
+      );
+      final contracts = await repository.getFilterContracts(
+        project: state.projectFilter,
+      );
+      state = state.copyWith(
+        isLoadingFilters: false,
+        availableProjects: projects,
+        availableContracts: contracts,
+      );
+    } catch (_) {
+      // Keep previous filter lists on failure — never show a popup dialog.
+      state = state.copyWith(isLoadingFilters: false);
+    }
+  }
+
   Future<void> fetchValidations() async {
-    state = state.copyWith(isLoading: true, errorMessage: null);
+    state = state.copyWith(
+      isLoading: true,
+      isLoadingFilters: true,
+      errorMessage: null,
+    );
     try {
       final repository = ref.read(validationRepositoryProvider);
       final items = await repository.getRfiValidations();
 
       state = state.copyWith(
-        isLoading: false,
         allItems: items,
-        filteredItems: _applySearch(items, state.searchQuery),
+        filteredItems: _applyFilters(items),
       );
+      await fetchFilterLists();
+      state = state.copyWith(isLoading: false);
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
+        isLoadingFilters: false,
         errorMessage: userFriendlyErrorMessage(e),
       );
     }
@@ -40,7 +77,100 @@ class ValidationNotifier extends _$ValidationNotifier {
     state = state.copyWith(
       searchQuery: query,
       currentPage: 1,
-      filteredItems: _applySearch(state.allItems, query),
+      filteredItems: _applyFilters(state.allItems, searchOverride: query),
+    );
+  }
+
+  Future<void> setProjectFilter(String? projectId) async {
+    final String value = projectId ?? '';
+    state = state.copyWith(
+      projectFilter: value,
+      contractFilter: '',
+      currentPage: 1,
+      isLoadingFilters: true,
+    );
+    try {
+      final repository = ref.read(validationRepositoryProvider);
+      final contracts = await repository.getFilterContracts(project: value);
+      final projects = await repository.getFilterProjects(contract: '');
+      state = state.copyWith(
+        isLoadingFilters: false,
+        availableProjects: projects,
+        availableContracts: contracts,
+        filteredItems: _applyFilters(state.allItems),
+      );
+    } catch (_) {
+      state = state.copyWith(
+        isLoadingFilters: false,
+        filteredItems: _applyFilters(state.allItems),
+      );
+    }
+  }
+
+  Future<void> setContractFilter(String? contractId) async {
+    final String value = contractId ?? '';
+    state = state.copyWith(
+      contractFilter: value,
+      currentPage: 1,
+      isLoadingFilters: true,
+    );
+    try {
+      final repository = ref.read(validationRepositoryProvider);
+      final projects = await repository.getFilterProjects(
+        project: state.projectFilter,
+        contract: value,
+      );
+      final contracts = await repository.getFilterContracts(
+        project: state.projectFilter,
+        contract: value,
+      );
+      state = state.copyWith(
+        isLoadingFilters: false,
+        availableProjects: projects,
+        availableContracts: contracts,
+        filteredItems: _applyFilters(state.allItems),
+      );
+    } catch (_) {
+      state = state.copyWith(
+        isLoadingFilters: false,
+        filteredItems: _applyFilters(state.allItems),
+      );
+    }
+  }
+
+  Future<void> clearFilters() async {
+    state = state.copyWith(
+      projectFilter: '',
+      contractFilter: '',
+      searchQuery: '',
+      currentPage: 1,
+    );
+    await fetchFilterLists();
+    state = state.copyWith(
+      filteredItems: _applyFilters(state.allItems),
+    );
+  }
+
+  List<ValidationItem> _applyFilters(
+    List<ValidationItem> items, {
+    String? searchOverride,
+  }) {
+    final String project = state.projectFilter;
+    final String contract = state.contractFilter;
+    Iterable<ValidationItem> filtered = items;
+    if (project.isNotEmpty) {
+      filtered = filtered.where(
+        (ValidationItem item) => validationProjectFilterId(item) == project,
+      );
+    }
+    if (contract.isNotEmpty) {
+      filtered = filtered.where(
+        (ValidationItem item) => validationContractFilterId(item) == contract,
+      );
+    }
+    return _applySearch(
+      filtered.toList(),
+      searchOverride ?? state.searchQuery,
     );
   }
 
@@ -53,7 +183,11 @@ class ValidationNotifier extends _$ValidationNotifier {
           (item.status?.toLowerCase().contains(lowerQuery) ?? false) ||
           (item.remarks?.toLowerCase().contains(lowerQuery) ?? false) ||
           (item.comment?.toLowerCase().contains(lowerQuery) ?? false) ||
-          (item.valdationAuth?.toLowerCase().contains(lowerQuery) ?? false);
+          (item.valdationAuth?.toLowerCase().contains(lowerQuery) ?? false) ||
+          (item.project?.toLowerCase().contains(lowerQuery) ?? false) ||
+          (item.contract?.toLowerCase().contains(lowerQuery) ?? false) ||
+          (item.projectId?.toLowerCase().contains(lowerQuery) ?? false) ||
+          (item.contractId?.toLowerCase().contains(lowerQuery) ?? false);
     }).toList();
   }
 
@@ -88,7 +222,9 @@ class ValidationNotifier extends _$ValidationNotifier {
     final comment = state.pendingComments[longRfiId] ?? '';
 
     if (remarks == 'Select' || comment.isEmpty) {
-      state = state.copyWith(actionErrorMessage: 'Remarks and Comments are mandatory');
+      state = state.copyWith(
+        actionErrorMessage: 'Remarks and Comments are mandatory',
+      );
       return false;
     }
 
@@ -96,11 +232,11 @@ class ValidationNotifier extends _$ValidationNotifier {
     try {
       final repository = ref.read(validationRepositoryProvider);
       await repository.validateRfi({
-        "long_rfi_id": longRfiId,
-        "long_rfi_validate_id": longRfiValidateId,
-        "remarks": remarks,
-        "action": action,
-        "comment": comment,
+        'long_rfi_id': longRfiId,
+        'long_rfi_validate_id': longRfiValidateId,
+        'remarks': remarks,
+        'action': action,
+        'comment': comment,
       });
 
       final newRemarks = Map<int, String>.from(state.pendingRemarks);

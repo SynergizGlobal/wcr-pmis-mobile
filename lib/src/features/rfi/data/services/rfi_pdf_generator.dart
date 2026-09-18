@@ -581,12 +581,13 @@ class RfiPdfGenerator {
         _buildTwoColRow('Consultant:', 'N/A', 'RFI ID:', info.rfiId, font, fontBold),
         _buildTwoColRow('Project:', info.project, 'Date of Submission:',
             info.dateOfCreation, font, fontBold),
-        _buildTwoColRow('Work:', info.work, 'Contract:', info.contract, font, fontBold),
         _buildTwoColRow(
-            'Contract ID:', info.contractId, 'Structure Type:', info.structureType, font, fontBold),
+            'Contract:', info.contract, 'Contract ID:', info.contractId, font, fontBold),
         _buildTwoColRow(
-            'Structure:', info.structure, 'Component:', info.component, font, fontBold),
-        _buildTwoColRow('Element:', info.element, 'Activity:', info.activity, font, fontBold),
+            'Structure Type:', info.structureType, 'Structure:', info.structure, font, fontBold),
+        _buildTwoColRow(
+            'Component:', info.component, 'Element:', info.element, font, fontBold),
+        _buildTwoColRow('Activity:', info.activity, '', '', font, fontBold),
         _buildTwoColRow('RFI Description:', info.rfiDescription, 'Type of RFI:',
             info.typeOfRfi, font, fontBold),
         _buildTwoColRow('Enclosures:', info.enclosures, 'Contractor:', info.contractor,

@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:wcr_pmis_mobile/src/core/network/rfi_dio_client.dart';
 import 'package:wcr_pmis_mobile/src/features/rfi/data/mappers/rfi_dropdown_mapper.dart';
+import 'package:wcr_pmis_mobile/src/features/rfi/domain/common/filter_option.dart';
 import 'package:wcr_pmis_mobile/src/features/rfi/domain/entities/rfi_dropdown_item.dart';
 import 'package:wcr_pmis_mobile/src/features/rfi/domain/entities/rfi_list_item.dart';
 import 'package:wcr_pmis_mobile/src/features/rfi/domain/entities/rfi_status_counts.dart';
@@ -51,6 +52,51 @@ class RfiRemoteDataSource {
               RfiListItem.fromJson(Map<String, dynamic>.from(row)),
         )
         .toList();
+  }
+
+  /// WCR list filters: separate project / contract endpoints.
+  Future<List<FilterOption>> fetchListFilterProjects({
+    required String requestedFormName,
+    String contractId = '',
+  }) async {
+    final Response<dynamic> response = await _dio.get<dynamic>(
+      '/rfi/filter-project',
+      queryParameters: <String, dynamic>{
+        'contract': contractId,
+        'requestedFormName': requestedFormName,
+      },
+      options: Options(extra: const <String, dynamic>{'silentError': true}),
+    );
+    return FilterOption.parseList(response.data, isProject: true);
+  }
+
+  Future<List<FilterOption>> fetchListFilterContracts({
+    required String requestedFormName,
+    String projectId = '',
+  }) async {
+    final Response<dynamic> response = await _dio.get<dynamic>(
+      '/rfi/filter-contract',
+      queryParameters: <String, dynamic>{
+        'project': projectId,
+        'requestedFormName': requestedFormName,
+      },
+      options: Options(extra: const <String, dynamic>{'silentError': true}),
+    );
+    return FilterOption.parseList(response.data, isProject: false);
+  }
+
+  @Deprecated('Use fetchListFilterProjects / fetchListFilterContracts')
+  Future<List<FilterOption>> fetchListFilterOptions({
+    required String requestedFormName,
+    String projectId = '',
+  }) {
+    if (projectId.trim().isEmpty) {
+      return fetchListFilterProjects(requestedFormName: requestedFormName);
+    }
+    return fetchListFilterContracts(
+      requestedFormName: requestedFormName,
+      projectId: projectId,
+    );
   }
 
   Future<void> deleteRfi(int id, String description) async {

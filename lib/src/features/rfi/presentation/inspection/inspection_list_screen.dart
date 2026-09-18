@@ -22,6 +22,7 @@ import 'package:wcr_pmis_mobile/src/core/network/user_friendly_error_message.dar
 import 'package:wcr_pmis_mobile/src/core/widgets/wcr_session_expired_error_listener.dart';
 import 'package:wcr_pmis_mobile/src/features/rfi/presentation/rfi_theme.dart';
 import '../../core/widgets/app_dropdown.dart';
+import '../../domain/common/filter_option.dart';
 import '../../domain/inspection/inspection_list_mode.dart';
 
 class InspectionListScreen extends ConsumerStatefulWidget {
@@ -94,30 +95,32 @@ class _InspectionListScreenState extends ConsumerState<InspectionListScreen> {
                             Row(
                               children: [
                                 Expanded(
-                                  child: AppDropdown<String>(
+                                  child: AppDropdown<FilterOption>(
                                     label: 'Project',
                                     hint: 'All Projects',
-                                    value: state.projectFilter.isEmpty
-                                        ? null
-                                        : state.projectFilter,
+                                    value: _optionById(
+                                      state.availableProjects,
+                                      state.projectFilter,
+                                    ),
                                     items: state.availableProjects,
-                                    onChanged: (String? value) =>
-                                        notifier.setProjectFilter(value),
-                                    itemLabel: (String v) => v,
+                                    onChanged: (FilterOption? value) =>
+                                        notifier.setProjectFilter(value?.id),
+                                    itemLabel: (FilterOption v) => v.name,
                                   ),
                                 ),
                                 const SizedBox(width: 10),
                                 Expanded(
-                                  child: AppDropdown<String>(
+                                  child: AppDropdown<FilterOption>(
                                     label: 'Contract',
                                     hint: 'All Contracts',
-                                    value: state.contractFilter.isEmpty
-                                        ? null
-                                        : state.contractFilter,
+                                    value: _optionById(
+                                      state.availableContracts,
+                                      state.contractFilter,
+                                    ),
                                     items: state.availableContracts,
-                                    onChanged: (String? value) =>
-                                        notifier.setContractFilter(value),
-                                    itemLabel: (String v) => v,
+                                    onChanged: (FilterOption? value) =>
+                                        notifier.setContractFilter(value?.id),
+                                    itemLabel: (FilterOption v) => v.name,
                                   ),
                                 ),
                               ],
@@ -645,5 +648,13 @@ class _InspectionListScreenState extends ConsumerState<InspectionListScreen> {
     } catch (e) {
       return false;
     }
+  }
+
+  FilterOption? _optionById(List<FilterOption> options, String id) {
+    if (id.trim().isEmpty) return null;
+    for (final FilterOption option in options) {
+      if (option.id == id) return option;
+    }
+    return null;
   }
 }

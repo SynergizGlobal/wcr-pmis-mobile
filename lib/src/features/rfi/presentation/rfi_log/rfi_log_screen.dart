@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/services/pdf_download_service.dart';
 import '../../providers/rfi_log/rfi_log_provider.dart';
 import 'package:wcr_pmis_mobile/src/features/rfi/presentation/rfi_theme.dart';
+import '../../domain/common/filter_option.dart';
 import '../../domain/rfi_log/rfi_log_dashboard_filter.dart';
 import '../../domain/rfi_log/rfi_log_item.dart';
 import '../../core/widgets/app_dropdown.dart';
@@ -49,7 +50,9 @@ class _RfiLogScreenState extends ConsumerState<RfiLogScreen> {
       ),
       body: SafeArea(
         top: false,
-        child: RefreshIndicator(
+        child: state.isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : RefreshIndicator(
           onRefresh: () => notifier.fetchRfiLogs(),
           child: Column(
             children: [
@@ -108,65 +111,32 @@ class _RfiLogScreenState extends ConsumerState<RfiLogScreen> {
                             Row(
                               children: [
                                 Expanded(
-                                  child: AppDropdown<String>(
+                                  child: AppDropdown<FilterOption>(
                                     label: 'Project',
                                     hint: 'All Projects',
-                                    value: state.projectFilter.isEmpty
-                                        ? null
-                                        : state.projectFilter,
-                                    items: state.projectNames,
-                                    onChanged: (val) =>
-                                        notifier.setProjectFilter(val ?? ''),
-                                    enabled: true,
-                                    itemLabel: (v) => v,
+                                    value: _optionById(
+                                      state.availableProjects,
+                                      state.projectFilter,
+                                    ),
+                                    items: state.availableProjects,
+                                    onChanged: (FilterOption? val) =>
+                                        notifier.setProjectFilter(val?.id),
+                                    itemLabel: (FilterOption v) => v.name,
                                   ),
                                 ),
                                 const SizedBox(width: 10),
                                 Expanded(
-                                  child: AppDropdown<String>(
-                                    label: 'Work',
-                                    hint: state.projectFilter.isEmpty
-                                        ? 'Select Project first'
-                                        : 'All Works',
-                                    value: state.workFilter.isEmpty
-                                        ? null
-                                        : state.workFilter,
-                                    items: state.projectFilter.isEmpty
-                                        ? []
-                                        : state.workNames,
-                                    onChanged: (val) =>
-                                        notifier.setWorkFilter(val ?? ''),
-                                    enabled: state.projectFilter.isNotEmpty,
-                                    itemLabel: (v) => v,
-                                  ),
-                                ),
-                                const SizedBox(width: 10),
-                                Expanded(
-                                  child: AppDropdown<String>(
+                                  child: AppDropdown<FilterOption>(
                                     label: 'Contract',
-                                    hint: state.filtersFromDataset
-                                        ? (state.projectFilter.isEmpty
-                                            ? 'Select Project first'
-                                            : 'All Contracts')
-                                        : (state.workFilter.isEmpty
-                                            ? 'Select Work first'
-                                            : 'All Contracts'),
-                                    value: state.contractFilter.isEmpty
-                                        ? null
-                                        : state.contractFilter,
-                                    items: state.filtersFromDataset
-                                        ? (state.projectFilter.isEmpty
-                                            ? []
-                                            : state.contractNames)
-                                        : (state.workFilter.isEmpty
-                                            ? []
-                                            : state.contractNames),
-                                    onChanged: (val) =>
-                                        notifier.setContractFilter(val ?? ''),
-                                    enabled: state.filtersFromDataset
-                                        ? state.projectFilter.isNotEmpty
-                                        : state.workFilter.isNotEmpty,
-                                    itemLabel: (v) => v,
+                                    hint: 'All Contracts',
+                                    value: _optionById(
+                                      state.availableContracts,
+                                      state.contractFilter,
+                                    ),
+                                    items: state.availableContracts,
+                                    onChanged: (FilterOption? val) =>
+                                        notifier.setContractFilter(val?.id),
+                                    itemLabel: (FilterOption v) => v.name,
                                   ),
                                 ),
                               ],
@@ -199,11 +169,7 @@ class _RfiLogScreenState extends ConsumerState<RfiLogScreen> {
                       ),
                     ),
 
-                    if (state.isLoading)
-                      const SliverFillRemaining(
-                        child: Center(child: CircularProgressIndicator()),
-                      )
-                    else if (state.errorMessage != null)
+                    if (state.errorMessage != null)
                       SliverFillRemaining(
                         child: ErrorStateWidget(
                           onRetry: () => notifier.fetchRfiLogs(),
@@ -435,5 +401,13 @@ class _RfiLogScreenState extends ConsumerState<RfiLogScreen> {
 
     final eStatus = (item.estatus ?? '').trim().toUpperCase();
     return eStatus == 'ENGG_SUCCESS' || eStatus == 'CON_SUCCESS';
+  }
+
+  FilterOption? _optionById(List<FilterOption> options, String id) {
+    if (id.trim().isEmpty) return null;
+    for (final FilterOption option in options) {
+      if (option.id == id) return option;
+    }
+    return null;
   }
 }

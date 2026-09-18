@@ -24,11 +24,14 @@ mixin _$InspectionState {
   String get searchQuery => throw _privateConstructorUsedError;
   String get projectFilter => throw _privateConstructorUsedError;
   String get contractFilter => throw _privateConstructorUsedError;
-  List<String> get availableProjects => throw _privateConstructorUsedError;
-  List<String> get availableContracts => throw _privateConstructorUsedError;
+  List<FilterOption> get availableProjects =>
+      throw _privateConstructorUsedError;
+  List<FilterOption> get availableContracts =>
+      throw _privateConstructorUsedError;
   InspectionListMode get listMode => throw _privateConstructorUsedError;
   int get currentPage => throw _privateConstructorUsedError;
   int get rowsPerPage => throw _privateConstructorUsedError;
+  bool get isLoadingFilters => throw _privateConstructorUsedError;
 
   /// Create a copy of InspectionState
   /// with the given fields replaced by the non-null parameter values.
@@ -52,11 +55,12 @@ abstract class $InspectionStateCopyWith<$Res> {
     String searchQuery,
     String projectFilter,
     String contractFilter,
-    List<String> availableProjects,
-    List<String> availableContracts,
+    List<FilterOption> availableProjects,
+    List<FilterOption> availableContracts,
     InspectionListMode listMode,
     int currentPage,
     int rowsPerPage,
+    bool isLoadingFilters,
   });
 }
 
@@ -87,6 +91,7 @@ class _$InspectionStateCopyWithImpl<$Res, $Val extends InspectionState>
     Object? listMode = null,
     Object? currentPage = null,
     Object? rowsPerPage = null,
+    Object? isLoadingFilters = null,
   }) {
     return _then(
       _value.copyWith(
@@ -121,11 +126,11 @@ class _$InspectionStateCopyWithImpl<$Res, $Val extends InspectionState>
             availableProjects: null == availableProjects
                 ? _value.availableProjects
                 : availableProjects // ignore: cast_nullable_to_non_nullable
-                      as List<String>,
+                      as List<FilterOption>,
             availableContracts: null == availableContracts
                 ? _value.availableContracts
                 : availableContracts // ignore: cast_nullable_to_non_nullable
-                      as List<String>,
+                      as List<FilterOption>,
             listMode: null == listMode
                 ? _value.listMode
                 : listMode // ignore: cast_nullable_to_non_nullable
@@ -138,6 +143,10 @@ class _$InspectionStateCopyWithImpl<$Res, $Val extends InspectionState>
                 ? _value.rowsPerPage
                 : rowsPerPage // ignore: cast_nullable_to_non_nullable
                       as int,
+            isLoadingFilters: null == isLoadingFilters
+                ? _value.isLoadingFilters
+                : isLoadingFilters // ignore: cast_nullable_to_non_nullable
+                      as bool,
           )
           as $Val,
     );
@@ -161,11 +170,12 @@ abstract class _$$InspectionStateImplCopyWith<$Res>
     String searchQuery,
     String projectFilter,
     String contractFilter,
-    List<String> availableProjects,
-    List<String> availableContracts,
+    List<FilterOption> availableProjects,
+    List<FilterOption> availableContracts,
     InspectionListMode listMode,
     int currentPage,
     int rowsPerPage,
+    bool isLoadingFilters,
   });
 }
 
@@ -195,6 +205,7 @@ class __$$InspectionStateImplCopyWithImpl<$Res>
     Object? listMode = null,
     Object? currentPage = null,
     Object? rowsPerPage = null,
+    Object? isLoadingFilters = null,
   }) {
     return _then(
       _$InspectionStateImpl(
@@ -229,11 +240,11 @@ class __$$InspectionStateImplCopyWithImpl<$Res>
         availableProjects: null == availableProjects
             ? _value._availableProjects
             : availableProjects // ignore: cast_nullable_to_non_nullable
-                  as List<String>,
+                  as List<FilterOption>,
         availableContracts: null == availableContracts
             ? _value._availableContracts
             : availableContracts // ignore: cast_nullable_to_non_nullable
-                  as List<String>,
+                  as List<FilterOption>,
         listMode: null == listMode
             ? _value.listMode
             : listMode // ignore: cast_nullable_to_non_nullable
@@ -246,6 +257,10 @@ class __$$InspectionStateImplCopyWithImpl<$Res>
             ? _value.rowsPerPage
             : rowsPerPage // ignore: cast_nullable_to_non_nullable
                   as int,
+        isLoadingFilters: null == isLoadingFilters
+            ? _value.isLoadingFilters
+            : isLoadingFilters // ignore: cast_nullable_to_non_nullable
+                  as bool,
       ),
     );
   }
@@ -262,11 +277,12 @@ class _$InspectionStateImpl implements _InspectionState {
     this.searchQuery = '',
     this.projectFilter = '',
     this.contractFilter = '',
-    final List<String> availableProjects = const [],
-    final List<String> availableContracts = const [],
+    final List<FilterOption> availableProjects = const [],
+    final List<FilterOption> availableContracts = const [],
     this.listMode = InspectionListMode.all,
     this.currentPage = 1,
     this.rowsPerPage = 5,
+    this.isLoadingFilters = false,
   }) : _allItems = allItems,
        _filteredItems = filteredItems,
        _availableProjects = availableProjects,
@@ -304,20 +320,20 @@ class _$InspectionStateImpl implements _InspectionState {
   @override
   @JsonKey()
   final String contractFilter;
-  final List<String> _availableProjects;
+  final List<FilterOption> _availableProjects;
   @override
   @JsonKey()
-  List<String> get availableProjects {
+  List<FilterOption> get availableProjects {
     if (_availableProjects is EqualUnmodifiableListView)
       return _availableProjects;
     // ignore: implicit_dynamic_type
     return EqualUnmodifiableListView(_availableProjects);
   }
 
-  final List<String> _availableContracts;
+  final List<FilterOption> _availableContracts;
   @override
   @JsonKey()
-  List<String> get availableContracts {
+  List<FilterOption> get availableContracts {
     if (_availableContracts is EqualUnmodifiableListView)
       return _availableContracts;
     // ignore: implicit_dynamic_type
@@ -333,10 +349,13 @@ class _$InspectionStateImpl implements _InspectionState {
   @override
   @JsonKey()
   final int rowsPerPage;
+  @override
+  @JsonKey()
+  final bool isLoadingFilters;
 
   @override
   String toString() {
-    return 'InspectionState(allItems: $allItems, filteredItems: $filteredItems, isLoading: $isLoading, error: $error, searchQuery: $searchQuery, projectFilter: $projectFilter, contractFilter: $contractFilter, availableProjects: $availableProjects, availableContracts: $availableContracts, listMode: $listMode, currentPage: $currentPage, rowsPerPage: $rowsPerPage)';
+    return 'InspectionState(allItems: $allItems, filteredItems: $filteredItems, isLoading: $isLoading, error: $error, searchQuery: $searchQuery, projectFilter: $projectFilter, contractFilter: $contractFilter, availableProjects: $availableProjects, availableContracts: $availableContracts, listMode: $listMode, currentPage: $currentPage, rowsPerPage: $rowsPerPage, isLoadingFilters: $isLoadingFilters)';
   }
 
   @override
@@ -371,7 +390,9 @@ class _$InspectionStateImpl implements _InspectionState {
             (identical(other.currentPage, currentPage) ||
                 other.currentPage == currentPage) &&
             (identical(other.rowsPerPage, rowsPerPage) ||
-                other.rowsPerPage == rowsPerPage));
+                other.rowsPerPage == rowsPerPage) &&
+            (identical(other.isLoadingFilters, isLoadingFilters) ||
+                other.isLoadingFilters == isLoadingFilters));
   }
 
   @override
@@ -389,6 +410,7 @@ class _$InspectionStateImpl implements _InspectionState {
     listMode,
     currentPage,
     rowsPerPage,
+    isLoadingFilters,
   );
 
   /// Create a copy of InspectionState
@@ -412,11 +434,12 @@ abstract class _InspectionState implements InspectionState {
     final String searchQuery,
     final String projectFilter,
     final String contractFilter,
-    final List<String> availableProjects,
-    final List<String> availableContracts,
+    final List<FilterOption> availableProjects,
+    final List<FilterOption> availableContracts,
     final InspectionListMode listMode,
     final int currentPage,
     final int rowsPerPage,
+    final bool isLoadingFilters,
   }) = _$InspectionStateImpl;
 
   @override
@@ -434,15 +457,17 @@ abstract class _InspectionState implements InspectionState {
   @override
   String get contractFilter;
   @override
-  List<String> get availableProjects;
+  List<FilterOption> get availableProjects;
   @override
-  List<String> get availableContracts;
+  List<FilterOption> get availableContracts;
   @override
   InspectionListMode get listMode;
   @override
   int get currentPage;
   @override
   int get rowsPerPage;
+  @override
+  bool get isLoadingFilters;
 
   /// Create a copy of InspectionState
   /// with the given fields replaced by the non-null parameter values.

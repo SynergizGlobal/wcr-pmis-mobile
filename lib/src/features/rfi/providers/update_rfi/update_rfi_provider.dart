@@ -22,13 +22,20 @@ class UpdateRfiForm extends _$UpdateRfiForm {
     final defaultSubmissionDate =
         "${now.day.toString().padLeft(2, '0')}-${now.month.toString().padLeft(2, '0')}-${now.year}";
 
+    final String projectId = (item.projectId ?? '').trim().isNotEmpty
+        ? item.projectId!.trim()
+        : item.project;
+    final String contractId = (item.contractId ?? '').trim().isNotEmpty
+        ? item.contractId!.trim()
+        : (item.contract ?? '');
+
     state = state.copyWith(
       initialItem: item,
 
-      selectedProject: DropdownItem(id: item.project, name: item.project),
+      selectedProject: DropdownItem(id: projectId, name: item.project),
       selectedWork: DropdownItem(id: item.work, name: item.work),
       selectedContract:
-          DropdownItem(id: item.contract ?? '', name: item.contract ?? ''),
+          DropdownItem(id: contractId, name: item.contract ?? ''),
       selectedStructureType: DropdownItem(
           id: 'Unknown', name: 'Unknown'), // Not explicitly provided
       selectedStructure: DropdownItem(id: item.structure, name: item.structure),
@@ -159,8 +166,10 @@ class UpdateRfiForm extends _$UpdateRfiForm {
 
       final data = {
         "project": state.selectedProject?.name ?? "",
+        "projectId": state.selectedProject?.id ?? "",
         "work": state.selectedWork?.name ?? "",
         "contract": state.selectedContract?.name ?? "",
+        "contractId": state.selectedContract?.id ?? "",
         "structureType": state.selectedStructureType?.name ?? "",
         "structure": state.selectedStructure?.name ?? "",
         "component": state.selectedComponent?.name ?? "",

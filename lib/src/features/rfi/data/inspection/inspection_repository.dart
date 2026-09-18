@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:wcr_pmis_mobile/src/core/network/user_friendly_error_message.dart';
 import '../../core/providers/dio_provider.dart';
+import '../../domain/common/filter_option.dart';
 import '../../domain/inspection/inspection_item.dart';
 import 'inspection_api.dart';
 
@@ -59,6 +60,8 @@ class InspectionRepository {
                   Map<String, dynamic>.from(json);
               row['project'] ??= row['projectName'];
               row['contract'] ??= row['contractName'];
+              row['projectId'] ??= row['project_id'];
+              row['contractId'] ??= row['contract_id'];
               return InspectionItem.fromJson(row);
             })
             .toList();
@@ -72,10 +75,10 @@ class InspectionRepository {
     }
   }
 
-  Future<List<String>> getFilterProjects({String contract = ''}) async {
+  Future<List<FilterOption>> getFilterProjects({String contract = ''}) async {
     try {
       final response = await _api.getFilterProjects(contract: contract);
-      return _parseNameList(response.data);
+      return FilterOption.parseList(response.data, isProject: true);
     } on DioException {
       rethrow;
     } catch (e) {
@@ -83,40 +86,15 @@ class InspectionRepository {
     }
   }
 
-  Future<List<String>> getFilterContracts({String project = ''}) async {
+  Future<List<FilterOption>> getFilterContracts({String project = ''}) async {
     try {
       final response = await _api.getFilterContracts(project: project);
-      return _parseNameList(response.data);
+      return FilterOption.parseList(response.data, isProject: false);
     } on DioException {
       rethrow;
     } catch (e) {
       throw Exception(userFriendlyErrorMessage(e));
     }
-  }
-
-  List<String> _parseNameList(dynamic data) {
-    if (data is! List) {
-      return const <String>[];
-    }
-    final List<String> names = <String>[];
-    for (final dynamic entry in data) {
-      if (entry is String && entry.trim().isNotEmpty) {
-        names.add(entry.trim());
-      } else if (entry is Map) {
-        final String name = (entry['projectName'] ??
-                entry['contractName'] ??
-                entry['name'] ??
-                entry['label'] ??
-                '')
-            .toString()
-            .trim();
-        if (name.isNotEmpty) {
-          names.add(name);
-        }
-      }
-    }
-    names.sort();
-    return names;
   }
 
   Future<InspectionItem> getRfiDetails(int id) async {

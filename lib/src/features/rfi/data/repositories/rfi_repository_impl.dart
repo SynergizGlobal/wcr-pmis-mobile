@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:wcr_pmis_mobile/src/features/rfi/data/datasources/rfi_remote_data_source.dart';
+import 'package:wcr_pmis_mobile/src/features/rfi/domain/common/filter_option.dart';
 import 'package:wcr_pmis_mobile/src/features/rfi/domain/entities/rfi_dropdown_item.dart';
 import 'package:wcr_pmis_mobile/src/features/rfi/domain/entities/rfi_list_item.dart';
 import 'package:wcr_pmis_mobile/src/features/rfi/domain/entities/rfi_status_counts.dart';
@@ -36,6 +37,33 @@ class RfiRepository {
 
   Future<List<RfiListItem>> fetchRfiList({String? requestedFormName}) =>
       _remote.fetchRfiList(requestedFormName: requestedFormName);
+
+  Future<List<FilterOption>> fetchListFilterProjects({
+    required String requestedFormName,
+    String contractId = '',
+  }) =>
+      _remote.fetchListFilterProjects(
+        requestedFormName: requestedFormName,
+        contractId: contractId,
+      );
+
+  Future<List<FilterOption>> fetchListFilterContracts({
+    required String requestedFormName,
+    String projectId = '',
+  }) =>
+      _remote.fetchListFilterContracts(
+        requestedFormName: requestedFormName,
+        projectId: projectId,
+      );
+
+  Future<List<FilterOption>> fetchListFilterOptions({
+    required String requestedFormName,
+    String projectId = '',
+  }) =>
+      _remote.fetchListFilterOptions(
+        requestedFormName: requestedFormName,
+        projectId: projectId,
+      );
 
   Future<Map<String, dynamic>> fetchRfiDetail(int id) =>
       _remote.fetchRfiDetail(id);

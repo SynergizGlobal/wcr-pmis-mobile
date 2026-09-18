@@ -31,6 +31,7 @@ class InspectionApi {
         'contract': contract,
         'requestedFormName': requestedFormName,
       },
+      options: Options(extra: const <String, dynamic>{'silentError': true}),
     );
   }
 
@@ -44,6 +45,7 @@ class InspectionApi {
         'project': project,
         'requestedFormName': requestedFormName,
       },
+      options: Options(extra: const <String, dynamic>{'silentError': true}),
     );
   }
 

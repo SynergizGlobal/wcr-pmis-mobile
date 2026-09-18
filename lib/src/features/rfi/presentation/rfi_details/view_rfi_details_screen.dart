@@ -82,7 +82,6 @@ class _ViewRfiDetailsScreenState extends ConsumerState<ViewRfiDetailsScreen> {
           _buildInfoCard(ctx, 'Project Info', [
             _InfoRow('Project', detail.project),
             _InfoRow('Contract', detail.contract),
-            _InfoRow('Work', detail.work),
           ]),
           const SizedBox(height: 16),
           _buildInfoCard(ctx, 'Structure Info', [

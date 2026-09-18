@@ -16,6 +16,10 @@ _$ValidationItemImpl _$$ValidationItemImplFromJson(Map<String, dynamic> json) =>
       valdationAuth: json['valdationAuth'] as String?,
       comment: json['comment'] as String?,
       txnId: json['txnId'] as String?,
+      project: json['project'] as String?,
+      projectId: json['projectId'] as String?,
+      contract: json['contract'] as String?,
+      contractId: json['contractId'] as String?,
     );
 
 Map<String, dynamic> _$$ValidationItemImplToJson(
@@ -29,4 +33,8 @@ Map<String, dynamic> _$$ValidationItemImplToJson(
   'valdationAuth': instance.valdationAuth,
   'comment': instance.comment,
   'txnId': instance.txnId,
+  'project': instance.project,
+  'projectId': instance.projectId,
+  'contract': instance.contract,
+  'contractId': instance.contractId,
 };

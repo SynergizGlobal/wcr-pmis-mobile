@@ -6,7 +6,7 @@ part of 'rfi_log_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$rfiLogNotifierHash() => r'ca718f6b8117d80ada6a944a8a73dc2a1fcb5696';
+String _$rfiLogNotifierHash() => r'38545492064b5aa6ef768e59ae085e3511ed8d86';
 
 /// See also [RfiLogNotifier].
 @ProviderFor(RfiLogNotifier)

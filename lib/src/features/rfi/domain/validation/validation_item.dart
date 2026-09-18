@@ -14,6 +14,10 @@ class ValidationItem with _$ValidationItem {
     String? valdationAuth,
     String? comment,
     String? txnId,
+    String? project,
+    String? projectId,
+    String? contract,
+    String? contractId,
   }) = _ValidationItem;
 
   factory ValidationItem.fromJson(Map<String, dynamic> json) =>

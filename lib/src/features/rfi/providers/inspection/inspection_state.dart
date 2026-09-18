@@ -1,4 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import '../../domain/common/filter_option.dart';
 import '../../domain/inspection/inspection_item.dart';
 import '../../domain/inspection/inspection_list_mode.dart';
 
@@ -14,10 +15,11 @@ class InspectionState with _$InspectionState {
     @Default('') String searchQuery,
     @Default('') String projectFilter,
     @Default('') String contractFilter,
-    @Default([]) List<String> availableProjects,
-    @Default([]) List<String> availableContracts,
+    @Default([]) List<FilterOption> availableProjects,
+    @Default([]) List<FilterOption> availableContracts,
     @Default(InspectionListMode.all) InspectionListMode listMode,
     @Default(1) int currentPage,
-    @Default(5) int rowsPerPage, // Matching references which use 5 or 10
+    @Default(5) int rowsPerPage,
+    @Default(false) bool isLoadingFilters,
   }) = _InspectionState;
 }

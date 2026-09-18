@@ -29,6 +29,10 @@ mixin _$ValidationItem {
   String? get valdationAuth => throw _privateConstructorUsedError;
   String? get comment => throw _privateConstructorUsedError;
   String? get txnId => throw _privateConstructorUsedError;
+  String? get project => throw _privateConstructorUsedError;
+  String? get projectId => throw _privateConstructorUsedError;
+  String? get contract => throw _privateConstructorUsedError;
+  String? get contractId => throw _privateConstructorUsedError;
 
   /// Serializes this ValidationItem to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -56,6 +60,10 @@ abstract class $ValidationItemCopyWith<$Res> {
     String? valdationAuth,
     String? comment,
     String? txnId,
+    String? project,
+    String? projectId,
+    String? contract,
+    String? contractId,
   });
 }
 
@@ -82,6 +90,10 @@ class _$ValidationItemCopyWithImpl<$Res, $Val extends ValidationItem>
     Object? valdationAuth = freezed,
     Object? comment = freezed,
     Object? txnId = freezed,
+    Object? project = freezed,
+    Object? projectId = freezed,
+    Object? contract = freezed,
+    Object? contractId = freezed,
   }) {
     return _then(
       _value.copyWith(
@@ -117,6 +129,22 @@ class _$ValidationItemCopyWithImpl<$Res, $Val extends ValidationItem>
                 ? _value.txnId
                 : txnId // ignore: cast_nullable_to_non_nullable
                       as String?,
+            project: freezed == project
+                ? _value.project
+                : project // ignore: cast_nullable_to_non_nullable
+                      as String?,
+            projectId: freezed == projectId
+                ? _value.projectId
+                : projectId // ignore: cast_nullable_to_non_nullable
+                      as String?,
+            contract: freezed == contract
+                ? _value.contract
+                : contract // ignore: cast_nullable_to_non_nullable
+                      as String?,
+            contractId: freezed == contractId
+                ? _value.contractId
+                : contractId // ignore: cast_nullable_to_non_nullable
+                      as String?,
           )
           as $Val,
     );
@@ -141,6 +169,10 @@ abstract class _$$ValidationItemImplCopyWith<$Res>
     String? valdationAuth,
     String? comment,
     String? txnId,
+    String? project,
+    String? projectId,
+    String? contract,
+    String? contractId,
   });
 }
 
@@ -166,6 +198,10 @@ class __$$ValidationItemImplCopyWithImpl<$Res>
     Object? valdationAuth = freezed,
     Object? comment = freezed,
     Object? txnId = freezed,
+    Object? project = freezed,
+    Object? projectId = freezed,
+    Object? contract = freezed,
+    Object? contractId = freezed,
   }) {
     return _then(
       _$ValidationItemImpl(
@@ -201,6 +237,22 @@ class __$$ValidationItemImplCopyWithImpl<$Res>
             ? _value.txnId
             : txnId // ignore: cast_nullable_to_non_nullable
                   as String?,
+        project: freezed == project
+            ? _value.project
+            : project // ignore: cast_nullable_to_non_nullable
+                  as String?,
+        projectId: freezed == projectId
+            ? _value.projectId
+            : projectId // ignore: cast_nullable_to_non_nullable
+                  as String?,
+        contract: freezed == contract
+            ? _value.contract
+            : contract // ignore: cast_nullable_to_non_nullable
+                  as String?,
+        contractId: freezed == contractId
+            ? _value.contractId
+            : contractId // ignore: cast_nullable_to_non_nullable
+                  as String?,
       ),
     );
   }
@@ -218,6 +270,10 @@ class _$ValidationItemImpl implements _ValidationItem {
     this.valdationAuth,
     this.comment,
     this.txnId,
+    this.project,
+    this.projectId,
+    this.contract,
+    this.contractId,
   });
 
   factory _$ValidationItemImpl.fromJson(Map<String, dynamic> json) =>
@@ -239,10 +295,18 @@ class _$ValidationItemImpl implements _ValidationItem {
   final String? comment;
   @override
   final String? txnId;
+  @override
+  final String? project;
+  @override
+  final String? projectId;
+  @override
+  final String? contract;
+  @override
+  final String? contractId;
 
   @override
   String toString() {
-    return 'ValidationItem(stringRfiId: $stringRfiId, longRfiId: $longRfiId, longRfiValidateId: $longRfiValidateId, status: $status, remarks: $remarks, valdationAuth: $valdationAuth, comment: $comment, txnId: $txnId)';
+    return 'ValidationItem(stringRfiId: $stringRfiId, longRfiId: $longRfiId, longRfiValidateId: $longRfiValidateId, status: $status, remarks: $remarks, valdationAuth: $valdationAuth, comment: $comment, txnId: $txnId, project: $project, projectId: $projectId, contract: $contract, contractId: $contractId)';
   }
 
   @override
@@ -261,7 +325,14 @@ class _$ValidationItemImpl implements _ValidationItem {
             (identical(other.valdationAuth, valdationAuth) ||
                 other.valdationAuth == valdationAuth) &&
             (identical(other.comment, comment) || other.comment == comment) &&
-            (identical(other.txnId, txnId) || other.txnId == txnId));
+            (identical(other.txnId, txnId) || other.txnId == txnId) &&
+            (identical(other.project, project) || other.project == project) &&
+            (identical(other.projectId, projectId) ||
+                other.projectId == projectId) &&
+            (identical(other.contract, contract) ||
+                other.contract == contract) &&
+            (identical(other.contractId, contractId) ||
+                other.contractId == contractId));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -276,6 +347,10 @@ class _$ValidationItemImpl implements _ValidationItem {
     valdationAuth,
     comment,
     txnId,
+    project,
+    projectId,
+    contract,
+    contractId,
   );
 
   /// Create a copy of ValidationItem
@@ -305,6 +380,10 @@ abstract class _ValidationItem implements ValidationItem {
     final String? valdationAuth,
     final String? comment,
     final String? txnId,
+    final String? project,
+    final String? projectId,
+    final String? contract,
+    final String? contractId,
   }) = _$ValidationItemImpl;
 
   factory _ValidationItem.fromJson(Map<String, dynamic> json) =
@@ -326,6 +405,14 @@ abstract class _ValidationItem implements ValidationItem {
   String? get comment;
   @override
   String? get txnId;
+  @override
+  String? get project;
+  @override
+  String? get projectId;
+  @override
+  String? get contract;
+  @override
+  String? get contractId;
 
   /// Create a copy of ValidationItem
   /// with the given fields replaced by the non-null parameter values.

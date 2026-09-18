@@ -208,7 +208,6 @@ class RfiPreviewDialog extends ConsumerWidget {
                   _buildInfoItem('RFI ID:', info.rfiId),
                   _buildInfoItem('Date of Submission:', info.dateOfCreation),
                   _buildInfoItem('Project:', info.project),
-                  _buildInfoItem('Work:', info.work),
                   _buildInfoItem('Contract:', info.contract),
                   _buildInfoItem('Contract ID:', info.contractId),
                   _buildInfoItem('Structure Type:', info.structureType),

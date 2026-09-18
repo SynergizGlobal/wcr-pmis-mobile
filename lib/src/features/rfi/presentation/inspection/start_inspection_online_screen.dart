@@ -2749,7 +2749,7 @@ class _ChecklistDialogState extends ConsumerState<_ChecklistDialog> {
         children: [
           Row(
             children: [
-              _buildInfoItem('Name of Work', rfi?.work ?? 'N/A'),
+              _buildInfoItem('Project', rfi?.project ?? 'N/A'),
               const SizedBox(width: 12),
               _buildInfoItem('Date', rfi?.dateOfInspection ?? 'N/A'),
             ],

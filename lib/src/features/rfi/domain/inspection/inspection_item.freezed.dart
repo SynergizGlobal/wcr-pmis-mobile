@@ -1183,6 +1183,7 @@ mixin _$InspectionItem {
   String? get imgClient => throw _privateConstructorUsedError;
   String? get contractId => throw _privateConstructorUsedError;
   String? get contract => throw _privateConstructorUsedError;
+  String? get projectId => throw _privateConstructorUsedError;
   String? get structure => throw _privateConstructorUsedError;
   String? get assignedPersonClient => throw _privateConstructorUsedError;
   String? get action => throw _privateConstructorUsedError;
@@ -1249,6 +1250,7 @@ abstract class $InspectionItemCopyWith<$Res> {
     String? imgClient,
     String? contractId,
     String? contract,
+    String? projectId,
     String? structure,
     String? assignedPersonClient,
     String? action,
@@ -1311,6 +1313,7 @@ class _$InspectionItemCopyWithImpl<$Res, $Val extends InspectionItem>
     Object? imgClient = freezed,
     Object? contractId = freezed,
     Object? contract = freezed,
+    Object? projectId = freezed,
     Object? structure = freezed,
     Object? assignedPersonClient = freezed,
     Object? action = freezed,
@@ -1373,6 +1376,10 @@ class _$InspectionItemCopyWithImpl<$Res, $Val extends InspectionItem>
             contract: freezed == contract
                 ? _value.contract
                 : contract // ignore: cast_nullable_to_non_nullable
+                      as String?,
+            projectId: freezed == projectId
+                ? _value.projectId
+                : projectId // ignore: cast_nullable_to_non_nullable
                       as String?,
             structure: freezed == structure
                 ? _value.structure
@@ -1555,6 +1562,7 @@ abstract class _$$InspectionItemImplCopyWith<$Res>
     String? imgClient,
     String? contractId,
     String? contract,
+    String? projectId,
     String? structure,
     String? assignedPersonClient,
     String? action,
@@ -1617,6 +1625,7 @@ class __$$InspectionItemImplCopyWithImpl<$Res>
     Object? imgClient = freezed,
     Object? contractId = freezed,
     Object? contract = freezed,
+    Object? projectId = freezed,
     Object? structure = freezed,
     Object? assignedPersonClient = freezed,
     Object? action = freezed,
@@ -1679,6 +1688,10 @@ class __$$InspectionItemImplCopyWithImpl<$Res>
         contract: freezed == contract
             ? _value.contract
             : contract // ignore: cast_nullable_to_non_nullable
+                  as String?,
+        projectId: freezed == projectId
+            ? _value.projectId
+            : projectId // ignore: cast_nullable_to_non_nullable
                   as String?,
         structure: freezed == structure
             ? _value.structure
@@ -1840,6 +1853,7 @@ class _$InspectionItemImpl implements _InspectionItem {
     this.imgClient,
     this.contractId,
     this.contract,
+    this.projectId,
     this.structure,
     this.assignedPersonClient,
     this.action,
@@ -1895,6 +1909,8 @@ class _$InspectionItemImpl implements _InspectionItem {
   final String? contractId;
   @override
   final String? contract;
+  @override
+  final String? projectId;
   @override
   final String? structure;
   @override
@@ -1998,7 +2014,7 @@ class _$InspectionItemImpl implements _InspectionItem {
 
   @override
   String toString() {
-    return 'InspectionItem(id: $id, element: $element, status: $status, imgClient: $imgClient, contractId: $contractId, contract: $contract, structure: $structure, assignedPersonClient: $assignedPersonClient, action: $action, rfiId: $rfiId, activity: $activity, rfiDescription: $rfiDescription, description: $description, timeOfInspection: $timeOfInspection, nameOfRepresentative: $nameOfRepresentative, inspectionStatus: $inspectionStatus, measurementType: $measurementType, totalQty: $totalQty, createdBy: $createdBy, dateOfInspection: $dateOfInspection, project: $project, work: $work, structureType: $structureType, component: $component, typeOfRFI: $typeOfRFI, approvalStatus: $approvalStatus, dateOfSubmission: $dateOfSubmission, contractorSubmittedOn: $contractorSubmittedOn, engineerSubmittedOn: $engineerSubmittedOn, validationStatus: $validationStatus, validationRemarks: $validationRemarks, validationComments: $validationComments, validationAuthor: $validationAuthor, validationDate: $validationDate, imgContractor: $imgContractor, representativeReportingToContractor: $representativeReportingToContractor, testResCon: $testResCon, testResEngg: $testResEngg, enclosuresList: $enclosuresList, enclosure: $enclosure, inspectionDetails: $inspectionDetails, measurements: $measurements)';
+    return 'InspectionItem(id: $id, element: $element, status: $status, imgClient: $imgClient, contractId: $contractId, contract: $contract, projectId: $projectId, structure: $structure, assignedPersonClient: $assignedPersonClient, action: $action, rfiId: $rfiId, activity: $activity, rfiDescription: $rfiDescription, description: $description, timeOfInspection: $timeOfInspection, nameOfRepresentative: $nameOfRepresentative, inspectionStatus: $inspectionStatus, measurementType: $measurementType, totalQty: $totalQty, createdBy: $createdBy, dateOfInspection: $dateOfInspection, project: $project, work: $work, structureType: $structureType, component: $component, typeOfRFI: $typeOfRFI, approvalStatus: $approvalStatus, dateOfSubmission: $dateOfSubmission, contractorSubmittedOn: $contractorSubmittedOn, engineerSubmittedOn: $engineerSubmittedOn, validationStatus: $validationStatus, validationRemarks: $validationRemarks, validationComments: $validationComments, validationAuthor: $validationAuthor, validationDate: $validationDate, imgContractor: $imgContractor, representativeReportingToContractor: $representativeReportingToContractor, testResCon: $testResCon, testResEngg: $testResEngg, enclosuresList: $enclosuresList, enclosure: $enclosure, inspectionDetails: $inspectionDetails, measurements: $measurements)';
   }
 
   @override
@@ -2015,6 +2031,8 @@ class _$InspectionItemImpl implements _InspectionItem {
                 other.contractId == contractId) &&
             (identical(other.contract, contract) ||
                 other.contract == contract) &&
+            (identical(other.projectId, projectId) ||
+                other.projectId == projectId) &&
             (identical(other.structure, structure) ||
                 other.structure == structure) &&
             (identical(other.assignedPersonClient, assignedPersonClient) ||
@@ -2105,6 +2123,7 @@ class _$InspectionItemImpl implements _InspectionItem {
     imgClient,
     contractId,
     contract,
+    projectId,
     structure,
     assignedPersonClient,
     action,
@@ -2168,6 +2187,7 @@ abstract class _InspectionItem implements InspectionItem {
     final String? imgClient,
     final String? contractId,
     final String? contract,
+    final String? projectId,
     final String? structure,
     final String? assignedPersonClient,
     final String? action,
@@ -2221,6 +2241,8 @@ abstract class _InspectionItem implements InspectionItem {
   String? get contractId;
   @override
   String? get contract;
+  @override
+  String? get projectId;
   @override
   String? get structure;
   @override

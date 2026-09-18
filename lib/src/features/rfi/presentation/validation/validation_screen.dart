@@ -12,6 +12,7 @@ import '../../data/rfi_log/rfi_log_repository.dart';
 import '../../core/widgets/app_dropdown.dart';
 import '../../core/widgets/error_state_widget.dart';
 import '../../core/widgets/global_alert_dialog.dart';
+import '../../domain/common/filter_option.dart';
 import 'package:wcr_pmis_mobile/src/features/rfi/presentation/rfi_theme.dart';
 import 'package:wcr_pmis_mobile/src/core/network/user_friendly_error_message.dart';
 
@@ -75,7 +76,9 @@ class ValidationScreen extends ConsumerWidget {
       ),
       body: SafeArea(
         top: false,
-        child: RefreshIndicator(
+        child: state.isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : RefreshIndicator(
           onRefresh: () => notifier.fetchValidations(),
           child: Column(
           children: [
@@ -84,9 +87,62 @@ class ValidationScreen extends ConsumerWidget {
               child: Container(
                 padding: const EdgeInsets.all(16.0),
                 decoration: RfiTheme.surfaceCardDecoration(scheme),
-                child: TableSearchHeader(
-                  onSearchChanged: notifier.setSearchQuery,
-                  searchHint: 'Search by RFI ID, status, remarks...',
+                child: Column(
+                  children: [
+                    TableSearchHeader(
+                      onSearchChanged: notifier.setSearchQuery,
+                      searchHint: 'Search by RFI ID, status, remarks...',
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: AppDropdown<FilterOption>(
+                            label: 'Project',
+                            hint: 'All Projects',
+                            value: _validationOptionById(
+                              state.availableProjects,
+                              state.projectFilter,
+                            ),
+                            items: state.availableProjects,
+                            onChanged: (FilterOption? value) =>
+                                notifier.setProjectFilter(value?.id),
+                            itemLabel: (FilterOption v) => v.name,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: AppDropdown<FilterOption>(
+                            label: 'Contract',
+                            hint: 'All Contracts',
+                            value: _validationOptionById(
+                              state.availableContracts,
+                              state.contractFilter,
+                            ),
+                            items: state.availableContracts,
+                            onChanged: (FilterOption? value) =>
+                                notifier.setContractFilter(value?.id),
+                            itemLabel: (FilterOption v) => v.name,
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (state.projectFilter.isNotEmpty ||
+                        state.contractFilter.isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton.icon(
+                          onPressed: notifier.clearFilters,
+                          icon: const Icon(Icons.filter_alt_off, size: 16),
+                          label: const Text(
+                            'Clear Filters',
+                            style: TextStyle(fontSize: 12),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
               ),
             ),
@@ -95,11 +151,7 @@ class ValidationScreen extends ConsumerWidget {
               child: CustomScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 slivers: [
-                  if (state.isLoading)
-                    const SliverFillRemaining(
-                      child: Center(child: CircularProgressIndicator()),
-                    )
-                  else if (state.errorMessage != null)
+                  if (state.errorMessage != null)
                     SliverFillRemaining(
                       hasScrollBody: false,
                       child: ErrorStateWidget(
@@ -445,4 +497,12 @@ class ValidationScreen extends ConsumerWidget {
     ),
   );
 }
+}
+
+FilterOption? _validationOptionById(List<FilterOption> options, String id) {
+  if (id.trim().isEmpty) return null;
+  for (final FilterOption option in options) {
+    if (option.id == id) return option;
+  }
+  return null;
 }

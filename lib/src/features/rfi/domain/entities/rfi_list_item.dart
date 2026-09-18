@@ -14,7 +14,9 @@ class RfiListItem {
     required this.createdBy,
     required this.approvalStatus,
     required this.totalQty,
+    this.projectId,
     this.contract,
+    this.contractId,
     this.typeOfRfi,
     this.rfiDescription,
     this.measurementType,
@@ -24,7 +26,9 @@ class RfiListItem {
 
   final int rfiId;
   final String rfiNo;
+  /// Display name (`projectName` preferred over legacy `project`).
   final String project;
+  final String? projectId;
   final String structure;
   final String activity;
   final String status;
@@ -37,11 +41,26 @@ class RfiListItem {
   final String approvalStatus;
   final String totalQty;
   final String? contract;
+  final String? contractId;
   final String? typeOfRfi;
   final String? rfiDescription;
   final String? measurementType;
   final String? validationStatus;
   final String? inspectionStatus;
+
+  /// Stable id for frontend project filtering.
+  String get filterProjectId {
+    final String id = (projectId ?? '').trim();
+    if (id.isNotEmpty) return id;
+    return project.trim();
+  }
+
+  /// Stable id for frontend contract filtering.
+  String get filterContractId {
+    final String id = (contractId ?? '').trim();
+    if (id.isNotEmpty) return id;
+    return (contract ?? '').trim();
+  }
 
   factory RfiListItem.fromJson(Map<String, dynamic> json) {
     String str(String key) => json[key]?.toString() ?? '';
@@ -62,10 +81,25 @@ class RfiListItem {
         int.tryParse(json['rfiId']?.toString() ?? '') ??
         0;
 
+    final String projectName = strFromKeys(<String>['projectName', 'project']);
+    final String? projectId = () {
+      final String value = strFromKeys(<String>['projectId', 'project_id']);
+      return value.isEmpty ? null : value;
+    }();
+    final String? contractName = () {
+      final String value = strFromKeys(<String>['contractName', 'contract']);
+      return value.isEmpty ? null : value;
+    }();
+    final String? contractId = () {
+      final String value = strFromKeys(<String>['contractId', 'contract_id']);
+      return value.isEmpty ? null : value;
+    }();
+
     return RfiListItem(
       rfiId: parsedId,
       rfiNo: strFromKeys(<String>['rfi_Id', 'rfiNo', 'rfi_id']),
-      project: str('project'),
+      project: projectName,
+      projectId: projectId,
       structure: str('structure'),
       activity: str('activity'),
       status: str('status'),
@@ -77,7 +111,8 @@ class RfiListItem {
       createdBy: str('createdBy'),
       approvalStatus: str('approvalStatus'),
       totalQty: str('totalQty'),
-      contract: json['contract']?.toString(),
+      contract: contractName,
+      contractId: contractId,
       typeOfRfi: json['typeOfRFI']?.toString(),
       rfiDescription: json['rfiDescription']?.toString(),
       measurementType: json['measurementType']?.toString(),
@@ -94,6 +129,7 @@ class RfiListItem {
     final Iterable<String> fields = <String>[
       rfiNo,
       project,
+      projectId ?? '',
       structure,
       element,
       activity,
@@ -104,7 +140,19 @@ class RfiListItem {
       status,
       dateOfSubmission,
       work,
+      contract ?? '',
+      contractId ?? '',
     ];
     return fields.any((String field) => field.toLowerCase().contains(lower));
+  }
+
+  bool matchesProjectId(String selectedProjectId) {
+    if (selectedProjectId.trim().isEmpty) return true;
+    return filterProjectId == selectedProjectId.trim();
+  }
+
+  bool matchesContractId(String selectedContractId) {
+    if (selectedContractId.trim().isEmpty) return true;
+    return filterContractId == selectedContractId.trim();
   }
 }

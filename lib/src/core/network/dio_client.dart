@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pretty_dio_logger/pretty_dio_logger.dart';
 import 'package:wcr_pmis_mobile/src/app/config/app_config_provider.dart';
 import 'package:wcr_pmis_mobile/src/core/constants/api_constants.dart';
+import 'package:wcr_pmis_mobile/src/core/network/api_error_dialog.dart';
 import 'package:wcr_pmis_mobile/src/core/network/auth_interceptor.dart';
 import 'package:wcr_pmis_mobile/src/core/network/network_connectivity.dart';
 import 'package:wcr_pmis_mobile/src/core/network/session_cookie_manager.dart';
@@ -40,6 +41,7 @@ final dioProvider = Provider<Dio>((ref) {
     );
   }
 
+  // Connectivity check before every API call.
   dio.interceptors.add(
     InterceptorsWrapper(
       onRequest: (options, handler) async {
@@ -63,11 +65,11 @@ final dioProvider = Provider<Dio>((ref) {
   dio.interceptors.add(
     InterceptorsWrapper(
       onError: (DioException error, ErrorInterceptorHandler handler) {
-        handler.next(
-          error.copyWith(
-            message: userFriendlyErrorMessage(error),
-          ),
+        final DioException friendly = error.copyWith(
+          message: userFriendlyErrorMessage(error),
         );
+        ApiErrorDialog.showFromDio(friendly);
+        handler.next(friendly);
       },
     ),
   );

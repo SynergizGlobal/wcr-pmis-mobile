@@ -22,11 +22,18 @@ mixin _$ValidationState {
   List<ValidationItem> get allItems => throw _privateConstructorUsedError;
   List<ValidationItem> get filteredItems => throw _privateConstructorUsedError;
   String get searchQuery => throw _privateConstructorUsedError;
+  String get projectFilter => throw _privateConstructorUsedError;
+  String get contractFilter => throw _privateConstructorUsedError;
+  List<FilterOption> get availableProjects =>
+      throw _privateConstructorUsedError;
+  List<FilterOption> get availableContracts =>
+      throw _privateConstructorUsedError;
   int get currentPage => throw _privateConstructorUsedError;
   int get entriesPerPage => throw _privateConstructorUsedError;
   Map<int, String> get pendingRemarks => throw _privateConstructorUsedError;
   Map<int, String> get pendingComments => throw _privateConstructorUsedError;
   bool get isValidating => throw _privateConstructorUsedError;
+  bool get isLoadingFilters => throw _privateConstructorUsedError;
   String? get actionErrorMessage => throw _privateConstructorUsedError;
 
   /// Create a copy of ValidationState
@@ -49,11 +56,16 @@ abstract class $ValidationStateCopyWith<$Res> {
     List<ValidationItem> allItems,
     List<ValidationItem> filteredItems,
     String searchQuery,
+    String projectFilter,
+    String contractFilter,
+    List<FilterOption> availableProjects,
+    List<FilterOption> availableContracts,
     int currentPage,
     int entriesPerPage,
     Map<int, String> pendingRemarks,
     Map<int, String> pendingComments,
     bool isValidating,
+    bool isLoadingFilters,
     String? actionErrorMessage,
   });
 }
@@ -78,11 +90,16 @@ class _$ValidationStateCopyWithImpl<$Res, $Val extends ValidationState>
     Object? allItems = null,
     Object? filteredItems = null,
     Object? searchQuery = null,
+    Object? projectFilter = null,
+    Object? contractFilter = null,
+    Object? availableProjects = null,
+    Object? availableContracts = null,
     Object? currentPage = null,
     Object? entriesPerPage = null,
     Object? pendingRemarks = null,
     Object? pendingComments = null,
     Object? isValidating = null,
+    Object? isLoadingFilters = null,
     Object? actionErrorMessage = freezed,
   }) {
     return _then(
@@ -107,6 +124,22 @@ class _$ValidationStateCopyWithImpl<$Res, $Val extends ValidationState>
                 ? _value.searchQuery
                 : searchQuery // ignore: cast_nullable_to_non_nullable
                       as String,
+            projectFilter: null == projectFilter
+                ? _value.projectFilter
+                : projectFilter // ignore: cast_nullable_to_non_nullable
+                      as String,
+            contractFilter: null == contractFilter
+                ? _value.contractFilter
+                : contractFilter // ignore: cast_nullable_to_non_nullable
+                      as String,
+            availableProjects: null == availableProjects
+                ? _value.availableProjects
+                : availableProjects // ignore: cast_nullable_to_non_nullable
+                      as List<FilterOption>,
+            availableContracts: null == availableContracts
+                ? _value.availableContracts
+                : availableContracts // ignore: cast_nullable_to_non_nullable
+                      as List<FilterOption>,
             currentPage: null == currentPage
                 ? _value.currentPage
                 : currentPage // ignore: cast_nullable_to_non_nullable
@@ -126,6 +159,10 @@ class _$ValidationStateCopyWithImpl<$Res, $Val extends ValidationState>
             isValidating: null == isValidating
                 ? _value.isValidating
                 : isValidating // ignore: cast_nullable_to_non_nullable
+                      as bool,
+            isLoadingFilters: null == isLoadingFilters
+                ? _value.isLoadingFilters
+                : isLoadingFilters // ignore: cast_nullable_to_non_nullable
                       as bool,
             actionErrorMessage: freezed == actionErrorMessage
                 ? _value.actionErrorMessage
@@ -152,11 +189,16 @@ abstract class _$$ValidationStateImplCopyWith<$Res>
     List<ValidationItem> allItems,
     List<ValidationItem> filteredItems,
     String searchQuery,
+    String projectFilter,
+    String contractFilter,
+    List<FilterOption> availableProjects,
+    List<FilterOption> availableContracts,
     int currentPage,
     int entriesPerPage,
     Map<int, String> pendingRemarks,
     Map<int, String> pendingComments,
     bool isValidating,
+    bool isLoadingFilters,
     String? actionErrorMessage,
   });
 }
@@ -180,11 +222,16 @@ class __$$ValidationStateImplCopyWithImpl<$Res>
     Object? allItems = null,
     Object? filteredItems = null,
     Object? searchQuery = null,
+    Object? projectFilter = null,
+    Object? contractFilter = null,
+    Object? availableProjects = null,
+    Object? availableContracts = null,
     Object? currentPage = null,
     Object? entriesPerPage = null,
     Object? pendingRemarks = null,
     Object? pendingComments = null,
     Object? isValidating = null,
+    Object? isLoadingFilters = null,
     Object? actionErrorMessage = freezed,
   }) {
     return _then(
@@ -209,6 +256,22 @@ class __$$ValidationStateImplCopyWithImpl<$Res>
             ? _value.searchQuery
             : searchQuery // ignore: cast_nullable_to_non_nullable
                   as String,
+        projectFilter: null == projectFilter
+            ? _value.projectFilter
+            : projectFilter // ignore: cast_nullable_to_non_nullable
+                  as String,
+        contractFilter: null == contractFilter
+            ? _value.contractFilter
+            : contractFilter // ignore: cast_nullable_to_non_nullable
+                  as String,
+        availableProjects: null == availableProjects
+            ? _value._availableProjects
+            : availableProjects // ignore: cast_nullable_to_non_nullable
+                  as List<FilterOption>,
+        availableContracts: null == availableContracts
+            ? _value._availableContracts
+            : availableContracts // ignore: cast_nullable_to_non_nullable
+                  as List<FilterOption>,
         currentPage: null == currentPage
             ? _value.currentPage
             : currentPage // ignore: cast_nullable_to_non_nullable
@@ -229,6 +292,10 @@ class __$$ValidationStateImplCopyWithImpl<$Res>
             ? _value.isValidating
             : isValidating // ignore: cast_nullable_to_non_nullable
                   as bool,
+        isLoadingFilters: null == isLoadingFilters
+            ? _value.isLoadingFilters
+            : isLoadingFilters // ignore: cast_nullable_to_non_nullable
+                  as bool,
         actionErrorMessage: freezed == actionErrorMessage
             ? _value.actionErrorMessage
             : actionErrorMessage // ignore: cast_nullable_to_non_nullable
@@ -246,15 +313,22 @@ class _$ValidationStateImpl extends _ValidationState {
     this.errorMessage,
     final List<ValidationItem> allItems = const [],
     final List<ValidationItem> filteredItems = const [],
-    this.searchQuery = "",
+    this.searchQuery = '',
+    this.projectFilter = '',
+    this.contractFilter = '',
+    final List<FilterOption> availableProjects = const [],
+    final List<FilterOption> availableContracts = const [],
     this.currentPage = 1,
     this.entriesPerPage = 5,
     final Map<int, String> pendingRemarks = const {},
     final Map<int, String> pendingComments = const {},
     this.isValidating = false,
+    this.isLoadingFilters = false,
     this.actionErrorMessage,
   }) : _allItems = allItems,
        _filteredItems = filteredItems,
+       _availableProjects = availableProjects,
+       _availableContracts = availableContracts,
        _pendingRemarks = pendingRemarks,
        _pendingComments = pendingComments,
        super._();
@@ -287,6 +361,32 @@ class _$ValidationStateImpl extends _ValidationState {
   final String searchQuery;
   @override
   @JsonKey()
+  final String projectFilter;
+  @override
+  @JsonKey()
+  final String contractFilter;
+  final List<FilterOption> _availableProjects;
+  @override
+  @JsonKey()
+  List<FilterOption> get availableProjects {
+    if (_availableProjects is EqualUnmodifiableListView)
+      return _availableProjects;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_availableProjects);
+  }
+
+  final List<FilterOption> _availableContracts;
+  @override
+  @JsonKey()
+  List<FilterOption> get availableContracts {
+    if (_availableContracts is EqualUnmodifiableListView)
+      return _availableContracts;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_availableContracts);
+  }
+
+  @override
+  @JsonKey()
   final int currentPage;
   @override
   @JsonKey()
@@ -313,11 +413,14 @@ class _$ValidationStateImpl extends _ValidationState {
   @JsonKey()
   final bool isValidating;
   @override
+  @JsonKey()
+  final bool isLoadingFilters;
+  @override
   final String? actionErrorMessage;
 
   @override
   String toString() {
-    return 'ValidationState(isLoading: $isLoading, errorMessage: $errorMessage, allItems: $allItems, filteredItems: $filteredItems, searchQuery: $searchQuery, currentPage: $currentPage, entriesPerPage: $entriesPerPage, pendingRemarks: $pendingRemarks, pendingComments: $pendingComments, isValidating: $isValidating, actionErrorMessage: $actionErrorMessage)';
+    return 'ValidationState(isLoading: $isLoading, errorMessage: $errorMessage, allItems: $allItems, filteredItems: $filteredItems, searchQuery: $searchQuery, projectFilter: $projectFilter, contractFilter: $contractFilter, availableProjects: $availableProjects, availableContracts: $availableContracts, currentPage: $currentPage, entriesPerPage: $entriesPerPage, pendingRemarks: $pendingRemarks, pendingComments: $pendingComments, isValidating: $isValidating, isLoadingFilters: $isLoadingFilters, actionErrorMessage: $actionErrorMessage)';
   }
 
   @override
@@ -336,6 +439,18 @@ class _$ValidationStateImpl extends _ValidationState {
             ) &&
             (identical(other.searchQuery, searchQuery) ||
                 other.searchQuery == searchQuery) &&
+            (identical(other.projectFilter, projectFilter) ||
+                other.projectFilter == projectFilter) &&
+            (identical(other.contractFilter, contractFilter) ||
+                other.contractFilter == contractFilter) &&
+            const DeepCollectionEquality().equals(
+              other._availableProjects,
+              _availableProjects,
+            ) &&
+            const DeepCollectionEquality().equals(
+              other._availableContracts,
+              _availableContracts,
+            ) &&
             (identical(other.currentPage, currentPage) ||
                 other.currentPage == currentPage) &&
             (identical(other.entriesPerPage, entriesPerPage) ||
@@ -350,6 +465,8 @@ class _$ValidationStateImpl extends _ValidationState {
             ) &&
             (identical(other.isValidating, isValidating) ||
                 other.isValidating == isValidating) &&
+            (identical(other.isLoadingFilters, isLoadingFilters) ||
+                other.isLoadingFilters == isLoadingFilters) &&
             (identical(other.actionErrorMessage, actionErrorMessage) ||
                 other.actionErrorMessage == actionErrorMessage));
   }
@@ -362,11 +479,16 @@ class _$ValidationStateImpl extends _ValidationState {
     const DeepCollectionEquality().hash(_allItems),
     const DeepCollectionEquality().hash(_filteredItems),
     searchQuery,
+    projectFilter,
+    contractFilter,
+    const DeepCollectionEquality().hash(_availableProjects),
+    const DeepCollectionEquality().hash(_availableContracts),
     currentPage,
     entriesPerPage,
     const DeepCollectionEquality().hash(_pendingRemarks),
     const DeepCollectionEquality().hash(_pendingComments),
     isValidating,
+    isLoadingFilters,
     actionErrorMessage,
   );
 
@@ -389,11 +511,16 @@ abstract class _ValidationState extends ValidationState {
     final List<ValidationItem> allItems,
     final List<ValidationItem> filteredItems,
     final String searchQuery,
+    final String projectFilter,
+    final String contractFilter,
+    final List<FilterOption> availableProjects,
+    final List<FilterOption> availableContracts,
     final int currentPage,
     final int entriesPerPage,
     final Map<int, String> pendingRemarks,
     final Map<int, String> pendingComments,
     final bool isValidating,
+    final bool isLoadingFilters,
     final String? actionErrorMessage,
   }) = _$ValidationStateImpl;
   const _ValidationState._() : super._();
@@ -409,6 +536,14 @@ abstract class _ValidationState extends ValidationState {
   @override
   String get searchQuery;
   @override
+  String get projectFilter;
+  @override
+  String get contractFilter;
+  @override
+  List<FilterOption> get availableProjects;
+  @override
+  List<FilterOption> get availableContracts;
+  @override
   int get currentPage;
   @override
   int get entriesPerPage;
@@ -418,6 +553,8 @@ abstract class _ValidationState extends ValidationState {
   Map<int, String> get pendingComments;
   @override
   bool get isValidating;
+  @override
+  bool get isLoadingFilters;
   @override
   String? get actionErrorMessage;
 

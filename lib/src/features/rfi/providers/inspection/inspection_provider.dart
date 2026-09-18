@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/inspection/inspection_repository.dart';
+import '../../domain/common/filter_option.dart';
 import '../../domain/inspection/inspection_item.dart';
 import '../../domain/inspection/inspection_list_mode.dart';
 import 'inspection_state.dart';
@@ -12,6 +13,18 @@ final inspectionProvider =
   final repository = ref.watch(inspectionRepositoryProvider);
   return InspectionNotifier(repository);
 });
+
+String inspectionProjectFilterId(InspectionItem item) {
+  final String id = (item.projectId ?? '').trim();
+  if (id.isNotEmpty) return id;
+  return (item.project ?? '').trim();
+}
+
+String inspectionContractFilterId(InspectionItem item) {
+  final String id = (item.contractId ?? '').trim();
+  if (id.isNotEmpty) return id;
+  return (item.contract ?? '').trim();
+}
 
 class InspectionNotifier extends StateNotifier<InspectionState> {
   final InspectionRepository _repository;
@@ -37,9 +50,12 @@ class InspectionNotifier extends StateNotifier<InspectionState> {
 
   Future<void> fetchInspections() async {
     try {
-      state = state.copyWith(isLoading: true, error: null);
+      state = state.copyWith(
+        isLoading: true,
+        isLoadingFilters: true,
+        error: null,
+      );
       final List<InspectionItem> items = await _repository.getInspectionList();
-      // Base grid: exclude Closed (INSPECTION_DONE).
       final List<InspectionItem> openItems = items
           .where(
             (InspectionItem item) =>
@@ -47,21 +63,37 @@ class InspectionNotifier extends StateNotifier<InspectionState> {
           )
           .toList();
 
-      List<String> projects = const <String>[];
-      List<String> contracts = const <String>[];
+      List<FilterOption> projects = const <FilterOption>[];
+      List<FilterOption> contracts = const <FilterOption>[];
       if (state.listMode.buildsFiltersFromDataset) {
         final List<InspectionItem> base = _statusScoped(openItems);
-        projects = _uniqueNonEmpty(base.map((InspectionItem e) => e.project));
-        contracts = _uniqueNonEmpty(base.map((InspectionItem e) => e.contract));
+        projects = FilterOption.uniqueFromPairs(
+          base.map(
+            (InspectionItem e) => (e.projectId, e.project),
+          ),
+        );
+        contracts = FilterOption.uniqueFromPairs(
+          base.map(
+            (InspectionItem e) => (e.contractId, e.contract),
+          ),
+        );
       } else {
         try {
           projects = await _repository.getFilterProjects();
-          contracts = await _repository.getFilterContracts();
+          contracts = await _repository.getFilterContracts(
+            project: state.projectFilter,
+          );
         } catch (_) {
-          projects =
-              _uniqueNonEmpty(openItems.map((InspectionItem e) => e.project));
-          contracts =
-              _uniqueNonEmpty(openItems.map((InspectionItem e) => e.contract));
+          projects = FilterOption.uniqueFromPairs(
+            openItems.map(
+              (InspectionItem e) => (e.projectId, e.project),
+            ),
+          );
+          contracts = FilterOption.uniqueFromPairs(
+            openItems.map(
+              (InspectionItem e) => (e.contractId, e.contract),
+            ),
+          );
         }
       }
 
@@ -70,11 +102,13 @@ class InspectionNotifier extends StateNotifier<InspectionState> {
         availableProjects: projects,
         availableContracts: contracts,
         isLoading: false,
+        isLoadingFilters: false,
       );
       _reapplyFilters();
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
+        isLoadingFilters: false,
         error: userFriendlyErrorMessage(e),
       );
     }
@@ -85,8 +119,8 @@ class InspectionNotifier extends StateNotifier<InspectionState> {
     _reapplyFilters();
   }
 
-  Future<void> setProjectFilter(String? project) async {
-    final String value = project ?? '';
+  Future<void> setProjectFilter(String? projectId) async {
+    final String value = projectId ?? '';
     state = state.copyWith(
       projectFilter: value,
       contractFilter: '',
@@ -94,12 +128,16 @@ class InspectionNotifier extends StateNotifier<InspectionState> {
     );
 
     if (!state.listMode.buildsFiltersFromDataset) {
+      state = state.copyWith(isLoadingFilters: true);
       try {
-        final List<String> contracts =
+        final List<FilterOption> contracts =
             await _repository.getFilterContracts(project: value);
-        state = state.copyWith(availableContracts: contracts);
+        state = state.copyWith(
+          isLoadingFilters: false,
+          availableContracts: contracts,
+        );
       } catch (_) {
-        // Keep existing contracts on failure.
+        state = state.copyWith(isLoadingFilters: false);
       }
     } else {
       final List<InspectionItem> base = _statusScoped(state.allItems);
@@ -107,21 +145,24 @@ class InspectionNotifier extends StateNotifier<InspectionState> {
           ? base
           : base
               .where(
-                (InspectionItem item) => (item.project ?? '').trim() == value,
+                (InspectionItem item) =>
+                    inspectionProjectFilterId(item) == value,
               )
               .toList();
       state = state.copyWith(
-        availableContracts: _uniqueNonEmpty(
-          forContracts.map((InspectionItem e) => e.contract),
+        availableContracts: FilterOption.uniqueFromPairs(
+          forContracts.map(
+            (InspectionItem e) => (e.contractId, e.contract),
+          ),
         ),
       );
     }
     _reapplyFilters();
   }
 
-  void setContractFilter(String? contract) {
+  void setContractFilter(String? contractId) {
     state = state.copyWith(
-      contractFilter: contract ?? '',
+      contractFilter: contractId ?? '',
       currentPage: 1,
     );
     _reapplyFilters();
@@ -137,11 +178,16 @@ class InspectionNotifier extends StateNotifier<InspectionState> {
     if (state.listMode.buildsFiltersFromDataset) {
       final List<InspectionItem> base = _statusScoped(state.allItems);
       state = state.copyWith(
-        availableProjects:
-            _uniqueNonEmpty(base.map((InspectionItem e) => e.project)),
-        availableContracts:
-            _uniqueNonEmpty(base.map((InspectionItem e) => e.contract)),
+        availableProjects: FilterOption.uniqueFromPairs(
+          base.map((InspectionItem e) => (e.projectId, e.project)),
+        ),
+        availableContracts: FilterOption.uniqueFromPairs(
+          base.map((InspectionItem e) => (e.contractId, e.contract)),
+        ),
       );
+    } else {
+      fetchInspections();
+      return;
     }
     _reapplyFilters();
   }
@@ -162,7 +208,6 @@ class InspectionNotifier extends StateNotifier<InspectionState> {
       case InspectionListMode.all:
         return items;
       case InspectionListMode.created:
-        // Web Scheduled list: CREATED + ongoing/rectification.
         const Set<String> scheduledStatuses = <String>{
           'CREATED',
           'UNDER_CON_RECTIFICATION',
@@ -183,7 +228,6 @@ class InspectionNotifier extends StateNotifier<InspectionState> {
             )
             .toList();
       case InspectionListMode.submitted:
-        // Web Submitted list: contractor-submitted inspection rows.
         const Set<String> submittedStatuses = <String>{
           'INSPECTED_BY_CON',
           'SUBMITTED',
@@ -204,13 +248,13 @@ class InspectionNotifier extends StateNotifier<InspectionState> {
     if (state.projectFilter.isNotEmpty) {
       filtered = filtered.where(
         (InspectionItem item) =>
-            (item.project ?? '').trim() == state.projectFilter,
+            inspectionProjectFilterId(item) == state.projectFilter,
       );
     }
     if (state.contractFilter.isNotEmpty) {
       filtered = filtered.where(
         (InspectionItem item) =>
-            (item.contract ?? '').trim() == state.contractFilter,
+            inspectionContractFilterId(item) == state.contractFilter,
       );
     }
 
@@ -226,23 +270,13 @@ class InspectionNotifier extends StateNotifier<InspectionState> {
                 false) ||
             (item.createdBy?.toLowerCase().contains(query) ?? false) ||
             (item.project?.toLowerCase().contains(query) ?? false) ||
-            (item.contract?.toLowerCase().contains(query) ?? false);
+            (item.contract?.toLowerCase().contains(query) ?? false) ||
+            (item.projectId?.toLowerCase().contains(query) ?? false) ||
+            (item.contractId?.toLowerCase().contains(query) ?? false);
       });
     }
 
     state = state.copyWith(filteredItems: filtered.toList());
-  }
-
-  List<String> _uniqueNonEmpty(Iterable<String?> values) {
-    final Set<String> unique = <String>{};
-    for (final String? value in values) {
-      final String trimmed = (value ?? '').trim();
-      if (trimmed.isNotEmpty) {
-        unique.add(trimmed);
-      }
-    }
-    final List<String> sorted = unique.toList()..sort();
-    return sorted;
   }
 
   Future<void> sendForValidation(int rfiId) async {

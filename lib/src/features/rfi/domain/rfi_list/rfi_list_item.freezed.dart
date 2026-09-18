@@ -24,6 +24,7 @@ mixin _$RfiListItem {
   int get rfiId => throw _privateConstructorUsedError;
   String get rfiNo => throw _privateConstructorUsedError;
   String get project => throw _privateConstructorUsedError;
+  String? get projectId => throw _privateConstructorUsedError;
   String get structure => throw _privateConstructorUsedError;
   String get activity => throw _privateConstructorUsedError;
   String get status => throw _privateConstructorUsedError;
@@ -38,6 +39,7 @@ mixin _$RfiListItem {
   List<String> get contractorImages => throw _privateConstructorUsedError;
   List<String> get clientImages => throw _privateConstructorUsedError;
   String? get contract => throw _privateConstructorUsedError;
+  String? get contractId => throw _privateConstructorUsedError;
   String? get typeOfRFI => throw _privateConstructorUsedError;
   String? get rfiDescription => throw _privateConstructorUsedError;
   String? get measurementType => throw _privateConstructorUsedError;
@@ -65,6 +67,7 @@ abstract class $RfiListItemCopyWith<$Res> {
     int rfiId,
     String rfiNo,
     String project,
+    String? projectId,
     String structure,
     String activity,
     String status,
@@ -79,6 +82,7 @@ abstract class $RfiListItemCopyWith<$Res> {
     List<String> contractorImages,
     List<String> clientImages,
     String? contract,
+    String? contractId,
     String? typeOfRFI,
     String? rfiDescription,
     String? measurementType,
@@ -105,6 +109,7 @@ class _$RfiListItemCopyWithImpl<$Res, $Val extends RfiListItem>
     Object? rfiId = null,
     Object? rfiNo = null,
     Object? project = null,
+    Object? projectId = freezed,
     Object? structure = null,
     Object? activity = null,
     Object? status = null,
@@ -119,6 +124,7 @@ class _$RfiListItemCopyWithImpl<$Res, $Val extends RfiListItem>
     Object? contractorImages = null,
     Object? clientImages = null,
     Object? contract = freezed,
+    Object? contractId = freezed,
     Object? typeOfRFI = freezed,
     Object? rfiDescription = freezed,
     Object? measurementType = freezed,
@@ -139,6 +145,10 @@ class _$RfiListItemCopyWithImpl<$Res, $Val extends RfiListItem>
                 ? _value.project
                 : project // ignore: cast_nullable_to_non_nullable
                       as String,
+            projectId: freezed == projectId
+                ? _value.projectId
+                : projectId // ignore: cast_nullable_to_non_nullable
+                      as String?,
             structure: null == structure
                 ? _value.structure
                 : structure // ignore: cast_nullable_to_non_nullable
@@ -195,6 +205,10 @@ class _$RfiListItemCopyWithImpl<$Res, $Val extends RfiListItem>
                 ? _value.contract
                 : contract // ignore: cast_nullable_to_non_nullable
                       as String?,
+            contractId: freezed == contractId
+                ? _value.contractId
+                : contractId // ignore: cast_nullable_to_non_nullable
+                      as String?,
             typeOfRFI: freezed == typeOfRFI
                 ? _value.typeOfRFI
                 : typeOfRFI // ignore: cast_nullable_to_non_nullable
@@ -234,6 +248,7 @@ abstract class _$$RfiListItemImplCopyWith<$Res>
     int rfiId,
     String rfiNo,
     String project,
+    String? projectId,
     String structure,
     String activity,
     String status,
@@ -248,6 +263,7 @@ abstract class _$$RfiListItemImplCopyWith<$Res>
     List<String> contractorImages,
     List<String> clientImages,
     String? contract,
+    String? contractId,
     String? typeOfRFI,
     String? rfiDescription,
     String? measurementType,
@@ -273,6 +289,7 @@ class __$$RfiListItemImplCopyWithImpl<$Res>
     Object? rfiId = null,
     Object? rfiNo = null,
     Object? project = null,
+    Object? projectId = freezed,
     Object? structure = null,
     Object? activity = null,
     Object? status = null,
@@ -287,6 +304,7 @@ class __$$RfiListItemImplCopyWithImpl<$Res>
     Object? contractorImages = null,
     Object? clientImages = null,
     Object? contract = freezed,
+    Object? contractId = freezed,
     Object? typeOfRFI = freezed,
     Object? rfiDescription = freezed,
     Object? measurementType = freezed,
@@ -307,6 +325,10 @@ class __$$RfiListItemImplCopyWithImpl<$Res>
             ? _value.project
             : project // ignore: cast_nullable_to_non_nullable
                   as String,
+        projectId: freezed == projectId
+            ? _value.projectId
+            : projectId // ignore: cast_nullable_to_non_nullable
+                  as String?,
         structure: null == structure
             ? _value.structure
             : structure // ignore: cast_nullable_to_non_nullable
@@ -363,6 +385,10 @@ class __$$RfiListItemImplCopyWithImpl<$Res>
             ? _value.contract
             : contract // ignore: cast_nullable_to_non_nullable
                   as String?,
+        contractId: freezed == contractId
+            ? _value.contractId
+            : contractId // ignore: cast_nullable_to_non_nullable
+                  as String?,
         typeOfRFI: freezed == typeOfRFI
             ? _value.typeOfRFI
             : typeOfRFI // ignore: cast_nullable_to_non_nullable
@@ -395,6 +421,7 @@ class _$RfiListItemImpl implements _RfiListItem {
     required this.rfiId,
     required this.rfiNo,
     required this.project,
+    this.projectId,
     required this.structure,
     required this.activity,
     required this.status,
@@ -409,6 +436,7 @@ class _$RfiListItemImpl implements _RfiListItem {
     final List<String> contractorImages = const [],
     final List<String> clientImages = const [],
     this.contract,
+    this.contractId,
     this.typeOfRFI,
     this.rfiDescription,
     this.measurementType,
@@ -426,6 +454,8 @@ class _$RfiListItemImpl implements _RfiListItem {
   final String rfiNo;
   @override
   final String project;
+  @override
+  final String? projectId;
   @override
   final String structure;
   @override
@@ -470,6 +500,8 @@ class _$RfiListItemImpl implements _RfiListItem {
   @override
   final String? contract;
   @override
+  final String? contractId;
+  @override
   final String? typeOfRFI;
   @override
   final String? rfiDescription;
@@ -482,7 +514,7 @@ class _$RfiListItemImpl implements _RfiListItem {
 
   @override
   String toString() {
-    return 'RfiListItem(rfiId: $rfiId, rfiNo: $rfiNo, project: $project, structure: $structure, activity: $activity, status: $status, dateOfSubmission: $dateOfSubmission, work: $work, element: $element, assignedPersonClient: $assignedPersonClient, nameOfRepresentative: $nameOfRepresentative, createdBy: $createdBy, approvalStatus: $approvalStatus, totalQty: $totalQty, contractorImages: $contractorImages, clientImages: $clientImages, contract: $contract, typeOfRFI: $typeOfRFI, rfiDescription: $rfiDescription, measurementType: $measurementType, validationStatus: $validationStatus, inspectionStatus: $inspectionStatus)';
+    return 'RfiListItem(rfiId: $rfiId, rfiNo: $rfiNo, project: $project, projectId: $projectId, structure: $structure, activity: $activity, status: $status, dateOfSubmission: $dateOfSubmission, work: $work, element: $element, assignedPersonClient: $assignedPersonClient, nameOfRepresentative: $nameOfRepresentative, createdBy: $createdBy, approvalStatus: $approvalStatus, totalQty: $totalQty, contractorImages: $contractorImages, clientImages: $clientImages, contract: $contract, contractId: $contractId, typeOfRFI: $typeOfRFI, rfiDescription: $rfiDescription, measurementType: $measurementType, validationStatus: $validationStatus, inspectionStatus: $inspectionStatus)';
   }
 
   @override
@@ -493,6 +525,8 @@ class _$RfiListItemImpl implements _RfiListItem {
             (identical(other.rfiId, rfiId) || other.rfiId == rfiId) &&
             (identical(other.rfiNo, rfiNo) || other.rfiNo == rfiNo) &&
             (identical(other.project, project) || other.project == project) &&
+            (identical(other.projectId, projectId) ||
+                other.projectId == projectId) &&
             (identical(other.structure, structure) ||
                 other.structure == structure) &&
             (identical(other.activity, activity) ||
@@ -522,6 +556,8 @@ class _$RfiListItemImpl implements _RfiListItem {
             ) &&
             (identical(other.contract, contract) ||
                 other.contract == contract) &&
+            (identical(other.contractId, contractId) ||
+                other.contractId == contractId) &&
             (identical(other.typeOfRFI, typeOfRFI) ||
                 other.typeOfRFI == typeOfRFI) &&
             (identical(other.rfiDescription, rfiDescription) ||
@@ -541,6 +577,7 @@ class _$RfiListItemImpl implements _RfiListItem {
     rfiId,
     rfiNo,
     project,
+    projectId,
     structure,
     activity,
     status,
@@ -555,6 +592,7 @@ class _$RfiListItemImpl implements _RfiListItem {
     const DeepCollectionEquality().hash(_contractorImages),
     const DeepCollectionEquality().hash(_clientImages),
     contract,
+    contractId,
     typeOfRFI,
     rfiDescription,
     measurementType,
@@ -581,6 +619,7 @@ abstract class _RfiListItem implements RfiListItem {
     required final int rfiId,
     required final String rfiNo,
     required final String project,
+    final String? projectId,
     required final String structure,
     required final String activity,
     required final String status,
@@ -595,6 +634,7 @@ abstract class _RfiListItem implements RfiListItem {
     final List<String> contractorImages,
     final List<String> clientImages,
     final String? contract,
+    final String? contractId,
     final String? typeOfRFI,
     final String? rfiDescription,
     final String? measurementType,
@@ -611,6 +651,8 @@ abstract class _RfiListItem implements RfiListItem {
   String get rfiNo;
   @override
   String get project;
+  @override
+  String? get projectId;
   @override
   String get structure;
   @override
@@ -639,6 +681,8 @@ abstract class _RfiListItem implements RfiListItem {
   List<String> get clientImages;
   @override
   String? get contract;
+  @override
+  String? get contractId;
   @override
   String? get typeOfRFI;
   @override

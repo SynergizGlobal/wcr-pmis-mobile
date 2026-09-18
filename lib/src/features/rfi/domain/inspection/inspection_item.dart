@@ -73,6 +73,7 @@ class InspectionItem with _$InspectionItem {
     String? imgClient,
     String? contractId,
     String? contract,
+    String? projectId,
     String? structure,
     String? assignedPersonClient,
     String? action,

@@ -36,8 +36,10 @@ mixin _$RfiLogItem {
   String? get notes => throw _privateConstructorUsedError;
   String? get validationStatus => throw _privateConstructorUsedError;
   String get project => throw _privateConstructorUsedError;
+  String? get projectId => throw _privateConstructorUsedError;
   String get work => throw _privateConstructorUsedError;
   String get contract => throw _privateConstructorUsedError;
+  String? get contractId => throw _privateConstructorUsedError;
   String get nameOfRepresentative => throw _privateConstructorUsedError;
   String? get txnId => throw _privateConstructorUsedError;
   String? get estatus => throw _privateConstructorUsedError;
@@ -75,8 +77,10 @@ abstract class $RfiLogItemCopyWith<$Res> {
     String? notes,
     String? validationStatus,
     String project,
+    String? projectId,
     String work,
     String contract,
+    String? contractId,
     String nameOfRepresentative,
     String? txnId,
     String? estatus,
@@ -113,8 +117,10 @@ class _$RfiLogItemCopyWithImpl<$Res, $Val extends RfiLogItem>
     Object? notes = freezed,
     Object? validationStatus = freezed,
     Object? project = null,
+    Object? projectId = freezed,
     Object? work = null,
     Object? contract = null,
+    Object? contractId = freezed,
     Object? nameOfRepresentative = null,
     Object? txnId = freezed,
     Object? estatus = freezed,
@@ -181,6 +187,10 @@ class _$RfiLogItemCopyWithImpl<$Res, $Val extends RfiLogItem>
                 ? _value.project
                 : project // ignore: cast_nullable_to_non_nullable
                       as String,
+            projectId: freezed == projectId
+                ? _value.projectId
+                : projectId // ignore: cast_nullable_to_non_nullable
+                      as String?,
             work: null == work
                 ? _value.work
                 : work // ignore: cast_nullable_to_non_nullable
@@ -189,6 +199,10 @@ class _$RfiLogItemCopyWithImpl<$Res, $Val extends RfiLogItem>
                 ? _value.contract
                 : contract // ignore: cast_nullable_to_non_nullable
                       as String,
+            contractId: freezed == contractId
+                ? _value.contractId
+                : contractId // ignore: cast_nullable_to_non_nullable
+                      as String?,
             nameOfRepresentative: null == nameOfRepresentative
                 ? _value.nameOfRepresentative
                 : nameOfRepresentative // ignore: cast_nullable_to_non_nullable
@@ -232,8 +246,10 @@ abstract class _$$RfiLogItemImplCopyWith<$Res>
     String? notes,
     String? validationStatus,
     String project,
+    String? projectId,
     String work,
     String contract,
+    String? contractId,
     String nameOfRepresentative,
     String? txnId,
     String? estatus,
@@ -269,8 +285,10 @@ class __$$RfiLogItemImplCopyWithImpl<$Res>
     Object? notes = freezed,
     Object? validationStatus = freezed,
     Object? project = null,
+    Object? projectId = freezed,
     Object? work = null,
     Object? contract = null,
+    Object? contractId = freezed,
     Object? nameOfRepresentative = null,
     Object? txnId = freezed,
     Object? estatus = freezed,
@@ -337,6 +355,10 @@ class __$$RfiLogItemImplCopyWithImpl<$Res>
             ? _value.project
             : project // ignore: cast_nullable_to_non_nullable
                   as String,
+        projectId: freezed == projectId
+            ? _value.projectId
+            : projectId // ignore: cast_nullable_to_non_nullable
+                  as String?,
         work: null == work
             ? _value.work
             : work // ignore: cast_nullable_to_non_nullable
@@ -345,6 +367,10 @@ class __$$RfiLogItemImplCopyWithImpl<$Res>
             ? _value.contract
             : contract // ignore: cast_nullable_to_non_nullable
                   as String,
+        contractId: freezed == contractId
+            ? _value.contractId
+            : contractId // ignore: cast_nullable_to_non_nullable
+                  as String?,
         nameOfRepresentative: null == nameOfRepresentative
             ? _value.nameOfRepresentative
             : nameOfRepresentative // ignore: cast_nullable_to_non_nullable
@@ -381,8 +407,10 @@ class _$RfiLogItemImpl implements _RfiLogItem {
     this.notes,
     this.validationStatus,
     required this.project,
+    this.projectId,
     required this.work,
     required this.contract,
+    this.contractId,
     required this.nameOfRepresentative,
     this.txnId,
     this.estatus,
@@ -422,9 +450,13 @@ class _$RfiLogItemImpl implements _RfiLogItem {
   @override
   final String project;
   @override
+  final String? projectId;
+  @override
   final String work;
   @override
   final String contract;
+  @override
+  final String? contractId;
   @override
   final String nameOfRepresentative;
   @override
@@ -434,7 +466,7 @@ class _$RfiLogItemImpl implements _RfiLogItem {
 
   @override
   String toString() {
-    return 'RfiLogItem(id: $id, rfiId: $rfiId, dateOfSubmission: $dateOfSubmission, structure: $structure, rfiDescription: $rfiDescription, rfiRequestedBy: $rfiRequestedBy, department: $department, person: $person, dateRaised: $dateRaised, dateResponded: $dateResponded, enggApproval: $enggApproval, status: $status, notes: $notes, validationStatus: $validationStatus, project: $project, work: $work, contract: $contract, nameOfRepresentative: $nameOfRepresentative, txnId: $txnId, estatus: $estatus)';
+    return 'RfiLogItem(id: $id, rfiId: $rfiId, dateOfSubmission: $dateOfSubmission, structure: $structure, rfiDescription: $rfiDescription, rfiRequestedBy: $rfiRequestedBy, department: $department, person: $person, dateRaised: $dateRaised, dateResponded: $dateResponded, enggApproval: $enggApproval, status: $status, notes: $notes, validationStatus: $validationStatus, project: $project, projectId: $projectId, work: $work, contract: $contract, contractId: $contractId, nameOfRepresentative: $nameOfRepresentative, txnId: $txnId, estatus: $estatus)';
   }
 
   @override
@@ -466,9 +498,13 @@ class _$RfiLogItemImpl implements _RfiLogItem {
             (identical(other.validationStatus, validationStatus) ||
                 other.validationStatus == validationStatus) &&
             (identical(other.project, project) || other.project == project) &&
+            (identical(other.projectId, projectId) ||
+                other.projectId == projectId) &&
             (identical(other.work, work) || other.work == work) &&
             (identical(other.contract, contract) ||
                 other.contract == contract) &&
+            (identical(other.contractId, contractId) ||
+                other.contractId == contractId) &&
             (identical(other.nameOfRepresentative, nameOfRepresentative) ||
                 other.nameOfRepresentative == nameOfRepresentative) &&
             (identical(other.txnId, txnId) || other.txnId == txnId) &&
@@ -494,8 +530,10 @@ class _$RfiLogItemImpl implements _RfiLogItem {
     notes,
     validationStatus,
     project,
+    projectId,
     work,
     contract,
+    contractId,
     nameOfRepresentative,
     txnId,
     estatus,
@@ -532,8 +570,10 @@ abstract class _RfiLogItem implements RfiLogItem {
     final String? notes,
     final String? validationStatus,
     required final String project,
+    final String? projectId,
     required final String work,
     required final String contract,
+    final String? contractId,
     required final String nameOfRepresentative,
     final String? txnId,
     final String? estatus,
@@ -573,9 +613,13 @@ abstract class _RfiLogItem implements RfiLogItem {
   @override
   String get project;
   @override
+  String? get projectId;
+  @override
   String get work;
   @override
   String get contract;
+  @override
+  String? get contractId;
   @override
   String get nameOfRepresentative;
   @override

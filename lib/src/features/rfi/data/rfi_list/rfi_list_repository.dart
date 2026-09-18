@@ -27,7 +27,11 @@ class RfiListRepository {
             ? json['id'] as int
             : int.tryParse(json['id']?.toString() ?? '0') ?? 0,
         rfiNo: json['rfi_Id']?.toString() ?? json['rfiNo']?.toString() ?? 'N/A',
-        project: json['project']?.toString() ?? 'Unknown',
+        project: json['projectName']?.toString() ??
+            json['project']?.toString() ??
+            'Unknown',
+        projectId: json['projectId']?.toString() ??
+            json['project_id']?.toString(),
         structure: json['structure']?.toString() ?? 'Unknown',
         activity: json['activity']?.toString() ?? 'Unknown',
         status: json['status']?.toString() ?? 'Unknown',
@@ -45,7 +49,10 @@ class RfiListRepository {
             'N/A',
         contractorImages: _parseImagePaths(json['imgContractor']?.toString()),
         clientImages: _parseImagePaths(json['imgClient']?.toString()),
-        contract: json['contractId']?.toString(),
+        contract: json['contractName']?.toString() ??
+            json['contract']?.toString(),
+        contractId: json['contractId']?.toString() ??
+            json['contract_id']?.toString(),
         typeOfRFI: json['typeOfRFI']?.toString(),
         rfiDescription: json['rfiDescription']?.toString() ??
             json['description']?.toString() ??

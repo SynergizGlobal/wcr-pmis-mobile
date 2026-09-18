@@ -1,5 +1,6 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../core/providers/dio_provider.dart';
+import '../../domain/common/filter_option.dart';
 import '../../domain/validation/validation_item.dart';
 import '../../domain/rfi_log/rfi_report_details.dart';
 import 'validation_api.dart';
@@ -20,9 +21,34 @@ class ValidationRepository {
   Future<List<ValidationItem>> getRfiValidations() async {
     final rawData = await api.getRfiValidations();
 
-    return rawData.map((json) {
-      return ValidationItem.fromJson(json);
+    return rawData.whereType<Map>().map((json) {
+      final Map<String, dynamic> row = Map<String, dynamic>.from(json);
+      row['project'] ??= row['projectName'];
+      row['contract'] ??= row['contractName'];
+      return ValidationItem.fromJson(row);
     }).toList();
+  }
+
+  Future<List<FilterOption>> getFilterProjects({
+    String project = '',
+    String contract = '',
+  }) async {
+    final raw = await api.filterProjects(
+      project: project,
+      contract: contract,
+    );
+    return FilterOption.parseList(raw, isProject: true);
+  }
+
+  Future<List<FilterOption>> getFilterContracts({
+    String project = '',
+    String contract = '',
+  }) async {
+    final raw = await api.filterContracts(
+      project: project,
+      contract: contract,
+    );
+    return FilterOption.parseList(raw, isProject: false);
   }
 
   Future<RfiReportDetailsData> fetchRfiReportDetails(int id) async {
