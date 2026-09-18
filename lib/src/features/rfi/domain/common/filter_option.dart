@@ -13,10 +13,10 @@ class FilterOption {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is FilterOption && other.id == id && other.name == name;
+      other is FilterOption && other.id == id;
 
   @override
-  int get hashCode => Object.hash(id, name);
+  int get hashCode => id.hashCode;
 
   @override
   String toString() => 'FilterOption(id: $id, name: $name)';

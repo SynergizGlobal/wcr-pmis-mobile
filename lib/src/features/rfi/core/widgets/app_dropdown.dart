@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:wcr_pmis_mobile/src/features/rfi/domain/common/filter_option.dart';
 
 class AppDropdown<T> extends StatelessWidget {
   const AppDropdown({
@@ -22,9 +23,28 @@ class AppDropdown<T> extends StatelessWidget {
   final double? width;
   final bool enabled;
 
+  /// Prefer a single entry per logical option (FilterOption → by id).
   List<T> _uniqueItems(List<T> source) {
-    final unique = <T>[];
-    for (final item in source) {
+    if (source.isEmpty) return source;
+
+    if (source.first is FilterOption) {
+      final Map<String, FilterOption> byId = <String, FilterOption>{};
+      for (final T item in source) {
+        final FilterOption option = item as FilterOption;
+        final String id = option.id.trim();
+        if (id.isEmpty) continue;
+        final FilterOption? existing = byId[id];
+        if (existing == null ||
+            (existing.name == existing.id && option.name != option.id) ||
+            option.name.length > existing.name.length) {
+          byId[id] = option;
+        }
+      }
+      return byId.values.toList().cast<T>();
+    }
+
+    final List<T> unique = <T>[];
+    for (final T item in source) {
       if (!unique.contains(item)) {
         unique.add(item);
       }
@@ -32,12 +52,22 @@ class AppDropdown<T> extends StatelessWidget {
     return unique;
   }
 
+  String _itemsIdentityKey(List<T> uniqueItems) {
+    if (uniqueItems.isEmpty) return 'empty';
+    if (uniqueItems.first is FilterOption) {
+      return uniqueItems
+          .map((T e) => (e as FilterOption).id)
+          .join('|');
+    }
+    return uniqueItems.map((T e) => e.hashCode).join('|');
+  }
+
   @override
   Widget build(BuildContext context) {
     final ColorScheme scheme = Theme.of(context).colorScheme;
     final TextTheme textTheme = Theme.of(context).textTheme;
-    final uniqueItems = _uniqueItems(items);
-    final resolvedValue = _resolveValue(value, uniqueItems);
+    final List<T> uniqueItems = _uniqueItems(items);
+    final T? resolvedValue = _resolveValue(value, uniqueItems);
 
     final Widget dropdown = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -54,6 +84,9 @@ class AppDropdown<T> extends StatelessWidget {
           const SizedBox(height: 6),
         ],
         DropdownButtonFormField<T>(
+          // Reset FormField when options change so a stale value cannot
+          // assert against a rebuilt items list.
+          key: ValueKey<String>('dd-${_itemsIdentityKey(uniqueItems)}'),
           value: resolvedValue,
           isExpanded: true,
           hint: Text(
@@ -99,12 +132,13 @@ class AppDropdown<T> extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     maxLines: 2,
                     style: textTheme.bodyMedium?.copyWith(
-                      color: item == resolvedValue
+                      color: identical(item, resolvedValue) || item == resolvedValue
                           ? scheme.primary
                           : scheme.onSurface,
-                      fontWeight: item == resolvedValue
-                          ? FontWeight.w600
-                          : FontWeight.normal,
+                      fontWeight:
+                          identical(item, resolvedValue) || item == resolvedValue
+                              ? FontWeight.w600
+                              : FontWeight.normal,
                     ),
                   ),
                 ),
@@ -120,13 +154,25 @@ class AppDropdown<T> extends StatelessWidget {
     }
     return dropdown;
   }
-
 }
 
 T? _resolveValue<T>(T? selected, List<T> options) {
   if (selected == null || options.isEmpty) {
     return null;
   }
+
+  // FilterOption: match by id, return the exact instance from [options].
+  if (selected is FilterOption) {
+    final String selectedId = selected.id.trim();
+    if (selectedId.isEmpty) return null;
+    for (final T option in options) {
+      if (option is FilterOption && option.id == selectedId) {
+        return option;
+      }
+    }
+    return null;
+  }
+
   for (final T option in options) {
     if (option == selected) {
       return option;

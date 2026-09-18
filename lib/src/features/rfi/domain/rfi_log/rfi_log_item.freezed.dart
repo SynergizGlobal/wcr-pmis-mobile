@@ -31,6 +31,8 @@ mixin _$RfiLogItem {
   String get person => throw _privateConstructorUsedError;
   String get dateRaised => throw _privateConstructorUsedError;
   String? get dateResponded => throw _privateConstructorUsedError;
+  String? get dateRespondedContractor => throw _privateConstructorUsedError;
+  String? get dateRespondedEngineer => throw _privateConstructorUsedError;
   String? get enggApproval => throw _privateConstructorUsedError;
   String get status => throw _privateConstructorUsedError;
   String? get notes => throw _privateConstructorUsedError;
@@ -72,6 +74,8 @@ abstract class $RfiLogItemCopyWith<$Res> {
     String person,
     String dateRaised,
     String? dateResponded,
+    String? dateRespondedContractor,
+    String? dateRespondedEngineer,
     String? enggApproval,
     String status,
     String? notes,
@@ -112,6 +116,8 @@ class _$RfiLogItemCopyWithImpl<$Res, $Val extends RfiLogItem>
     Object? person = null,
     Object? dateRaised = null,
     Object? dateResponded = freezed,
+    Object? dateRespondedContractor = freezed,
+    Object? dateRespondedEngineer = freezed,
     Object? enggApproval = freezed,
     Object? status = null,
     Object? notes = freezed,
@@ -166,6 +172,14 @@ class _$RfiLogItemCopyWithImpl<$Res, $Val extends RfiLogItem>
             dateResponded: freezed == dateResponded
                 ? _value.dateResponded
                 : dateResponded // ignore: cast_nullable_to_non_nullable
+                      as String?,
+            dateRespondedContractor: freezed == dateRespondedContractor
+                ? _value.dateRespondedContractor
+                : dateRespondedContractor // ignore: cast_nullable_to_non_nullable
+                      as String?,
+            dateRespondedEngineer: freezed == dateRespondedEngineer
+                ? _value.dateRespondedEngineer
+                : dateRespondedEngineer // ignore: cast_nullable_to_non_nullable
                       as String?,
             enggApproval: freezed == enggApproval
                 ? _value.enggApproval
@@ -241,6 +255,8 @@ abstract class _$$RfiLogItemImplCopyWith<$Res>
     String person,
     String dateRaised,
     String? dateResponded,
+    String? dateRespondedContractor,
+    String? dateRespondedEngineer,
     String? enggApproval,
     String status,
     String? notes,
@@ -280,6 +296,8 @@ class __$$RfiLogItemImplCopyWithImpl<$Res>
     Object? person = null,
     Object? dateRaised = null,
     Object? dateResponded = freezed,
+    Object? dateRespondedContractor = freezed,
+    Object? dateRespondedEngineer = freezed,
     Object? enggApproval = freezed,
     Object? status = null,
     Object? notes = freezed,
@@ -334,6 +352,14 @@ class __$$RfiLogItemImplCopyWithImpl<$Res>
         dateResponded: freezed == dateResponded
             ? _value.dateResponded
             : dateResponded // ignore: cast_nullable_to_non_nullable
+                  as String?,
+        dateRespondedContractor: freezed == dateRespondedContractor
+            ? _value.dateRespondedContractor
+            : dateRespondedContractor // ignore: cast_nullable_to_non_nullable
+                  as String?,
+        dateRespondedEngineer: freezed == dateRespondedEngineer
+            ? _value.dateRespondedEngineer
+            : dateRespondedEngineer // ignore: cast_nullable_to_non_nullable
                   as String?,
         enggApproval: freezed == enggApproval
             ? _value.enggApproval
@@ -402,6 +428,8 @@ class _$RfiLogItemImpl implements _RfiLogItem {
     required this.person,
     required this.dateRaised,
     this.dateResponded,
+    this.dateRespondedContractor,
+    this.dateRespondedEngineer,
     this.enggApproval,
     required this.status,
     this.notes,
@@ -440,6 +468,10 @@ class _$RfiLogItemImpl implements _RfiLogItem {
   @override
   final String? dateResponded;
   @override
+  final String? dateRespondedContractor;
+  @override
+  final String? dateRespondedEngineer;
+  @override
   final String? enggApproval;
   @override
   final String status;
@@ -466,7 +498,7 @@ class _$RfiLogItemImpl implements _RfiLogItem {
 
   @override
   String toString() {
-    return 'RfiLogItem(id: $id, rfiId: $rfiId, dateOfSubmission: $dateOfSubmission, structure: $structure, rfiDescription: $rfiDescription, rfiRequestedBy: $rfiRequestedBy, department: $department, person: $person, dateRaised: $dateRaised, dateResponded: $dateResponded, enggApproval: $enggApproval, status: $status, notes: $notes, validationStatus: $validationStatus, project: $project, projectId: $projectId, work: $work, contract: $contract, contractId: $contractId, nameOfRepresentative: $nameOfRepresentative, txnId: $txnId, estatus: $estatus)';
+    return 'RfiLogItem(id: $id, rfiId: $rfiId, dateOfSubmission: $dateOfSubmission, structure: $structure, rfiDescription: $rfiDescription, rfiRequestedBy: $rfiRequestedBy, department: $department, person: $person, dateRaised: $dateRaised, dateResponded: $dateResponded, dateRespondedContractor: $dateRespondedContractor, dateRespondedEngineer: $dateRespondedEngineer, enggApproval: $enggApproval, status: $status, notes: $notes, validationStatus: $validationStatus, project: $project, projectId: $projectId, work: $work, contract: $contract, contractId: $contractId, nameOfRepresentative: $nameOfRepresentative, txnId: $txnId, estatus: $estatus)';
   }
 
   @override
@@ -491,6 +523,13 @@ class _$RfiLogItemImpl implements _RfiLogItem {
                 other.dateRaised == dateRaised) &&
             (identical(other.dateResponded, dateResponded) ||
                 other.dateResponded == dateResponded) &&
+            (identical(
+                  other.dateRespondedContractor,
+                  dateRespondedContractor,
+                ) ||
+                other.dateRespondedContractor == dateRespondedContractor) &&
+            (identical(other.dateRespondedEngineer, dateRespondedEngineer) ||
+                other.dateRespondedEngineer == dateRespondedEngineer) &&
             (identical(other.enggApproval, enggApproval) ||
                 other.enggApproval == enggApproval) &&
             (identical(other.status, status) || other.status == status) &&
@@ -525,6 +564,8 @@ class _$RfiLogItemImpl implements _RfiLogItem {
     person,
     dateRaised,
     dateResponded,
+    dateRespondedContractor,
+    dateRespondedEngineer,
     enggApproval,
     status,
     notes,
@@ -565,6 +606,8 @@ abstract class _RfiLogItem implements RfiLogItem {
     required final String person,
     required final String dateRaised,
     final String? dateResponded,
+    final String? dateRespondedContractor,
+    final String? dateRespondedEngineer,
     final String? enggApproval,
     required final String status,
     final String? notes,
@@ -602,6 +645,10 @@ abstract class _RfiLogItem implements RfiLogItem {
   String get dateRaised;
   @override
   String? get dateResponded;
+  @override
+  String? get dateRespondedContractor;
+  @override
+  String? get dateRespondedEngineer;
   @override
   String? get enggApproval;
   @override

@@ -41,37 +41,71 @@ class RfiLogRepository {
         json['contractName'] ?? json['contract'],
       );
 
+      // Web "RFI Raised Date" — try common log/list field names.
+      final String raisedDate = _cleanText(
+            json['dateRaised'] ??
+                json['rfiRaisedDate'] ??
+                json['dateOfRaised'] ??
+                json['raisedDate'] ??
+                json['dateOfSubmission'] ??
+                json['dateOfCreation'],
+          ) ??
+          '-';
+
+      final String? respondedContractor = _cleanText(
+        json['dateRespondedContractor'] ??
+            json['contractorSubmittedOn'] ??
+            json['contractorDateResponded'] ??
+            json['dateRespondedCon'] ??
+            json['conDateResponded'],
+      );
+      final String? respondedEngineer = _cleanText(
+        json['dateRespondedEngineer'] ??
+            json['engineerSubmittedOn'] ??
+            json['engineerDateResponded'] ??
+            json['dateRespondedEng'] ??
+            json['enggDateResponded'] ??
+            json['dateResponded'],
+      );
+
       return RfiLogItem(
         id: json['id'] is int
             ? json['id'] as int
             : int.tryParse(json['id']?.toString() ?? '0') ?? 0,
         rfiId: RfiLogPdfPaths.readRfiIdFromJson(json),
-        dateOfSubmission: json['dateOfSubmission']?.toString() ?? 'N/A',
-        structure: (json['element']?.toString() ?? json['structure']?.toString()) ?? 'N/A',
-        rfiDescription: json['activity']?.toString() ?? 
-            json['rfiDescription']?.toString() ?? 
-            'N/A',
-        rfiRequestedBy: json['createdBy']?.toString() ?? 
-            json['rfiRequestedBy']?.toString() ?? 
-            'N/A',
-        department: json['department']?.toString() ?? 'N/A',
-        person: json['assignedPersonClient']?.toString() ?? 
-            json['person']?.toString() ?? 
-            'N/A',
-        dateRaised: json['dateRaised']?.toString() ?? 'N/A',
-        dateResponded: json['dateResponded']?.toString(),
-        enggApproval: json['enggApproval']?.toString(),
+        dateOfSubmission: raisedDate,
+        // Web "ID Of Structure" uses structure (e.g. 129/4 (PSC Girder)).
+        structure: _cleanText(json['structure']) ??
+            _cleanText(json['element']) ??
+            '-',
+        // Web description cells are usually activity labels.
+        rfiDescription: _cleanText(json['activity']) ??
+            _cleanText(json['rfiDescription']) ??
+            '-',
+        rfiRequestedBy: _cleanText(json['createdBy']) ??
+            _cleanText(json['rfiRequestedBy']) ??
+            '-',
+        department: _cleanText(json['department']) ?? '-',
+        person: _cleanText(json['assignedPersonClient']) ??
+            _cleanText(json['person']) ??
+            '-',
+        dateRaised: raisedDate,
+        dateResponded: respondedEngineer ?? respondedContractor,
+        dateRespondedContractor: respondedContractor,
+        dateRespondedEngineer: respondedEngineer,
+        enggApproval: _cleanText(json['enggApproval']),
         status: json['status']?.toString() ?? 'UNKNOWN',
-        notes: json['notes']?.toString(),
-        validationStatus: json['validationStatus']?.toString(),
+        notes: _cleanText(json['notes']),
+        validationStatus: _cleanText(json['validationStatus']),
         project: projectName ?? projectId ?? '',
         projectId: projectId,
         work: _cleanText(json['work']) ?? '',
         contract: contractName ?? contractId ?? '',
         contractId: contractId,
-        nameOfRepresentative: json['nameOfRepresentative']?.toString() ?? 'N/A',
-        txnId: json['txnId']?.toString(),
-        estatus: json['estatus']?.toString(),
+        nameOfRepresentative:
+            _cleanText(json['nameOfRepresentative']) ?? '-',
+        txnId: _cleanText(json['txnId']),
+        estatus: _cleanText(json['estatus']),
       );
     }).toList();
   }

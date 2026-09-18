@@ -205,13 +205,17 @@ class _RfiLogScreenState extends ConsumerState<RfiLogScreen> {
                                 dividerThickness: 1,
                                 columns: const [
                                   DataColumn(label: Text('RFI ID')),
-                                  DataColumn(label: Text('RFI Date')),
+                                  DataColumn(label: Text('RFI Raised\nDate')),
                                   DataColumn(label: Text('ID Of Structure')),
                                   DataColumn(label: Text('RFI Description')),
-                                  DataColumn(label: Text('Assigned\nContractor')),
-                                  DataColumn(label: Text('Person')),
-                                  DataColumn(label: Text('Date Raised')),
-                                  DataColumn(label: Text('Date\nResponded')),
+                                  DataColumn(
+                                      label: Text('Contractor\nRepresentative')),
+                                  DataColumn(
+                                      label: Text("Employer's\nEngineer")),
+                                  DataColumn(
+                                      label: Text('Date Responded\n(Contractor)')),
+                                  DataColumn(
+                                      label: Text('Date Responded\n(Engineer)')),
                                   DataColumn(label: Text('Status')),
                                   DataColumn(label: Text('Notes')),
                                   DataColumn(label: Text('Preview')),
@@ -279,55 +283,67 @@ class _RfiLogScreenState extends ConsumerState<RfiLogScreen> {
 
                                   return DataRow(
                                     cells: [
-                                      DataCell(Text(item.rfiId)),
-                                      DataCell(Text(item.dateOfSubmission)),
-                                      DataCell(Text(item.structure)),
-                                      DataCell(Text(item.rfiDescription)),
-                                      DataCell(Tooltip(
+                                      DataCell(Text(_cell(item.rfiId))),
+                                      DataCell(Text(_cell(item.dateRaised))),
+                                      DataCell(Text(_cell(item.structure))),
+                                      DataCell(
+                                          Text(_cell(item.rfiDescription))),
+                                      DataCell(
+                                        Tooltip(
                                           message: item.nameOfRepresentative,
-                                          child: Text(item
-                                                      .nameOfRepresentative
-                                                      .length >
-                                                  20
-                                              ? '${item.nameOfRepresentative.substring(0, 20)}...'
-                                              : item.nameOfRepresentative))),
-                                      DataCell(Tooltip(
+                                          child: Text(
+                                            _ellipsis(
+                                              item.nameOfRepresentative,
+                                              28,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      DataCell(
+                                        Tooltip(
                                           message: item.person,
-                                          child: Text(item.person.length > 20
-                                              ? '${item.person.substring(0, 20)}...'
-                                              : item.person))),
-                                      DataCell(Text(item.dateRaised)),
-                                      DataCell(Text(item.dateResponded ?? '')),
+                                          child: Text(
+                                            _ellipsis(item.person, 28),
+                                          ),
+                                        ),
+                                      ),
+                                      DataCell(Text(_cell(
+                                          item.dateRespondedContractor))),
+                                      DataCell(Text(
+                                          _cell(item.dateRespondedEngineer))),
                                       DataCell(
                                         Text(
                                           displayStatus,
                                           style: TextStyle(
-                                              color: statusColor,
-                                              fontWeight: FontWeight.bold),
+                                            color: statusColor,
+                                            fontWeight: FontWeight.bold,
+                                          ),
                                         ),
                                       ),
-                                      DataCell(Tooltip(
+                                      DataCell(
+                                        Tooltip(
                                           message: item.notes ?? '',
-                                          child: Text((item.notes ?? '')
-                                                      .length >
-                                                  20
-                                              ? '${item.notes!.substring(0, 20)}...'
-                                              : item.notes ?? ''))),
+                                          child: Text(
+                                            _ellipsis(item.notes ?? '', 20),
+                                          ),
+                                        ),
+                                      ),
                                       DataCell(
                                         item.rfiId.isEmpty
                                             ? const SizedBox.shrink()
                                             : IconButton(
                                                 icon: const Icon(
-                                                    Icons.remove_red_eye,
-                                                    size: 20,
-                                                    color: Colors.blueGrey),
+                                                  Icons.remove_red_eye,
+                                                  size: 20,
+                                                  color: Colors.blueGrey,
+                                                ),
                                                 onPressed: () {
                                                   showDialog(
                                                     context: context,
                                                     builder: (_) =>
                                                         RfiPreviewDialog(
-                                                            rfiId: item.id
-                                                                .toString()),
+                                                      rfiId: item.id.toString(),
+                                                    ),
                                                   );
                                                 },
                                                 tooltip: 'Preview',
@@ -337,21 +353,25 @@ class _RfiLogScreenState extends ConsumerState<RfiLogScreen> {
                                         !_canShowDownload(item)
                                             ? const SizedBox.shrink()
                                             : IconButton(
-                                                icon: const Icon(Icons.download,
-                                                    size: 20,
-                                                    color: Colors.blueAccent),
+                                                icon: const Icon(
+                                                  Icons.download,
+                                                  size: 20,
+                                                  color: Colors.blueAccent,
+                                                ),
                                                 onPressed: () {
                                                   if (!_canShowDownload(item)) {
                                                     GlobalAlertDialog.show(
                                                       context,
-                                                      title: 'Download unavailable',
+                                                      title:
+                                                          'Download unavailable',
                                                       message:
                                                           'Download is available only when eStatus is ENGG_SUCCESS or CON_SUCCESS and Transaction ID is present.',
                                                       type: DialogType.info,
                                                     );
                                                     return;
                                                   }
-                                                  final dio = ref.read(dioProvider);
+                                                  final dio =
+                                                      ref.read(dioProvider);
                                                   PdfDownloadService
                                                       .downloadAndOpenPdf(
                                                     context: context,
@@ -401,6 +421,22 @@ class _RfiLogScreenState extends ConsumerState<RfiLogScreen> {
 
     final eStatus = (item.estatus ?? '').trim().toUpperCase();
     return eStatus == 'ENGG_SUCCESS' || eStatus == 'CON_SUCCESS';
+  }
+
+  static String _cell(String? value) {
+    final String text = (value ?? '').trim();
+    if (text.isEmpty ||
+        text.toLowerCase() == 'n/a' ||
+        text.toLowerCase() == 'null') {
+      return '-';
+    }
+    return text;
+  }
+
+  static String _ellipsis(String value, int max) {
+    final String text = _cell(value);
+    if (text == '-' || text.length <= max) return text;
+    return '${text.substring(0, max)}...';
   }
 
   FilterOption? _optionById(List<FilterOption> options, String id) {

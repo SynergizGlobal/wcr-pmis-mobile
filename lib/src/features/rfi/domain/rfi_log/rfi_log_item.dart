@@ -16,6 +16,8 @@ class RfiLogItem with _$RfiLogItem {
     required String person,
     required String dateRaised,
     String? dateResponded,
+    String? dateRespondedContractor,
+    String? dateRespondedEngineer,
     String? enggApproval,
     required String status,
     String? notes,
