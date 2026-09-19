@@ -164,7 +164,28 @@ class UpdateRfiForm extends _$UpdateRfiForm {
       final defaultTime =
           "${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}";
 
-      final data = {
+      List<String> asDtoStringList(String? value) {
+        final String trimmed = value?.trim() ?? '';
+        if (trimmed.isEmpty) {
+          return const <String>[];
+        }
+        return <String>[trimmed];
+      }
+
+      String mapTypeOfRfiForApi(String? ui) {
+        return switch (ui?.trim()) {
+          'Spot RFI' => 'SPOT RFI',
+          'Regular RFI' => 'REGULAR RFI',
+          _ => ui?.trim() ?? '',
+        };
+      }
+
+      final String dateOfSubmission = formatToYMD(state.dateOfSubmission);
+      final String dateOfInspection = formatToYMD(state.dateOfInspection);
+
+      // RFI_DTO: element/activity/rfiDescription/p6/pmis are List<String>;
+      // LocalDate fields must not be "".
+      final data = <String, dynamic>{
         "project": state.selectedProject?.name ?? "",
         "projectId": state.selectedProject?.id ?? "",
         "work": state.selectedWork?.name ?? "",
@@ -173,18 +194,18 @@ class UpdateRfiForm extends _$UpdateRfiForm {
         "structureType": state.selectedStructureType?.name ?? "",
         "structure": state.selectedStructure?.name ?? "",
         "component": state.selectedComponent?.name ?? "",
-        "element": state.selectedElement?.name ?? "",
-        "activity": state.selectedActivity?.name ?? "",
-        "rfiDescription": state.selectedRfiDescription?.name ?? "",
+        "element": asDtoStringList(state.selectedElement?.name),
+        "activity": asDtoStringList(state.selectedActivity?.name),
+        "rfiDescription": asDtoStringList(state.selectedRfiDescription?.name),
         "action": state.action ?? "",
-        "typeOfRFI": state.typeOfRfi ?? "",
+        "typeOfRFI": mapTypeOfRfiForApi(state.typeOfRfi),
         "nameOfRepresentative": state.contractorRepresentative ?? "",
         "timeOfInspection": (state.timeOfInspection?.isNotEmpty == true)
             ? state.timeOfInspection!
             : defaultTime,
         "rfi_Id": state.initialItem!.rfiNo,
-        "dateOfSubmission": formatToYMD(state.dateOfSubmission),
-        "dateOfInspection": formatToYMD(state.dateOfInspection),
+        if (dateOfSubmission.isNotEmpty) "dateOfSubmission": dateOfSubmission,
+        if (dateOfInspection.isNotEmpty) "dateOfInspection": dateOfInspection,
         "enclosures": state.selectedEnclosures,
         "location": "",
         "description": state.rfiDescriptionText ?? "ok",

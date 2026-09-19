@@ -39,7 +39,8 @@ class RfiHomeTab extends ConsumerWidget {
         await ref.read(rfiDashboardProvider.future);
       },
       child: ListView(
-        padding: const EdgeInsets.all(16),
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
         children: <Widget>[
           Text(
             'Welcome to RFI System',
@@ -215,14 +216,21 @@ class _MetricsGrid extends StatelessWidget {
       ),
     ];
 
-    return GridView.count(
-      crossAxisCount: 2,
-      crossAxisSpacing: 12,
-      mainAxisSpacing: 12,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      childAspectRatio: 1.05,
-      children: cards,
+    return LayoutBuilder(
+      builder: (BuildContext context, BoxConstraints constraints) {
+        final double width = constraints.maxWidth;
+        // Taller tiles so icon + count + 2-line label never overflow.
+        final double aspectRatio = width < 360 ? 0.88 : 0.95;
+        return GridView.count(
+          crossAxisCount: 2,
+          crossAxisSpacing: 12,
+          mainAxisSpacing: 12,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          childAspectRatio: aspectRatio,
+          children: cards,
+        );
+      },
     );
   }
 }

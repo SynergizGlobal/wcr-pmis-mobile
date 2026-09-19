@@ -671,6 +671,16 @@ class CreateRfiNotifier extends StateNotifier<CreateRfiState> {
       return 'Missing activity schedule id (P6). Please re-select Activity.';
     }
 
+    final RfiDropdownItem? contract = state.selectedContract;
+    final String contractId = contract?.id.trim() ?? '';
+    if (contractId.isEmpty) {
+      return 'Missing contract id. Please re-select Contract.';
+    }
+    final String projectId = state.selectedProject?.id.trim() ?? '';
+    if (projectId.isEmpty) {
+      return 'Missing project id. Please re-select Project.';
+    }
+
     state = state.copyWith(isSubmitting: true, clearErrorMessage: true);
     try {
       final DateTime now = DateTime.now();
@@ -684,24 +694,34 @@ class CreateRfiNotifier extends StateNotifier<CreateRfiState> {
               ? state.selectedActivity!.pmisCalcFk!.trim()
               : 'No';
 
-      final RfiDropdownItem? contract = state.selectedContract;
       final RfiDropdownItem? representative = _findRepresentativeByName(
         state.contractorRepresentative,
       );
+
+      // RFI_DTO expects these as List<String> (Jackson rejects scalar/int → 400).
+      final String dateOfSubmission = state.dateOfSubmission?.isNotEmpty == true
+          ? _formatToYmd(state.dateOfSubmission)
+          : defaultSubmissionDate;
+      final String dateOfInspection = _formatToYmd(state.dateOfInspection);
+      if (dateOfInspection.isEmpty) {
+        state = state.copyWith(isSubmitting: false);
+        return 'Please select a valid Date of Inspection';
+      }
 
       final Map<String, dynamic> body = <String, dynamic>{
         'project': state.selectedProject?.name ?? '',
         'work': '',
         'contract': contract?.name ?? '',
-        'contractId': contract?.id ?? '',
+        'contractId': contractId,
         'structureType': state.selectedStructureType?.name ?? '',
         'structure': state.selectedStructure?.name ?? '',
         'component': state.selectedComponent?.name ?? '',
-        'element': state.selectedElement?.name ?? '',
-        'activity': state.selectedActivity?.name ?? '',
-        'p6ActivityIdFk': p6Id,
-        'pmisCalcFk': pmis,
-        'rfiDescription': state.selectedRfiDescription?.name ?? '',
+        'element': _asDtoStringList(state.selectedElement?.name),
+        'activity': _asDtoStringList(state.selectedActivity?.name),
+        'p6ActivityIdFk': <String>[p6Id.toString()],
+        'pmisCalcFk': <String>[pmis],
+        'rfiDescription':
+            _asDtoStringList(state.selectedRfiDescription?.name),
         'action': state.action ?? '',
         'typeOfRFI': _mapTypeOfRfiForApi(state.typeOfRfi),
         'nameOfRepresentative': state.contractorRepresentative ?? '',
@@ -710,10 +730,8 @@ class CreateRfiNotifier extends StateNotifier<CreateRfiState> {
         'timeOfInspection':
             _formatTimeForApi(state.timeOfInspection, defaultTime),
         'rfi_Id': '',
-        'dateOfSubmission': state.dateOfSubmission?.isNotEmpty == true
-            ? _formatToYmd(state.dateOfSubmission)
-            : defaultSubmissionDate,
-        'dateOfInspection': _formatToYmd(state.dateOfInspection),
+        'dateOfSubmission': dateOfSubmission,
+        'dateOfInspection': dateOfInspection,
         'enclosures': state.selectedEnclosures,
         'location': '',
         'description': state.rfiDescriptionText ?? '',
@@ -726,7 +744,7 @@ class CreateRfiNotifier extends StateNotifier<CreateRfiState> {
         'caoUserId': contract?.caoUserId ?? '',
         'caoUserName': contract?.caoUserName ?? '',
         'caoEmail': contract?.caoEmail ?? '',
-        'projectId': state.selectedProject?.id ?? '',
+        'projectId': projectId,
       };
 
       await _repository.submitCreateRfi(body);
@@ -887,6 +905,15 @@ class CreateRfiNotifier extends StateNotifier<CreateRfiState> {
       }
     }
     return null;
+  }
+
+  /// Backend [RFI_DTO] list fields — never send a bare string/int.
+  List<String> _asDtoStringList(String? value) {
+    final String trimmed = value?.trim() ?? '';
+    if (trimmed.isEmpty) {
+      return const <String>[];
+    }
+    return <String>[trimmed];
   }
 
   String _mapTypeOfRfiForApi(String? ui) {
