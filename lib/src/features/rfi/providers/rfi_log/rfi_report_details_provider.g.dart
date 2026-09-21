@@ -2,10 +2,6 @@
 
 part of 'rfi_report_details_provider.dart';
 
-// **************************************************************************
-// RiverpodGenerator
-// **************************************************************************
-
 String _$rfiReportDetailsHash() => r'a951d53eb9d0daf805080baa15a63c6c603b0e2c';
 
 /// Copied from Dart SDK
@@ -13,17 +9,13 @@ class _SystemHash {
   _SystemHash._();
 
   static int combine(int hash, int value) {
-    // ignore: parameter_assignments
     hash = 0x1fffffff & (hash + value);
-    // ignore: parameter_assignments
     hash = 0x1fffffff & (hash + ((0x0007ffff & hash) << 10));
     return hash ^ (hash >> 6);
   }
 
   static int finish(int hash) {
-    // ignore: parameter_assignments
     hash = 0x1fffffff & (hash + ((0x03ffffff & hash) << 3));
-    // ignore: parameter_assignments
     hash = hash ^ (hash >> 11);
     return 0x1fffffff & (hash + ((0x00003fff & hash) << 15));
   }

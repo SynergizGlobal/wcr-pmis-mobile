@@ -6,7 +6,7 @@ class RfiLogApi {
   RfiLogApi(this.dio);
 
   Future<List<dynamic>> getAllRfiLogDetails(Map<String, dynamic> body) async {
-    final response = await dio.post("api/rfiLog/getAllRfiLogDetails", data: body);
+    final response = await dio.post('api/rfiLog/getAllRfiLogDetails', data: body);
     if (response.data == null || response.data is! List) {
       return [];
     }
@@ -45,12 +45,12 @@ class RfiLogApi {
 
   @Deprecated('Use filterListProjects / filterListContracts')
   Future<Map<String, dynamic>> getFilterList() async {
-    final response = await dio.get("api/rfiLog/filter-list");
+    final response = await dio.get('api/rfiLog/filter-list');
     return (response.data as Map<String, dynamic>?) ?? {};
   }
 
   Future<Map<String, dynamic>> getRfiReportDetails(String id) async {
-    final response = await dio.get("api/rfiLog/getRfiReportDetails/$id");
+    final response = await dio.get('api/rfiLog/getRfiReportDetails/$id');
     return (response.data as Map<String, dynamic>?) ?? {};
   }
 

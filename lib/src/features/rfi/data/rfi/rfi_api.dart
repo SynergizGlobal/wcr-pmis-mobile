@@ -5,12 +5,12 @@ class RfiApi {
   RfiApi(this.dio);
 
   Future<Map<String, dynamic>> getStatusCounts() async {
-    final response = await dio.get("rfi/status-counts");
+    final response = await dio.get('rfi/status-counts');
     return response.data;
   }
 
   Future<int> getRfiCount() async {
-    final response = await dio.get("rfi/rfi-count");
+    final response = await dio.get('rfi/rfi-count');
     return response.data as int;
   }
 
@@ -22,23 +22,23 @@ class RfiApi {
     required String email,
   }) async {
     await dio.post(
-      "rfi/assign-client-person",
+      'rfi/assign-client-person',
       data: {
-        "rfi_Id": rfiId,
-        "clientUserId": clientUserId,
-        "assignedPersonClient": assignedPersonClient,
-        "clientDepartment": clientDepartment,
-        "email": email,
+        'rfi_Id': rfiId,
+        'clientUserId': clientUserId,
+        'assignedPersonClient': assignedPersonClient,
+        'clientDepartment': clientDepartment,
+        'email': email,
       },
     );
   }
 
   Future<void> deleteRfi(int id, String description) async {
     await dio.delete(
-      "rfi/delete",
+      'rfi/delete',
       data: {
-        "id": id,
-        "description": description,
+        'id': id,
+        'description': description,
       },
     );
   }
@@ -53,17 +53,17 @@ class RfiApi {
   }
 
   Future<List<dynamic>> getProjectNames() async {
-    final response = await dio.get("rfi/projectNames");
+    final response = await dio.get('rfi/projectNames');
     return response.data;
   }
 
   Future<List<dynamic>> getWorkNames(String projectId) async {
-    final response = await dio.get("rfi/workNames", queryParameters: {"projectId": projectId});
+    final response = await dio.get('rfi/workNames', queryParameters: {'projectId': projectId});
     return response.data;
   }
 
   Future<List<dynamic>> getContractNames(String workId) async {
-    final response = await dio.get("rfi/contractNames", queryParameters: {"workId": workId});
+    final response = await dio.get('rfi/contractNames', queryParameters: {'workId': workId});
     return response.data;
   }
 }

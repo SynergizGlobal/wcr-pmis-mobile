@@ -1,5 +1,5 @@
-import 'rfi_api.dart';
 import '../../domain/rfi/status_counts.dart';
+import 'rfi_api.dart';
 
 class RfiRepository {
   final RfiApi api;

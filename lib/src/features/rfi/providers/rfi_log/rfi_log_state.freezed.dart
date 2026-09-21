@@ -1,14 +1,4 @@
-// coverage:ignore-file
-// GENERATED CODE - DO NOT MODIFY BY HAND
-// ignore_for_file: type=lint
-// ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
-
 part of 'rfi_log_state.dart';
-
-// **************************************************************************
-// FreezedGenerator
-// **************************************************************************
-
 T _$identity<T>(T value) => value;
 
 final _privateConstructorUsedError = UnsupportedError(
@@ -70,9 +60,7 @@ class _$RfiLogStateCopyWithImpl<$Res, $Val extends RfiLogState>
     implements $RfiLogStateCopyWith<$Res> {
   _$RfiLogStateCopyWithImpl(this._value, this._then);
 
-  // ignore: unused_field
   final $Val _value;
-  // ignore: unused_field
   final $Res Function($Val) _then;
 
   /// Create a copy of RfiLogState
@@ -80,29 +68,29 @@ class _$RfiLogStateCopyWithImpl<$Res, $Val extends RfiLogState>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? allItems = null,
-    Object? filteredItems = null,
-    Object? searchQuery = null,
-    Object? projectFilter = null,
-    Object? contractFilter = null,
-    Object? availableProjects = null,
-    Object? availableContracts = null,
-    Object? dashboardFilter = null,
-    Object? entriesPerPage = null,
-    Object? currentPage = null,
-    Object? isLoading = null,
-    Object? isLoadingFilters = null,
+    Object? allItems,
+    Object? filteredItems,
+    Object? searchQuery,
+    Object? projectFilter,
+    Object? contractFilter,
+    Object? availableProjects,
+    Object? availableContracts,
+    Object? dashboardFilter,
+    Object? entriesPerPage,
+    Object? currentPage,
+    Object? isLoading,
+    Object? isLoadingFilters,
     Object? errorMessage = freezed,
   }) {
     return _then(
       _value.copyWith(
             allItems: null == allItems
                 ? _value.allItems
-                : allItems // ignore: cast_nullable_to_non_nullable
+                : allItems
                       as List<RfiLogItem>,
             filteredItems: null == filteredItems
                 ? _value.filteredItems
-                : filteredItems // ignore: cast_nullable_to_non_nullable
+                : filteredItems
                       as List<RfiLogItem>,
             searchQuery: null == searchQuery
                 ? _value.searchQuery
@@ -194,18 +182,18 @@ class __$$RfiLogStateImplCopyWithImpl<$Res>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? allItems = null,
-    Object? filteredItems = null,
-    Object? searchQuery = null,
-    Object? projectFilter = null,
-    Object? contractFilter = null,
-    Object? availableProjects = null,
-    Object? availableContracts = null,
-    Object? dashboardFilter = null,
-    Object? entriesPerPage = null,
-    Object? currentPage = null,
-    Object? isLoading = null,
-    Object? isLoadingFilters = null,
+    Object? allItems,
+    Object? filteredItems,
+    Object? searchQuery,
+    Object? projectFilter,
+    Object? contractFilter,
+    Object? availableProjects,
+    Object? availableContracts,
+    Object? dashboardFilter,
+    Object? entriesPerPage,
+    Object? currentPage,
+    Object? isLoading,
+    Object? isLoadingFilters,
     Object? errorMessage = freezed,
   }) {
     return _then(
@@ -321,9 +309,9 @@ class _$RfiLogStateImpl extends _RfiLogState {
   @override
   @JsonKey()
   List<FilterOption> get availableProjects {
-    if (_availableProjects is EqualUnmodifiableListView)
+    if (_availableProjects is EqualUnmodifiableListView) {
       return _availableProjects;
-    // ignore: implicit_dynamic_type
+    }
     return EqualUnmodifiableListView(_availableProjects);
   }
 
@@ -331,9 +319,9 @@ class _$RfiLogStateImpl extends _RfiLogState {
   @override
   @JsonKey()
   List<FilterOption> get availableContracts {
-    if (_availableContracts is EqualUnmodifiableListView)
+    if (_availableContracts is EqualUnmodifiableListView) {
       return _availableContracts;
-    // ignore: implicit_dynamic_type
+    }
     return EqualUnmodifiableListView(_availableContracts);
   }
 

@@ -1,11 +1,5 @@
-// GENERATED CODE - DO NOT MODIFY BY HAND
 
 part of 'rfi_log_provider.dart';
-
-// **************************************************************************
-// RiverpodGenerator
-// **************************************************************************
-
 String _$rfiLogNotifierHash() => r'38545492064b5aa6ef768e59ae085e3511ed8d86';
 
 /// See also [RfiLogNotifier].
