@@ -42,9 +42,7 @@ String normalizeRfiAttachmentPath(String raw) {
   if (path.startsWith('file://')) {
     try {
       path = Uri.parse(path).toFilePath();
-    } catch (_) {
-      // Keep normalized slash form.
-    }
+    } catch (_) {}
   }
   return path;
 }

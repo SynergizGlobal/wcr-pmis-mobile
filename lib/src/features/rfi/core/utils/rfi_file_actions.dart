@@ -26,7 +26,6 @@ abstract final class RfiFileActions {
     final trimmed = normalizeRfiAttachmentPath(path);
     if (trimmed.isEmpty) return;
 
-    // Case 1: freshly picked / on-device file — open locally, no API.
     if (RfiPreviewFetch.isLocalDevicePath(trimmed)) {
       await viewLocalFile(
         context,
@@ -59,9 +58,7 @@ abstract final class RfiFileActions {
           title: title ?? _fileLabel(trimmed),
         );
         return;
-      } catch (_) {
-        // Fall through to API fetch when the path is not readable locally.
-      }
+      } catch (_) {}
     }
 
     if (!context.mounted) return;
@@ -167,7 +164,6 @@ abstract final class RfiFileActions {
     fileName = fileName.replaceAll(RegExp(r'[\\/:*?"<>|]'), '_');
     final savePath = p.join(downloadsDir.path, fileName);
 
-    // Case 1: local file — copy directly, no API.
     if (RfiPreviewFetch.isLocalDevicePath(trimmed)) {
       final source = File(trimmed);
       if (!await source.exists()) {

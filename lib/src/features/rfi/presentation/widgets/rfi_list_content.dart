@@ -122,9 +122,7 @@ class _RfiListContentState extends ConsumerState<RfiListContent> {
         setState(() {
           _contracts = contracts;
         });
-      } catch (_) {
-        // Keep previous contracts on failure.
-      }
+      } catch (_) {}
     }
   }
 
@@ -208,8 +206,6 @@ class _RfiListContentState extends ConsumerState<RfiListContent> {
           _ensureFilters(items);
         });
 
-        // Wait for filter APIs so Project/Contract appear with the table —
-        // no secondary filter loader UI.
         if (!_filtersLoaded) {
           return const Center(child: CircularProgressIndicator());
         }

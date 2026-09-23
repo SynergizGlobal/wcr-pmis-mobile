@@ -35,9 +35,7 @@ class CreateRfiNotifier extends StateNotifier<CreateRfiState> {
   Future<void> _bootstrap() async {
     try {
       await _ref.read(rfiHandoffProvider.future);
-    } catch (_) {
-      // Continue; individual fetches will surface errors.
-    }
+    } catch (_) {}
     await Future.wait(<Future<void>>[
       _fetchProjects(initial: true),
       _fetchRepresentatives(),
@@ -504,7 +502,6 @@ class CreateRfiNotifier extends StateNotifier<CreateRfiState> {
         currentStep: nextStep,
         clearErrorMessage: true,
       );
-      // Always refresh representatives when entering step 2.
       if (nextStep == 1) {
         unawaited(_fetchRepresentatives());
       }
@@ -839,9 +836,7 @@ class CreateRfiNotifier extends StateNotifier<CreateRfiState> {
         selectedActivity: _itemFromJson(draft['selectedActivity']),
         selectedRfiDescription: _itemFromJson(draft['selectedRfiDescription']),
       );
-    } catch (_) {
-      // ignore corrupted draft
-    }
+    } catch (_) {}
   }
 
   Map<String, dynamic>? _itemToJson(RfiDropdownItem? item) {

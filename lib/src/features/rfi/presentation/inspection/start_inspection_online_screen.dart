@@ -107,8 +107,6 @@ class _StartInspectionOnlineScreenState
                       color: Theme.of(context).dividerColor,
                     ),
                     Expanded(
-                      // Show one step at a time. PageView animate/jump during
-                      // rebuild was blanking step 2 and throwing layout asserts.
                       child: state.currentStep == 1
                           ? _buildStep1(context, state, notifier)
                           : _buildStep2(context, state, notifier),
@@ -656,8 +654,6 @@ class _StartInspectionOnlineScreenState
                           backgroundColor: const Color(0xFF50589C),
                           foregroundColor: Colors.white,
                           padding: EdgeInsets.zero,
-                          // Theme uses Size.fromHeight(54) (= infinite width).
-                          // That breaks inside a Row; keep this button compact.
                           minimumSize: Size.zero,
                           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                           shape: RoundedRectangleBorder(

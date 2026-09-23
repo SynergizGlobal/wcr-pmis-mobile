@@ -122,9 +122,7 @@ class SupportChatController extends StateNotifier<SupportChatState> {
     }
     try {
       await _dataSource.closeChat(chatId);
-    } catch (_) {
-      // Best effort only. Status polling remains the source of truth.
-    }
+    } catch (_) {}
   }
 
   Future<void> sendMessage(String rawMessage) async {

@@ -43,7 +43,6 @@ class ValidationNotifier extends _$ValidationNotifier {
         availableContracts: contracts,
       );
     } catch (_) {
-      // Keep previous filter lists on failure — never show a popup dialog.
       state = state.copyWith(isLoadingFilters: false);
     }
   }

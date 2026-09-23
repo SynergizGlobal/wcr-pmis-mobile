@@ -6,7 +6,6 @@ abstract final class RfiDropdownMapper {
       return const <RfiDropdownItem>[];
     }
 
-    // Plain map of id -> name (no nested list).
     if (data is Map && !_looksLikeWrappedList(data)) {
       final List<RfiDropdownItem> fromEntries = <RfiDropdownItem>[];
       data.forEach((dynamic key, dynamic value) {

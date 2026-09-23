@@ -1180,7 +1180,6 @@ class InspectionSubmitPdfBuilder {
       }
     }
 
-    // 1. Enclosures (web: enclosurePdfBlobs)
     for (final path in state.enclosurePaths) {
       addSourcePdf(path, 'Enclosure');
     }
@@ -1188,7 +1187,6 @@ class InspectionSubmitPdfBuilder {
       addSourcePdf(enc.enclosureUploadFile, 'Enclosure');
     }
 
-    // 2. Supporting documents (web: supportingPdfBlobs — form uploads only)
     for (final doc in state.supportingDocuments) {
       addSourcePdf(doc.path, 'Supporting Document');
     }
@@ -1196,7 +1194,6 @@ class InspectionSubmitPdfBuilder {
       addSourcePdf(detail.supportingDocuments, 'Supporting Document');
     }
 
-    // 3. Test report (web: testReportFile — role-specific path on RFI)
     final testReportPath = isEngineer
         ? (rfi.testResEngg?.trim().isNotEmpty == true
             ? rfi.testResEngg
@@ -1285,17 +1282,14 @@ class InspectionSubmitPdfBuilder {
       }
     }
 
-    // 1) Freshly selected images in current inspection session.
     if (includeCurrentSessionPaths) {
       for (final path in state.siteImagePaths) {
         if (path.trim().isNotEmpty) merged.add(path.trim());
       }
     }
 
-    // 2) Server-side contractor image paths already saved on RFI.
     addRaw(rfi.imgContractor);
 
-    // 3) Contractor-side inspection detail image paths.
     for (final detail in rfi.inspectionDetails ?? const <InspectionDetail>[]) {
       if (!_isContractorInspectionDetail(detail)) continue;
       addRaw(detail.siteImage);

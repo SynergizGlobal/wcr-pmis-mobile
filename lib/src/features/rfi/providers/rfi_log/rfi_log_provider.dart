@@ -89,7 +89,6 @@ class RfiLogNotifier extends _$RfiLogNotifier {
         );
       }
     } catch (_) {
-      // Keep previous filter lists on failure — never show a popup dialog.
       state = state.copyWith(isLoadingFilters: false);
     }
   }
@@ -102,7 +101,6 @@ class RfiLogNotifier extends _$RfiLogNotifier {
     );
     try {
       final repository = ref.read(rfiLogRepositoryProvider);
-      // Always load full list; Project/Contract/Search filter on frontend.
       final List<RfiLogItem> rawItems = await repository.getAllRfiLogDetails(
         <String, dynamic>{
           'project': '',
@@ -116,7 +114,6 @@ class RfiLogNotifier extends _$RfiLogNotifier {
         filteredItems: _applyClientFilters(scoped),
       );
 
-      // Resolve dropdown labels before revealing the page (avoids filter blink).
       if (state.filtersFromDataset) {
         await fetchFilterLists(
           limitProjectIds: _idsInItems(scoped, isProject: true),

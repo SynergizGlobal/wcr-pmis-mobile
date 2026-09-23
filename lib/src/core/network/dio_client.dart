@@ -41,7 +41,6 @@ final dioProvider = Provider<Dio>((ref) {
     );
   }
 
-  // Connectivity check before every API call.
   dio.interceptors.add(
     InterceptorsWrapper(
       onRequest: (options, handler) async {

@@ -84,8 +84,6 @@ class AppDropdown<T> extends StatelessWidget {
           const SizedBox(height: 6),
         ],
         DropdownButtonFormField<T>(
-          // Reset FormField when options change so a stale value cannot
-          // assert against a rebuilt items list.
           key: ValueKey<String>('dd-${_itemsIdentityKey(uniqueItems)}'),
           value: resolvedValue,
           isExpanded: true,
@@ -161,7 +159,6 @@ T? _resolveValue<T>(T? selected, List<T> options) {
     return null;
   }
 
-  // FilterOption: match by id, return the exact instance from [options].
   if (selected is FilterOption) {
     final String selectedId = selected.id.trim();
     if (selectedId.isEmpty) return null;

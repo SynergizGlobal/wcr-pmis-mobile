@@ -1,5 +1,3 @@
-// Firebase configuration for IMPACT-WCR (project: syntrack-pmis-wcr).
-// Platform files: android/app/google-services.json, ios/Runner/GoogleService-Info.plist
 
 import 'package:firebase_core/firebase_core.dart' show FirebaseOptions;
 import 'package:flutter/foundation.dart'

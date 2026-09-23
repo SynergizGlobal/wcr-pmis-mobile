@@ -219,7 +219,6 @@ class _MetricsGrid extends StatelessWidget {
     return LayoutBuilder(
       builder: (BuildContext context, BoxConstraints constraints) {
         final double width = constraints.maxWidth;
-        // Taller tiles so icon + count + 2-line label never overflow.
         final double aspectRatio = width < 360 ? 0.88 : 0.95;
         return GridView.count(
           crossAxisCount: 2,

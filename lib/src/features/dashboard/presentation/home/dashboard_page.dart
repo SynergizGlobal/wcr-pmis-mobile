@@ -840,12 +840,6 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
       await _onReportFormTap(card.payload! as UpdateFormItem);
       return;
     }
-    // AI Custom Report navigation is paused.
-    // if (_section == _HomeSection.reports &&
-    //     card.title.toLowerCase().contains('custom report')) {
-    //   context.pushNamed(AiCustomReportPage.routeName);
-    //   return;
-    // }
     await AppDialog.show(
       context: context,
       title: title,

@@ -109,8 +109,7 @@ List<UpdateFormSubItem> _parseSubMenus(dynamic raw) {
           );
           items.add(UpdateFormSubItem.fromJson(map));
         }
-      } catch (_) {
-      }
+      } catch (_) {}
     }
   }
   return items;

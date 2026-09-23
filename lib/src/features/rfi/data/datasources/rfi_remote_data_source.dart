@@ -236,7 +236,6 @@ class RfiRemoteDataSource {
     final Response<dynamic> response = await _dio.post<dynamic>(
       'rfi/create',
       data: body,
-      // Create screen shows its own error dialog from DioException.
       options: Options(extra: const <String, dynamic>{'silentError': true}),
     );
     return response.data;

@@ -40,7 +40,6 @@ final rfiDioProvider = Provider<Dio>((ref) {
     );
   }
 
-  // Connectivity check before every RFI API call.
   dio.interceptors.add(
     InterceptorsWrapper(
       onRequest: (options, handler) async {

@@ -183,8 +183,6 @@ class UpdateRfiForm extends _$UpdateRfiForm {
       final String dateOfSubmission = formatToYMD(state.dateOfSubmission);
       final String dateOfInspection = formatToYMD(state.dateOfInspection);
 
-      // RFI_DTO: element/activity/rfiDescription/p6/pmis are List<String>;
-      // LocalDate fields must not be "".
       final data = <String, dynamic>{
         "project": state.selectedProject?.name ?? "",
         "projectId": state.selectedProject?.id ?? "",

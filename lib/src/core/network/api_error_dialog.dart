@@ -32,7 +32,6 @@ abstract final class ApiErrorDialog {
     final ({String title, String message}) content = _titleAndMessage(error);
     _isShowing = true;
 
-    // Interceptors can fire outside the frame; schedule dialog safely.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final BuildContext? dialogContext = appNavigatorKey.currentContext;
       if (dialogContext == null || !dialogContext.mounted) {

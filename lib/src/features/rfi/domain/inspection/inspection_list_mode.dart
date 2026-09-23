@@ -48,7 +48,6 @@ extension InspectionListModeX on InspectionListMode {
           }
         }
       }
-      // Legacy boolean from earlier navigation.
       if (extra['rescheduledOnly'] == true) {
         return InspectionListMode.rescheduled;
       }

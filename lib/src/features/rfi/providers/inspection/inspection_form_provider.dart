@@ -89,10 +89,6 @@ class InspectionFormNotifier extends StateNotifier<InspectionFormState> {
         }
       }
 
-      // if (initialContractorDesc == null || initialContractorDesc.isEmpty) {
-      //   initialContractorDesc = details.description;
-      // }
-
       List<MeasurementRow> initialMeasurements = state.measurements;
       if (initialMeasurements.length == 1 && initialMeasurements.first.type == 'Select') {
         if (details.measurements != null) {
@@ -289,9 +285,7 @@ class InspectionFormNotifier extends StateNotifier<InspectionFormState> {
     if (trimmed.startsWith('file:')) {
       try {
         trimmed = Uri.parse(trimmed).toFilePath();
-      } catch (_) {
-        /* keep trimmed as-is */
-      }
+      } catch (_) {}
     }
     state = state.copyWith(
       selfiePath: trimmed.isEmpty ? null : trimmed,
