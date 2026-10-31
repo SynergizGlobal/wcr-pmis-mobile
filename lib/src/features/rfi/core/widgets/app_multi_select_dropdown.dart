@@ -7,6 +7,7 @@ class AppMultiSelectDropdown<T> extends StatefulWidget {
   final String Function(T) itemLabel;
   final List<T> selectedItems;
   final void Function(List<T>) onChanged;
+  final bool enabled;
 
   const AppMultiSelectDropdown({
     super.key,
@@ -16,6 +17,7 @@ class AppMultiSelectDropdown<T> extends StatefulWidget {
     required this.itemLabel,
     required this.selectedItems,
     required this.onChanged,
+    this.enabled = true,
   });
 
   @override
@@ -41,6 +43,9 @@ class AppMultiSelectDropdownState<T> extends State<AppMultiSelectDropdown<T>> {
   }
 
   void _showMultiSelect(BuildContext context) async {
+    if (!widget.enabled) {
+      return;
+    }
     final List<T>? results = await showDialog<List<T>>(
       context: context,
       builder: (BuildContext context) {
@@ -67,6 +72,7 @@ class AppMultiSelectDropdownState<T> extends State<AppMultiSelectDropdown<T>> {
     final displayString = _localSelected.isEmpty
         ? widget.hint
         : _localSelected.map((e) => widget.itemLabel(e)).join(', ');
+    final bool enabled = widget.enabled;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -81,31 +87,34 @@ class AppMultiSelectDropdownState<T> extends State<AppMultiSelectDropdown<T>> {
         ),
         const SizedBox(height: 8),
         InkWell(
-          onTap: () => _showMultiSelect(context),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-            decoration: BoxDecoration(
-              border: Border.all(color: scheme.outlineVariant),
-              borderRadius: BorderRadius.circular(4),
-              color: scheme.surfaceContainerHighest,
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Text(
-                    displayString,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: textTheme.bodyMedium?.copyWith(
-                      color: _localSelected.isEmpty
-                          ? scheme.onSurfaceVariant
-                          : scheme.onSurface,
+          onTap: enabled ? () => _showMultiSelect(context) : null,
+          child: Opacity(
+            opacity: enabled ? 1 : 0.55,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+              decoration: BoxDecoration(
+                border: Border.all(color: scheme.outlineVariant),
+                borderRadius: BorderRadius.circular(4),
+                color: scheme.surfaceContainerHighest,
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text(
+                      displayString,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: textTheme.bodyMedium?.copyWith(
+                        color: _localSelected.isEmpty
+                            ? scheme.onSurfaceVariant
+                            : scheme.onSurface,
+                      ),
                     ),
                   ),
-                ),
-                Icon(Icons.arrow_drop_down, color: scheme.onSurfaceVariant),
-              ],
+                  Icon(Icons.arrow_drop_down, color: scheme.onSurfaceVariant),
+                ],
+              ),
             ),
           ),
         ),

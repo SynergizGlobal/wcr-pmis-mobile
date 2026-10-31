@@ -36,4 +36,12 @@ class RfiDropdownItem {
   final String? caoUserId;
   final String? caoUserName;
   final String? caoEmail;
+
+  @override
+  bool operator ==(Object other) {
+    return other is RfiDropdownItem && other.id == id;
+  }
+
+  @override
+  int get hashCode => id.hashCode;
 }

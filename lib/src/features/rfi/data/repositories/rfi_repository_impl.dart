@@ -128,8 +128,10 @@ class RfiRepository {
         componentId: componentId,
       );
 
-  Future<List<RfiDropdownItem>> fetchCreateRfiDescriptions(String activity) =>
-      _remote.fetchRfiDescriptions(activity);
+  Future<List<RfiDropdownItem>> fetchCreateRfiDescriptions(
+    List<String> activities,
+  ) =>
+      _remote.fetchRfiDescriptions(activities);
 
   Future<List<RfiDropdownItem>> fetchCreateRepresentatives() =>
       _remote.fetchRegularUsers();

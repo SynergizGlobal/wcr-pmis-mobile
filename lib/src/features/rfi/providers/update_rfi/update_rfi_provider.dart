@@ -63,7 +63,7 @@ class UpdateRfiForm extends _$UpdateRfiForm {
     );
 
     _fetchRegularUsers();
-    _fetchRfiDescriptions(item.activity);
+    _fetchRfiDescriptions(<String>[item.activity]);
   }
 
   Future<void> _fetchRegularUsers() async {
@@ -77,11 +77,11 @@ class UpdateRfiForm extends _$UpdateRfiForm {
     }
   }
 
-  Future<void> _fetchRfiDescriptions(String activityName) async {
+  Future<void> _fetchRfiDescriptions(List<String> activityNames) async {
     try {
       state = state.copyWith(isLoadingItems: true);
       final repo = CreateRfiRepository(CreateRfiApi(ref.read(dioProvider)));
-      final list = await repo.getRfiDescriptions(activityName);
+      final list = await repo.getRfiDescriptions(activityNames);
       state = state.copyWith(rfiDescriptions: list, isLoadingItems: false);
     } catch (_) {
       state = state.copyWith(rfiDescriptions: [], isLoadingItems: false);

@@ -154,8 +154,10 @@ class CreateRfiRepository {
     return _mapToDropdownItems(response);
   }
 
-  Future<List<DropdownItem>> getRfiDescriptions(String activityName) async {
-    final response = await api.getRfiDescriptions(activityName);
+  Future<List<DropdownItem>> getRfiDescriptions(
+    List<String> activityNames,
+  ) async {
+    final response = await api.getRfiDescriptions(activityNames);
     return _mapToDropdownItems(response);
   }
 

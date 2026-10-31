@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:wcr_pmis_mobile/src/core/widgets/app_dialog.dart';
+import 'package:wcr_pmis_mobile/src/features/rfi/core/widgets/app_multi_select_dropdown.dart';
 import 'package:wcr_pmis_mobile/src/features/rfi/domain/entities/rfi_dropdown_item.dart';
 import 'package:wcr_pmis_mobile/src/features/rfi/presentation/create_rfi/create_rfi_notifier.dart';
 import 'package:wcr_pmis_mobile/src/features/rfi/presentation/create_rfi/create_rfi_state.dart';
@@ -35,7 +36,11 @@ class CreateRfiPage extends ConsumerWidget {
                 0 => _ScopeStep(state: state, notifier: notifier),
                 1 => _InspectionPlanStep(state: state, notifier: notifier),
                 _ => _EnclosuresStep(
-                    key: ValueKey<String>(state.selectedRfiDescription?.id ?? ''),
+                    key: ValueKey<String>(
+                      state.selectedRfiDescriptions
+                          .map((RfiDropdownItem e) => e.id)
+                          .join('|'),
+                    ),
                     state: state,
                     notifier: notifier,
                   ),
@@ -276,20 +281,28 @@ class _ScopeStep extends StatelessWidget {
           enabled: state.selectedComponent != null,
         ),
         const SizedBox(height: 16),
-        RfiFormDropdown(
+        AppMultiSelectDropdown<RfiDropdownItem>(
           label: 'Activity *',
+          hint: state.selectedElement == null
+              ? 'Select element first…'
+              : 'Select one or more…',
           items: state.activities,
-          value: state.selectedActivity,
-          onChanged: notifier.selectActivity,
+          itemLabel: (RfiDropdownItem item) => item.name,
+          selectedItems: state.selectedActivities,
+          onChanged: notifier.selectActivities,
           enabled: state.selectedElement != null,
         ),
         const SizedBox(height: 16),
-        RfiFormDropdown(
+        AppMultiSelectDropdown<RfiDropdownItem>(
           label: 'RFI Description *',
+          hint: state.selectedActivities.isEmpty
+              ? 'Select activity first…'
+              : 'Select one or more…',
           items: state.rfiDescriptions,
-          value: state.selectedRfiDescription,
-          onChanged: notifier.selectRfiDescription,
-          enabled: state.selectedActivity != null,
+          itemLabel: (RfiDropdownItem item) => item.name,
+          selectedItems: state.selectedRfiDescriptions,
+          onChanged: notifier.selectRfiDescriptions,
+          enabled: state.selectedActivities.isNotEmpty,
         ),
       ],
     );
@@ -414,8 +427,11 @@ class _EnclosuresStepState extends State<_EnclosuresStep> {
 
   @override
   Widget build(BuildContext context) {
-    final List<String> enclosures =
-        widget.state.selectedRfiDescription?.enclosures ?? const <String>[];
+    final List<String> enclosures = <String>{
+      for (final RfiDropdownItem description
+          in widget.state.selectedRfiDescriptions)
+        ...description.enclosures,
+    }.toList(growable: false);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,

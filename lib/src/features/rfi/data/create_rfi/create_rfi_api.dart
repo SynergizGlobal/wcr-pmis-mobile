@@ -70,11 +70,19 @@ class CreateRfiApi {
     return response.data;
   }
 
-  Future<List<dynamic>> getRfiDescriptions(String activityName) async {
-    final response = await dio.get("rfi/rfi-descriptions", queryParameters: {
-      "activity[]": activityName,
-    });
-    return response.data;
+  Future<List<dynamic>> getRfiDescriptions(List<String> activityNames) async {
+    final List<String> names = activityNames
+        .map((String name) => name.trim())
+        .where((String name) => name.isNotEmpty)
+        .toList(growable: false);
+    if (names.isEmpty) {
+      return const <dynamic>[];
+    }
+    final response = await dio.get(
+      'rfi/rfi-descriptions',
+      queryParameters: <String, dynamic>{'activity[]': names},
+    );
+    return response.data as List<dynamic>? ?? const <dynamic>[];
   }
 
   Future<List<dynamic>> getRegularUsers() async {

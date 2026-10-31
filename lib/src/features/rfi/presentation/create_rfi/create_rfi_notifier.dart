@@ -105,7 +105,7 @@ class CreateRfiNotifier extends StateNotifier<CreateRfiState> {
       } catch (_) {}
     }
 
-    final RfiDropdownItem? activity = state.selectedActivity;
+    final List<RfiDropdownItem> selectedActivities = state.selectedActivities;
     if (structureType != null && structure != null && component != null) {
       final String componentId =
           element?.id.isNotEmpty == true ? element!.id : component.id;
@@ -121,10 +121,12 @@ class CreateRfiNotifier extends StateNotifier<CreateRfiState> {
       } catch (_) {}
     }
 
-    if (activity != null) {
+    if (selectedActivities.isNotEmpty) {
       try {
         final List<RfiDropdownItem> descriptions =
-            await _repository.fetchCreateRfiDescriptions(activity.name);
+            await _repository.fetchCreateRfiDescriptions(
+          selectedActivities.map((RfiDropdownItem a) => a.name).toList(),
+        );
         state = state.copyWith(rfiDescriptions: descriptions);
       } catch (_) {}
     }
@@ -215,10 +217,11 @@ class CreateRfiNotifier extends StateNotifier<CreateRfiState> {
       components: const <RfiDropdownItem>[],
       clearSelectedElement: true,
       elements: const <RfiDropdownItem>[],
-      clearSelectedActivity: true,
+      selectedActivities: const <RfiDropdownItem>[],
       activities: const <RfiDropdownItem>[],
-      clearSelectedRfiDescription: true,
+      selectedRfiDescriptions: const <RfiDropdownItem>[],
       rfiDescriptions: const <RfiDropdownItem>[],
+      selectedEnclosures: const <String>[],
     );
     if (project == null || project.id.isEmpty) {
       return;
@@ -249,10 +252,11 @@ class CreateRfiNotifier extends StateNotifier<CreateRfiState> {
       components: const <RfiDropdownItem>[],
       clearSelectedElement: true,
       elements: const <RfiDropdownItem>[],
-      clearSelectedActivity: true,
+      selectedActivities: const <RfiDropdownItem>[],
       activities: const <RfiDropdownItem>[],
-      clearSelectedRfiDescription: true,
+      selectedRfiDescriptions: const <RfiDropdownItem>[],
       rfiDescriptions: const <RfiDropdownItem>[],
+      selectedEnclosures: const <String>[],
     );
     if (contract == null || contract.id.isEmpty) {
       return;
@@ -281,10 +285,11 @@ class CreateRfiNotifier extends StateNotifier<CreateRfiState> {
       components: const <RfiDropdownItem>[],
       clearSelectedElement: true,
       elements: const <RfiDropdownItem>[],
-      clearSelectedActivity: true,
+      selectedActivities: const <RfiDropdownItem>[],
       activities: const <RfiDropdownItem>[],
-      clearSelectedRfiDescription: true,
+      selectedRfiDescriptions: const <RfiDropdownItem>[],
       rfiDescriptions: const <RfiDropdownItem>[],
+      selectedEnclosures: const <String>[],
     );
     final RfiDropdownItem? contract = state.selectedContract;
     if (type == null || contract == null) {
@@ -314,10 +319,11 @@ class CreateRfiNotifier extends StateNotifier<CreateRfiState> {
       components: const <RfiDropdownItem>[],
       clearSelectedElement: true,
       elements: const <RfiDropdownItem>[],
-      clearSelectedActivity: true,
+      selectedActivities: const <RfiDropdownItem>[],
       activities: const <RfiDropdownItem>[],
-      clearSelectedRfiDescription: true,
+      selectedRfiDescriptions: const <RfiDropdownItem>[],
       rfiDescriptions: const <RfiDropdownItem>[],
+      selectedEnclosures: const <String>[],
     );
     final RfiDropdownItem? type = state.selectedStructureType;
     final RfiDropdownItem? contract = state.selectedContract;
@@ -348,10 +354,11 @@ class CreateRfiNotifier extends StateNotifier<CreateRfiState> {
       selectedComponent: component,
       clearSelectedElement: true,
       elements: const <RfiDropdownItem>[],
-      clearSelectedActivity: true,
+      selectedActivities: const <RfiDropdownItem>[],
       activities: const <RfiDropdownItem>[],
-      clearSelectedRfiDescription: true,
+      selectedRfiDescriptions: const <RfiDropdownItem>[],
       rfiDescriptions: const <RfiDropdownItem>[],
+      selectedEnclosures: const <String>[],
     );
     final RfiDropdownItem? type = state.selectedStructureType;
     final RfiDropdownItem? contract = state.selectedContract;
@@ -381,10 +388,11 @@ class CreateRfiNotifier extends StateNotifier<CreateRfiState> {
     state = state.copyWith(
       clearErrorMessage: true,
       selectedElement: element,
-      clearSelectedActivity: true,
+      selectedActivities: const <RfiDropdownItem>[],
       activities: const <RfiDropdownItem>[],
-      clearSelectedRfiDescription: true,
+      selectedRfiDescriptions: const <RfiDropdownItem>[],
       rfiDescriptions: const <RfiDropdownItem>[],
+      selectedEnclosures: const <String>[],
     );
     final RfiDropdownItem? type = state.selectedStructureType;
     final RfiDropdownItem? structure = state.selectedStructure;
@@ -410,24 +418,32 @@ class CreateRfiNotifier extends StateNotifier<CreateRfiState> {
     }
   }
 
-  Future<void> selectActivity(RfiDropdownItem? activity) async {
-    if (state.selectedActivity?.id == activity?.id) {
+  Future<void> selectActivities(List<RfiDropdownItem> activities) async {
+    final List<RfiDropdownItem> next = List<RfiDropdownItem>.from(activities);
+    final bool sameSelection = next.length == state.selectedActivities.length &&
+        next.every(
+          (RfiDropdownItem item) => state.selectedActivities
+              .any((RfiDropdownItem selected) => selected.id == item.id),
+        );
+    if (sameSelection) {
       return;
     }
     state = state.copyWith(
       clearErrorMessage: true,
-      selectedActivity: activity,
-      clearSelectedRfiDescription: true,
+      selectedActivities: next,
+      selectedRfiDescriptions: const <RfiDropdownItem>[],
       rfiDescriptions: const <RfiDropdownItem>[],
       selectedEnclosures: const <String>[],
     );
-    if (activity == null) {
+    if (next.isEmpty) {
       return;
     }
     try {
       await _withLoading(() async {
         final List<RfiDropdownItem> list =
-            await _repository.fetchCreateRfiDescriptions(activity.name);
+            await _repository.fetchCreateRfiDescriptions(
+          next.map((RfiDropdownItem a) => a.name).toList(),
+        );
         state = state.copyWith(rfiDescriptions: list);
       });
     } catch (_) {
@@ -435,12 +451,49 @@ class CreateRfiNotifier extends StateNotifier<CreateRfiState> {
     }
   }
 
-  void selectRfiDescription(RfiDropdownItem? description) {
+  void selectRfiDescriptions(List<RfiDropdownItem> descriptions) {
     state = state.copyWith(
       clearErrorMessage: true,
-      selectedRfiDescription: description,
+      selectedRfiDescriptions: List<RfiDropdownItem>.from(descriptions),
       selectedEnclosures: const <String>[],
     );
+  }
+
+  List<String> _unionEnclosures(List<RfiDropdownItem> descriptions) {
+    final Set<String> values = <String>{};
+    for (final RfiDropdownItem item in descriptions) {
+      for (final String enclosure in item.enclosures) {
+        final String trimmed = enclosure.trim();
+        if (trimmed.isNotEmpty) {
+          values.add(trimmed);
+        }
+      }
+    }
+    return values.toList(growable: false);
+  }
+
+  List<String> _resolveP6Ids(List<RfiDropdownItem> activities) {
+    final List<String> ids = <String>[];
+    for (final RfiDropdownItem activity in activities) {
+      int? p6Id = activity.p6ActivityIdFk;
+      if (p6Id == null && RegExp(r'^\d+$').hasMatch(activity.id.trim())) {
+        p6Id = int.tryParse(activity.id.trim());
+      }
+      if (p6Id != null) {
+        ids.add(p6Id.toString());
+      }
+    }
+    return ids;
+  }
+
+  List<String> _resolvePmis(List<RfiDropdownItem> activities) {
+    return activities
+        .map(
+          (RfiDropdownItem a) => a.pmisCalcFk?.trim().isNotEmpty == true
+              ? a.pmisCalcFk!.trim()
+              : 'No',
+        )
+        .toList(growable: false);
   }
 
   void setAction(String? value) {
@@ -551,10 +604,10 @@ class CreateRfiNotifier extends StateNotifier<CreateRfiState> {
     if (state.selectedElement == null) {
       return 'Please select Element';
     }
-    if (state.selectedActivity == null) {
+    if (state.selectedActivities.isEmpty) {
       return 'Please select Activity';
     }
-    if (state.selectedRfiDescription == null) {
+    if (state.selectedRfiDescriptions.isEmpty) {
       return 'Please select RFI Description';
     }
     return null;
@@ -584,7 +637,7 @@ class CreateRfiNotifier extends StateNotifier<CreateRfiState> {
 
   String? _validateEnclosures() {
     final List<String> enclosures =
-        state.selectedRfiDescription?.enclosures ?? const <String>[];
+        _unionEnclosures(state.selectedRfiDescriptions);
     if (enclosures.isEmpty) {
       return null;
     }
@@ -659,13 +712,12 @@ class CreateRfiNotifier extends StateNotifier<CreateRfiState> {
       return enclosureError;
     }
 
-    int? p6Id = state.selectedActivity?.p6ActivityIdFk;
-    final String activityId = state.selectedActivity?.id ?? '';
-    if (p6Id == null && RegExp(r'^\d+$').hasMatch(activityId.trim())) {
-      p6Id = int.tryParse(activityId.trim());
-    }
-    if (p6Id == null) {
+    final List<String> p6Ids = _resolveP6Ids(state.selectedActivities);
+    if (p6Ids.isEmpty) {
       return 'Missing activity schedule id (P6). Please re-select Activity.';
+    }
+    if (p6Ids.length != state.selectedActivities.length) {
+      return 'One or more activities are missing a schedule id (P6). Please re-select Activity.';
     }
 
     final RfiDropdownItem? contract = state.selectedContract;
@@ -686,16 +738,10 @@ class CreateRfiNotifier extends StateNotifier<CreateRfiState> {
       final String defaultTime =
           '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
 
-      final String pmis =
-          state.selectedActivity?.pmisCalcFk?.trim().isNotEmpty == true
-              ? state.selectedActivity!.pmisCalcFk!.trim()
-              : 'No';
-
       final RfiDropdownItem? representative = _findRepresentativeByName(
         state.contractorRepresentative,
       );
 
-      // RFI_DTO expects these as List<String> (Jackson rejects scalar/int → 400).
       final String dateOfSubmission = state.dateOfSubmission?.isNotEmpty == true
           ? _formatToYmd(state.dateOfSubmission)
           : defaultSubmissionDate;
@@ -714,11 +760,16 @@ class CreateRfiNotifier extends StateNotifier<CreateRfiState> {
         'structure': state.selectedStructure?.name ?? '',
         'component': state.selectedComponent?.name ?? '',
         'element': _asDtoStringList(state.selectedElement?.name),
-        'activity': _asDtoStringList(state.selectedActivity?.name),
-        'p6ActivityIdFk': <String>[p6Id.toString()],
-        'pmisCalcFk': <String>[pmis],
-        'rfiDescription':
-            _asDtoStringList(state.selectedRfiDescription?.name),
+        'activity': state.selectedActivities
+            .map((RfiDropdownItem a) => a.name)
+            .where((String n) => n.trim().isNotEmpty)
+            .toList(),
+        'p6ActivityIdFk': p6Ids,
+        'pmisCalcFk': _resolvePmis(state.selectedActivities),
+        'rfiDescription': state.selectedRfiDescriptions
+            .map((RfiDropdownItem d) => d.name)
+            .where((String n) => n.trim().isNotEmpty)
+            .toList(),
         'action': state.action ?? '',
         'typeOfRFI': _mapTypeOfRfiForApi(state.typeOfRfi),
         'nameOfRepresentative': state.contractorRepresentative ?? '',
@@ -779,8 +830,8 @@ class CreateRfiNotifier extends StateNotifier<CreateRfiState> {
         'selectedStructure': _itemToJson(state.selectedStructure),
         'selectedComponent': _itemToJson(state.selectedComponent),
         'selectedElement': _itemToJson(state.selectedElement),
-        'selectedActivity': _itemToJson(state.selectedActivity),
-        'selectedRfiDescription': _itemToJson(state.selectedRfiDescription),
+        'selectedActivities': state.selectedActivities.map(_itemToJson).whereType<Map<String, dynamic>>().toList(),
+        'selectedRfiDescriptions': state.selectedRfiDescriptions.map(_itemToJson).whereType<Map<String, dynamic>>().toList(),
       };
       final SharedPreferences prefs = await SharedPreferences.getInstance();
       await prefs.setString(_draftKey, jsonEncode(draft));
@@ -833,8 +884,8 @@ class CreateRfiNotifier extends StateNotifier<CreateRfiState> {
         selectedStructure: _itemFromJson(draft['selectedStructure']),
         selectedComponent: _itemFromJson(draft['selectedComponent']),
         selectedElement: _itemFromJson(draft['selectedElement']),
-        selectedActivity: _itemFromJson(draft['selectedActivity']),
-        selectedRfiDescription: _itemFromJson(draft['selectedRfiDescription']),
+        selectedActivities: _itemsFromJson(draft['selectedActivities'] ?? draft['selectedActivity']),
+        selectedRfiDescriptions: _itemsFromJson(draft['selectedRfiDescriptions'] ?? draft['selectedRfiDescription']),
       );
     } catch (_) {}
   }
@@ -860,6 +911,19 @@ class CreateRfiNotifier extends StateNotifier<CreateRfiState> {
       'caoUserName': item.caoUserName,
       'caoEmail': item.caoEmail,
     };
+  }
+
+  List<RfiDropdownItem> _itemsFromJson(dynamic raw) {
+    if (raw is List) {
+      return raw
+          .map(_itemFromJson)
+          .whereType<RfiDropdownItem>()
+          .toList(growable: false);
+    }
+    final RfiDropdownItem? single = _itemFromJson(raw);
+    return single == null
+        ? const <RfiDropdownItem>[]
+        : <RfiDropdownItem>[single];
   }
 
   RfiDropdownItem? _itemFromJson(dynamic raw) {

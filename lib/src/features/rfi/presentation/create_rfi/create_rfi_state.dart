@@ -18,8 +18,8 @@ class CreateRfiState {
     this.selectedStructure,
     this.selectedComponent,
     this.selectedElement,
-    this.selectedActivity,
-    this.selectedRfiDescription,
+    this.selectedActivities = const <RfiDropdownItem>[],
+    this.selectedRfiDescriptions = const <RfiDropdownItem>[],
     this.currentStep = 0,
     this.action,
     this.typeOfRfi,
@@ -52,8 +52,8 @@ class CreateRfiState {
   final RfiDropdownItem? selectedStructure;
   final RfiDropdownItem? selectedComponent;
   final RfiDropdownItem? selectedElement;
-  final RfiDropdownItem? selectedActivity;
-  final RfiDropdownItem? selectedRfiDescription;
+  final List<RfiDropdownItem> selectedActivities;
+  final List<RfiDropdownItem> selectedRfiDescriptions;
 
   final int currentStep;
   final String? action;
@@ -93,10 +93,8 @@ class CreateRfiState {
     bool clearSelectedComponent = false,
     RfiDropdownItem? selectedElement,
     bool clearSelectedElement = false,
-    RfiDropdownItem? selectedActivity,
-    bool clearSelectedActivity = false,
-    RfiDropdownItem? selectedRfiDescription,
-    bool clearSelectedRfiDescription = false,
+    List<RfiDropdownItem>? selectedActivities,
+    List<RfiDropdownItem>? selectedRfiDescriptions,
     int? currentStep,
     String? action,
     String? typeOfRfi,
@@ -142,12 +140,9 @@ class CreateRfiState {
       selectedElement: clearSelectedElement
           ? null
           : (selectedElement ?? this.selectedElement),
-      selectedActivity: clearSelectedActivity
-          ? null
-          : (selectedActivity ?? this.selectedActivity),
-      selectedRfiDescription: clearSelectedRfiDescription
-          ? null
-          : (selectedRfiDescription ?? this.selectedRfiDescription),
+      selectedActivities: selectedActivities ?? this.selectedActivities,
+      selectedRfiDescriptions:
+          selectedRfiDescriptions ?? this.selectedRfiDescriptions,
       currentStep: currentStep ?? this.currentStep,
       action: action ?? this.action,
       typeOfRfi: typeOfRfi ?? this.typeOfRfi,

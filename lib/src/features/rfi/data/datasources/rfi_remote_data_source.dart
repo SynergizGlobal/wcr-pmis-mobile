@@ -201,12 +201,23 @@ class RfiRemoteDataSource {
     return RfiDropdownMapper.fromList(response.data);
   }
 
-  Future<List<RfiDropdownItem>> fetchRfiDescriptions(String activityName) async {
+  Future<List<RfiDropdownItem>> fetchRfiDescriptions(
+    List<String> activityNames,
+  ) async {
+    final List<String> names = activityNames
+        .map((String name) => name.trim())
+        .where((String name) => name.isNotEmpty)
+        .toList(growable: false);
+    if (names.isEmpty) {
+      return const <RfiDropdownItem>[];
+    }
     final Response<dynamic> response = await _dio.get<dynamic>(
       'rfi/rfi-descriptions',
-      queryParameters: <String, String>{'activity[]': activityName},
+      queryParameters: <String, dynamic>{'activity[]': names},
     );
-    return RfiDropdownMapper.fromList(response.data);
+    return RfiDropdownMapper.dedupeById(
+      RfiDropdownMapper.fromList(response.data),
+    );
   }
 
   Future<List<RfiDropdownItem>> fetchRegularUsers() async {
