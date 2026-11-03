@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
+import 'package:wcr_pmis_mobile/src/core/network/user_friendly_error_message.dart';
+import 'package:wcr_pmis_mobile/src/core/widgets/app_filter_dialog.dart';
+import 'package:wcr_pmis_mobile/src/core/widgets/app_select_sheet_field.dart';
 import 'package:wcr_pmis_mobile/src/core/widgets/app_table_pagination_footer.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/domain/entities/site_photo_row.dart';
+import 'package:wcr_pmis_mobile/src/features/dashboard/domain/utils/site_photos_filters.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/projects/providers/site_photos_provider.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/projects/widgets/site_photos_preview_dialog.dart';
-import 'package:wcr_pmis_mobile/src/core/network/user_friendly_error_message.dart';
 
 class SitePhotosTab extends ConsumerStatefulWidget {
   const SitePhotosTab({
@@ -23,6 +27,356 @@ class _SitePhotosTabState extends ConsumerState<SitePhotosTab> {
 
   int _pageSize = 10;
   int _currentPage = 0;
+  SitePhotosFilterState _filters = SitePhotosFilterState.cleared;
+
+  void _clearFilters() {
+    setState(() {
+      _filters = SitePhotosFilterState.cleared;
+      _currentPage = 0;
+    });
+  }
+
+  void _applyFilters(SitePhotosFilterState next) {
+    setState(() {
+      _filters = next;
+      _currentPage = 0;
+    });
+  }
+
+  int _activeFilterCount(SitePhotosFilterState filters) {
+    var count = 0;
+    if (filters.section != SitePhotosFilters.all) {
+      count++;
+    }
+    if (filters.structureType != SitePhotosFilters.all) {
+      count++;
+    }
+    if (filters.structure != SitePhotosFilters.all) {
+      count++;
+    }
+    if (filters.structureComponent != SitePhotosFilters.all) {
+      count++;
+    }
+    if (filters.componentId != SitePhotosFilters.all) {
+      count++;
+    }
+    if (filters.fromDate != null) {
+      count++;
+    }
+    if (filters.toDate != null) {
+      count++;
+    }
+    return count;
+  }
+
+  SitePhotosFilterState _normalizeFilters(
+    List<SitePhotoRow> allRows,
+    SitePhotosFilterState state,
+  ) {
+    final List<String> sections =
+        SitePhotosFilters.sectionOptions(allRows, state);
+    final List<String> structureTypes =
+        SitePhotosFilters.structureTypeOptions(allRows, state);
+    final List<String> structures =
+        SitePhotosFilters.structureOptions(allRows, state);
+    final List<String> components =
+        SitePhotosFilters.structureComponentOptions(allRows, state);
+    final List<String> componentIds =
+        SitePhotosFilters.componentIdOptions(allRows, state);
+
+    String section =
+        SitePhotosFilters.sheetValue(sections, state.section);
+    String structureType = SitePhotosFilters.sheetValue(
+      structureTypes,
+      state.structureType,
+    );
+    String structure = SitePhotosFilters.sheetValue(structures, state.structure);
+    String structureComponent = SitePhotosFilters.sheetValue(
+      components,
+      state.structureComponent,
+    );
+    String componentId = SitePhotosFilters.sheetValue(
+      componentIds,
+      state.componentId,
+    );
+
+    if (structureType == SitePhotosFilters.all) {
+      structure = SitePhotosFilters.all;
+      structureComponent = SitePhotosFilters.all;
+      componentId = SitePhotosFilters.all;
+    } else if (structure == SitePhotosFilters.all) {
+      structureComponent = SitePhotosFilters.all;
+      componentId = SitePhotosFilters.all;
+    } else if (structureComponent == SitePhotosFilters.all) {
+      componentId = SitePhotosFilters.all;
+    }
+
+    return state.copyWith(
+      section: section,
+      structureType: structureType,
+      structure: structure,
+      structureComponent: structureComponent,
+      componentId: componentId,
+    );
+  }
+
+  Future<void> _openFilterDialog(List<SitePhotoRow> allRows) async {
+    SitePhotosFilterState dialogFilters = _normalizeFilters(allRows, _filters);
+    bool shouldApply = false;
+
+    await showDialog<void>(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setDialogState) {
+            SitePhotosFilterState working = _normalizeFilters(
+              allRows,
+              dialogFilters,
+            );
+
+            void updateDialog(SitePhotosFilterState next) {
+              setDialogState(() {
+                dialogFilters = _normalizeFilters(allRows, next);
+              });
+            }
+
+            final List<String> sections =
+                SitePhotosFilters.sectionOptions(allRows, working);
+            final List<String> structureTypes =
+                SitePhotosFilters.structureTypeOptions(allRows, working);
+            final List<String> structures =
+                SitePhotosFilters.structureOptions(allRows, working);
+            final List<String> components =
+                SitePhotosFilters.structureComponentOptions(allRows, working);
+            final List<String> componentIds =
+                SitePhotosFilters.componentIdOptions(allRows, working);
+
+            final bool structureEnabled =
+                working.structureType != SitePhotosFilters.all;
+            final bool componentEnabled =
+                structureEnabled && working.structure != SitePhotosFilters.all;
+            final bool componentIdEnabled = componentEnabled &&
+                working.structureComponent != SitePhotosFilters.all;
+
+            Future<void> pickFromDate() async {
+              final DateTime? picked = await showDatePicker(
+                context: context,
+                initialDate: working.fromDate ?? DateTime.now(),
+                firstDate: DateTime(2015),
+                lastDate: DateTime.now().add(const Duration(days: 365)),
+              );
+              if (picked != null) {
+                updateDialog(
+                  working.copyWith(fromDate: DateUtils.dateOnly(picked)),
+                );
+              }
+            }
+
+            Future<void> pickToDate() async {
+              final DateTime? picked = await showDatePicker(
+                context: context,
+                initialDate: working.toDate ?? working.fromDate ?? DateTime.now(),
+                firstDate: DateTime(2015),
+                lastDate: DateTime.now().add(const Duration(days: 365)),
+              );
+              if (picked != null) {
+                updateDialog(
+                  working.copyWith(toDate: DateUtils.dateOnly(picked)),
+                );
+              }
+            }
+
+            final String fromLabel = working.fromDate == null
+                ? 'dd/mm/yyyy'
+                : DateFormat('dd/MM/yyyy').format(working.fromDate!);
+            final String toLabel = working.toDate == null
+                ? 'dd/mm/yyyy'
+                : DateFormat('dd/MM/yyyy').format(working.toDate!);
+            final bool invalidRange = working.fromDate != null &&
+                working.toDate != null &&
+                working.fromDate!.isAfter(working.toDate!);
+
+            return AppFilterDialog(
+              title: 'Filter Site Photos',
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: <Widget>[
+                    AppSelectSheetField<String>(
+                      label: 'Section',
+                      title: 'Select Section',
+                      compact: true,
+                      placeholderText: SitePhotosFilters.all,
+                      items: sections,
+                      value: SitePhotosFilters.sheetValue(
+                        sections,
+                        working.section,
+                      ),
+                      itemLabelBuilder: (String value) => value,
+                      onChanged: (String value) => updateDialog(
+                        working.copyWith(section: value),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        'Date range',
+                        style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: pickFromDate,
+                        icon: const Icon(Icons.calendar_today_rounded, size: 16),
+                        label: Text('From: $fromLabel'),
+                        style: OutlinedButton.styleFrom(
+                          alignment: Alignment.centerLeft,
+                          visualDensity: VisualDensity.compact,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 10,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: pickToDate,
+                        icon: const Icon(Icons.calendar_today_rounded, size: 16),
+                        label: Text('To: $toLabel'),
+                        style: OutlinedButton.styleFrom(
+                          alignment: Alignment.centerLeft,
+                          visualDensity: VisualDensity.compact,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 10,
+                          ),
+                        ),
+                      ),
+                    ),
+                    if (invalidRange) ...<Widget>[
+                      const SizedBox(height: 8),
+                      Text(
+                        'From date must be on or before To date.',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).colorScheme.error,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 10),
+                    AppSelectSheetField<String>(
+                      label: 'Structure Type',
+                      title: 'Select Structure Type',
+                      compact: true,
+                      placeholderText: SitePhotosFilters.all,
+                      items: structureTypes,
+                      value: SitePhotosFilters.sheetValue(
+                        structureTypes,
+                        working.structureType,
+                      ),
+                      itemLabelBuilder: (String value) => value,
+                      onChanged: (String value) => updateDialog(
+                        working.copyWith(
+                          structureType: value,
+                          structure: SitePhotosFilters.all,
+                          structureComponent: SitePhotosFilters.all,
+                          componentId: SitePhotosFilters.all,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    AppSelectSheetField<String>(
+                      label: 'Structure',
+                      title: 'Select Structure',
+                      compact: true,
+                      enabled: structureEnabled,
+                      placeholderText: SitePhotosFilters.all,
+                      items: structures,
+                      value: SitePhotosFilters.sheetValue(
+                        structures,
+                        working.structure,
+                      ),
+                      itemLabelBuilder: (String value) => value,
+                      onChanged: (String value) => updateDialog(
+                        working.copyWith(
+                          structure: value,
+                          structureComponent: SitePhotosFilters.all,
+                          componentId: SitePhotosFilters.all,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    AppSelectSheetField<String>(
+                      label: 'Structure Component',
+                      title: 'Select Structure Component',
+                      compact: true,
+                      enabled: componentEnabled,
+                      placeholderText: SitePhotosFilters.all,
+                      items: components,
+                      value: SitePhotosFilters.sheetValue(
+                        components,
+                        working.structureComponent,
+                      ),
+                      itemLabelBuilder: (String value) => value,
+                      onChanged: (String value) => updateDialog(
+                        working.copyWith(
+                          structureComponent: value,
+                          componentId: SitePhotosFilters.all,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    AppSelectSheetField<String>(
+                      label: 'Component ID',
+                      title: 'Select Component ID',
+                      compact: true,
+                      enabled: componentIdEnabled,
+                      placeholderText: SitePhotosFilters.all,
+                      items: componentIds,
+                      value: SitePhotosFilters.sheetValue(
+                        componentIds,
+                        working.componentId,
+                      ),
+                      itemLabelBuilder: (String value) => value,
+                      onChanged: (String value) => updateDialog(
+                        working.copyWith(componentId: value),
+                      ),
+                    ),
+                  ],
+                ),
+              actions: <Widget>[
+                TextButton(
+                  onPressed: () => updateDialog(SitePhotosFilterState.cleared),
+                  child: const Text('Clear'),
+                ),
+                FilledButton(
+                  onPressed: invalidRange
+                      ? null
+                      : () {
+                          shouldApply = true;
+                          Navigator.of(context).pop();
+                        },
+                  child: const Text('Apply'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    if (shouldApply) {
+      _applyFilters(_normalizeFilters(allRows, dialogFilters));
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -69,7 +423,24 @@ class _SitePhotosTabState extends ConsumerState<SitePhotosTab> {
     );
   }
 
-  Widget _content(BuildContext context, List<SitePhotoRow> rows) {
+  Widget _content(BuildContext context, List<SitePhotoRow> allRows) {
+    final SitePhotosFilterState activeFilters =
+        _normalizeFilters(allRows, _filters);
+    if (activeFilters.section != _filters.section ||
+        activeFilters.structureType != _filters.structureType ||
+        activeFilters.structure != _filters.structure ||
+        activeFilters.structureComponent != _filters.structureComponent ||
+        activeFilters.componentId != _filters.componentId) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) {
+          return;
+        }
+        setState(() => _filters = activeFilters);
+      });
+    }
+
+    final List<SitePhotoRow> rows =
+        SitePhotosFilters.apply(allRows, activeFilters);
     final int total = rows.length;
     final int pageCount = total == 0 ? 1 : (total / _pageSize).ceil();
     if (_currentPage >= pageCount) {
@@ -83,20 +454,26 @@ class _SitePhotosTabState extends ConsumerState<SitePhotosTab> {
     final List<SitePhotoRow> pageRows =
         total == 0 ? rows : rows.sublist(start, end);
 
+    final String emptyMessage = allRows.isEmpty
+        ? 'No site photos available for this project.'
+        : 'No site photos match the selected filters.';
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         Expanded(
           child: CustomScrollView(
             slivers: <Widget>[
-              SliverToBoxAdapter(child: _headerCard(context)),
+              SliverToBoxAdapter(
+                child: _headerCard(context, allRows: allRows),
+              ),
               const SliverToBoxAdapter(child: SizedBox(height: 10)),
               if (rows.isEmpty)
                 SliverFillRemaining(
                   hasScrollBody: false,
                   child: Center(
                     child: Text(
-                      'No site photos available for this project.',
+                      emptyMessage,
                       style: Theme.of(context).textTheme.bodyMedium,
                       textAlign: TextAlign.center,
                     ),
@@ -130,9 +507,18 @@ class _SitePhotosTabState extends ConsumerState<SitePhotosTab> {
     );
   }
 
-  Widget _headerCard(BuildContext context) {
+  Widget _headerCard(
+    BuildContext context, {
+    required List<SitePhotoRow> allRows,
+  }) {
     final ThemeData theme = Theme.of(context);
     final ColorScheme cs = theme.colorScheme;
+    final bool canFilter = allRows.isNotEmpty;
+    final bool hasActiveFilters = _filters.hasActiveFilters;
+    final int activeCount = _activeFilterCount(_filters);
+    final String filterLabel =
+        activeCount > 0 ? 'Filter ($activeCount)' : 'Filter';
+
     return Card(
       margin: EdgeInsets.zero,
       child: Padding(
@@ -164,6 +550,43 @@ class _SitePhotosTabState extends ConsumerState<SitePhotosTab> {
                 ],
               ),
             ),
+            const SizedBox(height: 10),
+            Row(
+              children: <Widget>[
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed:
+                        canFilter ? () => _openFilterDialog(allRows) : null,
+                    icon: const Icon(Icons.filter_alt_rounded, size: 18),
+                    label: Text(filterLabel),
+                    style: OutlinedButton.styleFrom(
+                      visualDensity: VisualDensity.compact,
+                      minimumSize: const Size(0, 40),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: hasActiveFilters ? _clearFilters : null,
+                    icon: const Icon(Icons.filter_alt_off_rounded, size: 18),
+                    label: const Text('Clear'),
+                    style: OutlinedButton.styleFrom(
+                      visualDensity: VisualDensity.compact,
+                      minimumSize: const Size(0, 40),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ],
         ),
       ),
@@ -194,27 +617,27 @@ class _SitePhotosTabState extends ConsumerState<SitePhotosTab> {
         scrollDirection: Axis.horizontal,
         child: SizedBox(
           width: _SitePhotosColumnLayout.totalWidth,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                _tableHeader(context),
-                for (int index = 0; index < rows.length; index++) ...<Widget>[
-                  if (index > 0)
-                    Divider(
-                      height: 1,
-                      thickness: 0.6,
-                      color: Theme.of(context)
-                          .colorScheme
-                          .outlineVariant
-                          .withValues(alpha: 0.45),
-                    ),
-                  _tableRow(context, rows[index]),
-                ],
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              _tableHeader(context),
+              for (int index = 0; index < rows.length; index++) ...<Widget>[
+                if (index > 0)
+                  Divider(
+                    height: 1,
+                    thickness: 0.6,
+                    color: Theme.of(context)
+                        .colorScheme
+                        .outlineVariant
+                        .withValues(alpha: 0.45),
+                  ),
+                _tableRow(context, rows[index]),
               ],
-            ),
+            ],
           ),
         ),
+      ),
     );
   }
 
@@ -229,6 +652,7 @@ class _SitePhotosTabState extends ConsumerState<SitePhotosTab> {
       child: Row(
         children: <Widget>[
           _headerCell('SECTION', _SitePhotosColumnLayout.section),
+          _headerCell('DATE', _SitePhotosColumnLayout.date),
           _headerCell('STRUCTURE TYPE', _SitePhotosColumnLayout.structureType),
           _headerCell('STRUCTURE', _SitePhotosColumnLayout.structure),
           _headerCell(
@@ -282,6 +706,7 @@ class _SitePhotosTabState extends ConsumerState<SitePhotosTab> {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: <Widget>[
             _textCell(row.section, width: _SitePhotosColumnLayout.section),
+            _textCell(row.displayDate, width: _SitePhotosColumnLayout.date),
             _textCell(
               row.structureType,
               width: _SitePhotosColumnLayout.structureType,
@@ -378,6 +803,7 @@ class _SitePhotosTabState extends ConsumerState<SitePhotosTab> {
 
 class _SitePhotosColumnLayout {
   static const double section = 128;
+  static const double date = 92;
   static const double structureType = 108;
   static const double structure = 196;
   static const double structureComponent = 132;
@@ -388,6 +814,7 @@ class _SitePhotosColumnLayout {
 
   static double get totalWidth =>
       section +
+      date +
       structureType +
       structure +
       structureComponent +

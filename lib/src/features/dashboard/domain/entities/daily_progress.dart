@@ -35,6 +35,7 @@ class DailyProgressGroup {
     required this.scope,
     required this.completedQty,
     required this.balance,
+    required this.askingRatePerDay,
     required this.progressOnDate,
     required this.tdc,
     required this.structures,
@@ -47,9 +48,38 @@ class DailyProgressGroup {
   final double scope;
   final double completedQty;
   final double balance;
+  final double? askingRatePerDay;
   final double progressOnDate;
   final String tdc;
   final List<DailyProgressStructureRow> structures;
 
   String get groupKey => '$section|$activity';
+}
+
+class DailyProgressActivityGroup {
+  const DailyProgressActivityGroup({
+    required this.activity,
+    required this.unit,
+    required this.structureCount,
+    required this.scope,
+    required this.completedQty,
+    required this.balance,
+    required this.askingRatePerDay,
+    required this.progressOnDate,
+    required this.tdc,
+    required this.sections,
+  });
+
+  final String activity;
+  final String unit;
+  final int structureCount;
+  final double scope;
+  final double completedQty;
+  final double balance;
+  final double? askingRatePerDay;
+  final double progressOnDate;
+  final String tdc;
+  final List<DailyProgressGroup> sections;
+
+  String get activityKey => activity;
 }

@@ -8,8 +8,8 @@ class DailyProgressMapper {
         <String, List<Map<String, dynamic>>>{};
 
     for (final Map<String, dynamic> row in rows) {
-      final String section = _string(row['section'], fallback: '—');
-      final String activity = _string(row['structure_type'], fallback: '—');
+      final String section = sectionFromRow(row, fallback: '—');
+      final String activity = structureTypeFromRow(row, fallback: '—');
       final String key = '$section|$activity';
       grouped.putIfAbsent(key, () => <Map<String, dynamic>>[]).add(row);
     }
@@ -19,12 +19,14 @@ class DailyProgressMapper {
     ) {
       final List<Map<String, dynamic>> groupRows = entry.value;
       final Map<String, dynamic> first = groupRows.first;
-      final String section = _string(first['section'], fallback: '—');
-      final String activity = _string(first['structure_type'], fallback: '—');
+      final String section = sectionFromRow(first, fallback: '—');
+      final String activity = structureTypeFromRow(first, fallback: '—');
 
       double scopeSum = 0;
       double completedSum = 0;
       double progressSum = 0;
+      double askingRateSum = 0;
+      bool hasAskingRate = false;
       final Set<String> units = <String>{};
 
       final List<DailyProgressStructureRow> structures =
@@ -39,15 +41,20 @@ class DailyProgressMapper {
             scopeSum += scope;
             completedSum += actualTill;
             progressSum += actualForDay;
+            final double? askingRate = _toNullableDouble(
+              row['asking_rate_per_day'] ?? row['asking_rate'],
+            );
+            if (askingRate != null) {
+              askingRateSum += askingRate;
+              hasAskingRate = true;
+            }
             return DailyProgressStructureRow(
               structure: _string(row['structure'], fallback: '—'),
               unit: unit,
               scope: scope,
               plannedTillDate: _toDouble(row['planned_till_date']),
               actualTillDate: actualTill,
-              askingRatePerDay: _toNullableDouble(
-                row['asking_rate_per_day'] ?? row['asking_rate'],
-              ),
+              askingRatePerDay: askingRate,
               actualForDay: actualForDay,
               cumulativeActual: _toDouble(row['cumulative_actual']),
               mpDeployment: _displayValue(row['mp_deployment']),
@@ -72,6 +79,7 @@ class DailyProgressMapper {
         scope: scopeSum,
         completedQty: completedSum,
         balance: scopeSum - completedSum,
+        askingRatePerDay: hasAskingRate ? askingRateSum : null,
         progressOnDate: progressSum,
         tdc: _latestTdc(groupRows),
         structures: structures,
@@ -79,20 +87,125 @@ class DailyProgressMapper {
     }).toList();
 
     groups.sort((DailyProgressGroup a, DailyProgressGroup b) {
-      final int sectionCompare = a.section.compareTo(b.section);
-      if (sectionCompare != 0) {
-        return sectionCompare;
+      final int activityCompare = a.activity.compareTo(b.activity);
+      if (activityCompare != 0) {
+        return activityCompare;
       }
-      return a.activity.compareTo(b.activity);
+      return a.section.compareTo(b.section);
     });
     return groups;
+  }
+
+  static List<DailyProgressActivityGroup> groupByActivity(
+    List<Map<String, dynamic>> rows,
+  ) {
+    final List<DailyProgressGroup> sectionGroups = groupRows(rows);
+    final Map<String, List<DailyProgressGroup>> byActivity =
+        <String, List<DailyProgressGroup>>{};
+
+    for (final DailyProgressGroup group in sectionGroups) {
+      byActivity
+          .putIfAbsent(group.activity, () => <DailyProgressGroup>[])
+          .add(group);
+    }
+
+    final List<DailyProgressActivityGroup> activities =
+        byActivity.entries.map((
+      MapEntry<String, List<DailyProgressGroup>> entry,
+    ) {
+      final List<DailyProgressGroup> sections = entry.value
+        ..sort(
+          (DailyProgressGroup a, DailyProgressGroup b) =>
+              a.section.compareTo(b.section),
+        );
+
+      double scopeSum = 0;
+      double completedSum = 0;
+      double balanceSum = 0;
+      double progressSum = 0;
+      double askingRateSum = 0;
+      bool hasAskingRate = false;
+      int structureCount = 0;
+      final Set<String> units = <String>{};
+      String tdc = '—';
+      DateTime? latestTdc;
+
+      for (final DailyProgressGroup section in sections) {
+        scopeSum += section.scope;
+        completedSum += section.completedQty;
+        balanceSum += section.balance;
+        progressSum += section.progressOnDate;
+        structureCount += section.structureCount;
+        units.add(section.unit);
+        if (section.askingRatePerDay != null) {
+          askingRateSum += section.askingRatePerDay!;
+          hasAskingRate = true;
+        }
+        final DateTime? parsed = _parseTdcDateFromDisplay(section.tdc);
+        if (parsed != null &&
+            (latestTdc == null || parsed.isAfter(latestTdc))) {
+          latestTdc = parsed;
+          tdc = section.tdc;
+        }
+      }
+
+      final String unit = units.length == 1 ? units.first : '—';
+
+      return DailyProgressActivityGroup(
+        activity: entry.key,
+        unit: unit,
+        structureCount: structureCount,
+        scope: scopeSum,
+        completedQty: completedSum,
+        balance: balanceSum,
+        askingRatePerDay: hasAskingRate ? askingRateSum : null,
+        progressOnDate: progressSum,
+        tdc: tdc,
+        sections: sections,
+      );
+    }).toList()
+          ..sort(
+            (DailyProgressActivityGroup a, DailyProgressActivityGroup b) =>
+                a.activity.compareTo(b.activity),
+          );
+
+    return activities;
+  }
+
+  static DateTime? _parseTdcDateFromDisplay(String value) {
+    if (value == '—') {
+      return null;
+    }
+    return _parseTdcDate(value);
+  }
+
+  static String sectionFromRow(
+    Map<String, dynamic> row, {
+    String fallback = '',
+  }) {
+    return _string(
+      row['section'] ?? row['section_name'] ?? row['sections'],
+      fallback: fallback,
+    );
+  }
+
+  static String structureTypeFromRow(
+    Map<String, dynamic> row, {
+    String fallback = '',
+  }) {
+    return _string(
+      row['structure_type_new'] ??
+          row['structure_type'] ??
+          row['activity'],
+      fallback: fallback,
+    );
   }
 
   static List<String> uniqueSections(List<Map<String, dynamic>> rows) {
     final Set<String> values = <String>{};
     for (final Map<String, dynamic> row in rows) {
-      final String section = _string(row['section']);
-      if (section.isNotEmpty) {
+      final String section = sectionFromRow(row);
+      if (section.isNotEmpty && section != '—') {
         values.add(section);
       }
     }
@@ -103,8 +216,8 @@ class DailyProgressMapper {
   static List<String> uniqueActivities(List<Map<String, dynamic>> rows) {
     final Set<String> values = <String>{};
     for (final Map<String, dynamic> row in rows) {
-      final String activity = _string(row['structure_type']);
-      if (activity.isNotEmpty) {
+      final String activity = structureTypeFromRow(row);
+      if (activity.isNotEmpty && activity != '—') {
         values.add(activity);
       }
     }

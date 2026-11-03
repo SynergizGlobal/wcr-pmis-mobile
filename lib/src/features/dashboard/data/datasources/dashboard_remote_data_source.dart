@@ -1376,12 +1376,16 @@ class DashboardRemoteDataSource {
   Future<List<Map<String, dynamic>>> fetchDailyProgress({
     required String projectId,
     required String date,
+    required String fromDate,
+    required String toDate,
   }) async {
     final Response<dynamic> response = await _dio.get<dynamic>(
       '/execution/daily-progress',
       queryParameters: <String, String>{
         'projectId': projectId,
         'date': date,
+        'fromDate': fromDate,
+        'toDate': toDate,
       },
       options: _requestOptions,
     );

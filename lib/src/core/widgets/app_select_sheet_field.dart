@@ -33,7 +33,7 @@ class AppSelectSheetField<T> extends StatelessWidget {
     final String selectedLabel = value != null
         ? itemLabelBuilder(value as T)
         : '';
-    final bool filled = value != null;
+    final bool filled = value != null && selectedLabel.trim().isNotEmpty;
 
     return Material(
       color: Colors.transparent,
@@ -64,9 +64,11 @@ class AppSelectSheetField<T> extends StatelessWidget {
                             top: Radius.circular(24),
                           ),
                           clipBehavior: Clip.antiAlias,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: <Widget>[
+                          child: SizedBox(
+                            width: double.infinity,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: <Widget>[
                               const SizedBox(height: 10),
                               Center(
                                 child: Container(
@@ -102,10 +104,10 @@ class AppSelectSheetField<T> extends StatelessWidget {
                               Expanded(
                                 child: ListView.separated(
                                   padding: const EdgeInsets.fromLTRB(
-                                    10,
-                                    10,
-                                    10,
-                                    14,
+                                    16,
+                                    8,
+                                    16,
+                                    16,
                                   ),
                                   physics: const ClampingScrollPhysics(),
                                   itemCount: items.length,
@@ -169,7 +171,8 @@ class AppSelectSheetField<T> extends StatelessWidget {
                                       },
                                 ),
                               ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
                       ),

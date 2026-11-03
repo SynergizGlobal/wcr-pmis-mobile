@@ -1,7 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/data/datasources/dashboard_remote_data_source.dart';
 
-typedef DailyProgressRequest = ({String projectId, String date});
+typedef DailyProgressRequest = ({
+  String projectId,
+  String date,
+  String fromDate,
+  String toDate,
+});
 
 final dailyProgressProvider =
     FutureProvider.family<List<Map<String, dynamic>>, DailyProgressRequest>((
@@ -11,5 +16,7 @@ final dailyProgressProvider =
   return ref.read(dashboardRemoteDataSourceProvider).fetchDailyProgress(
         projectId: request.projectId,
         date: request.date,
+        fromDate: request.fromDate,
+        toDate: request.toDate,
       );
 });

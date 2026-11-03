@@ -10,13 +10,15 @@ import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
+import 'package:wcr_pmis_mobile/src/core/network/user_friendly_error_message.dart';
 import 'package:wcr_pmis_mobile/src/core/widgets/app_dialog.dart';
+import 'package:wcr_pmis_mobile/src/core/widgets/app_filter_dialog.dart';
 import 'package:wcr_pmis_mobile/src/core/widgets/app_select_sheet_field.dart';
+import 'package:wcr_pmis_mobile/src/core/widgets/app_table_pagination_bar.dart';
 import 'package:wcr_pmis_mobile/src/core/widgets/app_table_pagination_footer.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/domain/entities/daily_progress.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/domain/utils/daily_progress_mapper.dart';
 import 'package:wcr_pmis_mobile/src/features/dashboard/presentation/projects/providers/daily_progress_provider.dart';
-import 'package:wcr_pmis_mobile/src/core/network/user_friendly_error_message.dart';
 
 class DailyProgressTab extends ConsumerStatefulWidget {
   const DailyProgressTab({
@@ -41,22 +43,42 @@ class _DailyProgressTabState extends ConsumerState<DailyProgressTab> {
   static const String _exportDash = '-';
   static const List<int> _pageSizeOptions = <int>[5, 10, 25, 50];
 
-  late DateTime _selectedDate;
+  late DateTime _fromDate;
+  late DateTime _toDate;
   String _sectionFilter = _allSections;
   String _activityFilter = _allActivities;
   int _pageSize = 10;
   int _currentPage = 0;
+  final Set<String> _expandedActivities = <String>{};
   final Set<String> _expandedGroups = <String>{};
 
   @override
   void initState() {
     super.initState();
-    _selectedDate = DateTime.now();
+    final DateTime today = DateUtils.dateOnly(DateTime.now());
+    _fromDate = today;
+    _toDate = today;
   }
 
-  String get _apiDate => DateFormat('yyyy-MM-dd').format(_selectedDate);
+  /// Report/as-of date sent to API — aligned with web (`date` = **To**).
+  String get _apiDate => DateFormat('yyyy-MM-dd').format(_toDate);
 
-  String get _displayDate => DateFormat('dd/MM/yyyy').format(_selectedDate);
+  String get _apiFromDate => DateFormat('yyyy-MM-dd').format(_fromDate);
+
+  String get _apiToDate => DateFormat('yyyy-MM-dd').format(_toDate);
+
+  String get _displayReportDate => DateFormat('dd/MM/yyyy').format(_toDate);
+
+  String get _displayFromDate => DateFormat('dd/MM/yyyy').format(_fromDate);
+
+  String get _displayToDate => DateFormat('dd/MM/yyyy').format(_toDate);
+
+  DailyProgressRequest get _progressRequest => (
+        projectId: widget.projectId,
+        date: _apiDate,
+        fromDate: _apiFromDate,
+        toDate: _apiToDate,
+      );
 
   @override
   Widget build(BuildContext context) {
@@ -72,12 +94,8 @@ class _DailyProgressTabState extends ConsumerState<DailyProgressTab> {
       );
     }
 
-    final AsyncValue<List<Map<String, dynamic>>> progressAsync = ref.watch(
-      dailyProgressProvider((
-        projectId: widget.projectId,
-        date: _apiDate,
-      )),
-    );
+    final AsyncValue<List<Map<String, dynamic>>> progressAsync =
+        ref.watch(dailyProgressProvider(_progressRequest));
 
     return progressAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
@@ -93,12 +111,8 @@ class _DailyProgressTabState extends ConsumerState<DailyProgressTab> {
               ),
               const SizedBox(height: 12),
               FilledButton.icon(
-                onPressed: () => ref.invalidate(
-                  dailyProgressProvider((
-                    projectId: widget.projectId,
-                    date: _apiDate,
-                  )),
-                ),
+                onPressed: () =>
+                    ref.invalidate(dailyProgressProvider(_progressRequest)),
                 icon: const Icon(Icons.refresh_rounded),
                 label: const Text('Retry'),
               ),
@@ -130,8 +144,8 @@ class _DailyProgressTabState extends ConsumerState<DailyProgressTab> {
     final List<Map<String, dynamic>> filteredRows = rows.where((
       Map<String, dynamic> row,
     ) {
-      final String section = row['section']?.toString() ?? '';
-      final String activity = row['structure_type']?.toString() ?? '';
+      final String section = DailyProgressMapper.sectionFromRow(row);
+      final String activity = DailyProgressMapper.structureTypeFromRow(row);
       final bool sectionMatch =
           _sectionFilter == _allSections || section == _sectionFilter;
       final bool activityMatch =
@@ -139,9 +153,11 @@ class _DailyProgressTabState extends ConsumerState<DailyProgressTab> {
       return sectionMatch && activityMatch;
     }).toList();
 
+    final List<DailyProgressActivityGroup> activityGroups =
+        DailyProgressMapper.groupByActivity(filteredRows);
     final List<DailyProgressGroup> groups =
-        DailyProgressMapper.groupRows(filteredRows);
-    final int total = groups.length;
+        _flattenSectionGroups(activityGroups);
+    final int total = activityGroups.length;
     final int pageCount = total == 0 ? 1 : (total / _pageSize).ceil();
     if (_currentPage >= pageCount) {
       _currentPage = pageCount - 1;
@@ -151,8 +167,13 @@ class _DailyProgressTabState extends ConsumerState<DailyProgressTab> {
     }
     final int start = total == 0 ? 0 : _currentPage * _pageSize;
     final int end = total == 0 ? 0 : (start + _pageSize).clamp(0, total);
-    final List<DailyProgressGroup> pageGroups =
-        total == 0 ? groups : groups.sublist(start, end);
+    final List<DailyProgressActivityGroup> pageActivityGroups = total == 0
+        ? activityGroups
+        : activityGroups.sublist(start, end);
+    final int structureCount = groups.fold<int>(
+      0,
+      (int sum, DailyProgressGroup group) => sum + group.structureCount,
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -170,7 +191,7 @@ class _DailyProgressTabState extends ConsumerState<DailyProgressTab> {
                 ),
               ),
               const SliverToBoxAdapter(child: SizedBox(height: 10)),
-              if (groups.isEmpty)
+              if (activityGroups.isEmpty)
                 SliverFillRemaining(
                   hasScrollBody: false,
                   child: Center(
@@ -183,14 +204,29 @@ class _DailyProgressTabState extends ConsumerState<DailyProgressTab> {
                 )
               else
                 SliverToBoxAdapter(
-                  child: _tableArea(context, pageGroups),
+                  child: _tableArea(context, pageActivityGroups),
                 ),
             ],
           ),
         ),
-        _paginationFooter(total: total, start: start, end: end, pageCount: pageCount),
+        _paginationFooter(
+          total: total,
+          start: start,
+          end: end,
+          pageCount: pageCount,
+          activityCount: activityGroups.length,
+          structureCount: structureCount,
+        ),
       ],
     );
+  }
+
+  List<DailyProgressGroup> _flattenSectionGroups(
+    List<DailyProgressActivityGroup> activityGroups,
+  ) {
+    return activityGroups
+        .expand((DailyProgressActivityGroup activity) => activity.sections)
+        .toList();
   }
 
   int get _activeFilterCount {
@@ -202,7 +238,10 @@ class _DailyProgressTabState extends ConsumerState<DailyProgressTab> {
       count++;
     }
     final DateTime today = DateUtils.dateOnly(DateTime.now());
-    if (!DateUtils.isSameDay(_selectedDate, today)) {
+    if (!DateUtils.isSameDay(_fromDate, today)) {
+      count++;
+    }
+    if (!DateUtils.isSameDay(_toDate, today)) {
       count++;
     }
     return count;
@@ -210,6 +249,22 @@ class _DailyProgressTabState extends ConsumerState<DailyProgressTab> {
 
   bool get _hasSectionOrActivityFilter =>
       _sectionFilter != _allSections || _activityFilter != _allActivities;
+
+  String _sectionSheetValue(List<String> sections, String current) {
+    final String normalized = current.trim();
+    if (normalized.isEmpty || !sections.contains(normalized)) {
+      return _allSections;
+    }
+    return normalized;
+  }
+
+  String _activitySheetValue(List<String> activities, String current) {
+    final String normalized = current.trim();
+    if (normalized.isEmpty || !activities.contains(normalized)) {
+      return _allActivities;
+    }
+    return normalized;
+  }
 
   List<DailyProgressGroup> _exportGroups(
     List<Map<String, dynamic>> allRows,
@@ -259,9 +314,25 @@ class _DailyProgressTabState extends ConsumerState<DailyProgressTab> {
               text: TextSpan(
                 style: tt.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
                 children: <TextSpan>[
-                  const TextSpan(text: 'Report date: '),
+                  const TextSpan(text: 'From: '),
                   TextSpan(
-                    text: _displayDate,
+                    text: _displayFromDate,
+                    style: TextStyle(
+                      color: cs.primary,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const TextSpan(text: '  ·  To: '),
+                  TextSpan(
+                    text: _displayToDate,
+                    style: TextStyle(
+                      color: cs.primary,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const TextSpan(text: '  ·  Report date: '),
+                  TextSpan(
+                    text: _displayReportDate,
                     style: TextStyle(
                       color: cs.primary,
                       fontWeight: FontWeight.w700,
@@ -322,9 +393,10 @@ class _DailyProgressTabState extends ConsumerState<DailyProgressTab> {
     required List<String> sections,
     required List<String> activities,
   }) async {
-    String dialogSection = _sectionFilter;
-    String dialogActivity = _activityFilter;
-    DateTime dialogDate = _selectedDate;
+    String dialogSection = _sectionSheetValue(sections, _sectionFilter);
+    String dialogActivity = _activitySheetValue(activities, _activityFilter);
+    DateTime dialogFromDate = _fromDate;
+    DateTime dialogToDate = _toDate;
     bool shouldApply = false;
 
     await showDialog<void>(
@@ -332,15 +404,27 @@ class _DailyProgressTabState extends ConsumerState<DailyProgressTab> {
       builder: (BuildContext dialogContext) {
         return StatefulBuilder(
           builder: (BuildContext context, StateSetter setDialogState) {
-            Future<void> pickDialogDate() async {
+            Future<void> pickDialogFromDate() async {
               final DateTime? picked = await showDatePicker(
                 context: context,
-                initialDate: dialogDate,
+                initialDate: dialogFromDate,
                 firstDate: DateTime(2015),
                 lastDate: DateTime.now().add(const Duration(days: 365)),
               );
               if (picked != null) {
-                setDialogState(() => dialogDate = picked);
+                setDialogState(() => dialogFromDate = DateUtils.dateOnly(picked));
+              }
+            }
+
+            Future<void> pickDialogToDate() async {
+              final DateTime? picked = await showDatePicker(
+                context: context,
+                initialDate: dialogToDate,
+                firstDate: DateTime(2015),
+                lastDate: DateTime.now().add(const Duration(days: 365)),
+              );
+              if (picked != null) {
+                setDialogState(() => dialogToDate = DateUtils.dateOnly(picked));
               }
             }
 
@@ -348,49 +432,56 @@ class _DailyProgressTabState extends ConsumerState<DailyProgressTab> {
               setDialogState(() {
                 dialogSection = _allSections;
                 dialogActivity = _allActivities;
-                dialogDate = DateTime.now();
+                final DateTime today = DateUtils.dateOnly(DateTime.now());
+                dialogFromDate = today;
+                dialogToDate = today;
               });
             }
 
-            final String dialogDateLabel =
-                DateFormat('dd/MM/yyyy').format(dialogDate);
+            final String dialogFromLabel =
+                DateFormat('dd/MM/yyyy').format(dialogFromDate);
+            final String dialogToLabel =
+                DateFormat('dd/MM/yyyy').format(dialogToDate);
+            final bool invalidRange =
+                dialogFromDate.isAfter(dialogToDate);
 
-            return AlertDialog(
-              title: const Text('Filter Daily Progress'),
-              content: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: <Widget>[
+            return AppFilterDialog(
+              title: 'Filter Daily Progress',
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: <Widget>[
                     AppSelectSheetField<String>(
                       label: 'Section',
                       title: 'Select Section',
                       compact: true,
+                      placeholderText: _allSections,
                       items: sections,
-                      value: sections.contains(dialogSection)
-                          ? dialogSection
-                          : _allSections,
+                      value: _sectionSheetValue(sections, dialogSection),
                       itemLabelBuilder: (String value) => value,
-                      onChanged: (String value) =>
-                          setDialogState(() => dialogSection = value),
+                      onChanged: (String value) => setDialogState(
+                        () => dialogSection = _sectionSheetValue(sections, value),
+                      ),
                     ),
                     const SizedBox(height: 10),
                     AppSelectSheetField<String>(
                       label: 'Activity',
                       title: 'Select Activity',
                       compact: true,
+                      placeholderText: _allActivities,
                       items: activities,
-                      value: activities.contains(dialogActivity)
-                          ? dialogActivity
-                          : _allActivities,
+                      value: _activitySheetValue(activities, dialogActivity),
                       itemLabelBuilder: (String value) => value,
-                      onChanged: (String value) =>
-                          setDialogState(() => dialogActivity = value),
+                      onChanged: (String value) => setDialogState(
+                        () =>
+                            dialogActivity = _activitySheetValue(activities, value),
+                      ),
                     ),
                     const SizedBox(height: 10),
                     Align(
                       alignment: Alignment.centerLeft,
                       child: Text(
-                        'Report date',
+                        'From',
                         style: Theme.of(context).textTheme.labelLarge?.copyWith(
                           fontWeight: FontWeight.w700,
                         ),
@@ -400,9 +491,9 @@ class _DailyProgressTabState extends ConsumerState<DailyProgressTab> {
                     SizedBox(
                       width: double.infinity,
                       child: OutlinedButton.icon(
-                        onPressed: pickDialogDate,
+                        onPressed: pickDialogFromDate,
                         icon: const Icon(Icons.calendar_today_rounded, size: 16),
-                        label: Text(dialogDateLabel),
+                        label: Text(dialogFromLabel),
                         style: OutlinedButton.styleFrom(
                           alignment: Alignment.centerLeft,
                           visualDensity: VisualDensity.compact,
@@ -413,23 +504,57 @@ class _DailyProgressTabState extends ConsumerState<DailyProgressTab> {
                         ),
                       ),
                     ),
+                    const SizedBox(height: 10),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        'To (report date)',
+                        style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: pickDialogToDate,
+                        icon: const Icon(Icons.calendar_today_rounded, size: 16),
+                        label: Text(dialogToLabel),
+                        style: OutlinedButton.styleFrom(
+                          alignment: Alignment.centerLeft,
+                          visualDensity: VisualDensity.compact,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 10,
+                          ),
+                        ),
+                      ),
+                    ),
+                    if (invalidRange) ...<Widget>[
+                      const SizedBox(height: 8),
+                      Text(
+                        'From date must be on or before To date.',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).colorScheme.error,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
                   ],
                 ),
-              ),
               actions: <Widget>[
                 TextButton(
                   onPressed: clearDialogFilters,
                   child: const Text('Clear'),
                 ),
-                TextButton(
-                  onPressed: () => Navigator.of(dialogContext).pop(),
-                  child: const Text('Cancel'),
-                ),
                 FilledButton(
-                  onPressed: () {
-                    shouldApply = true;
-                    Navigator.of(dialogContext).pop();
-                  },
+                  onPressed: invalidRange
+                      ? null
+                      : () {
+                          shouldApply = true;
+                          Navigator.of(dialogContext).pop();
+                        },
                   child: const Text('Apply'),
                 ),
               ],
@@ -443,10 +568,12 @@ class _DailyProgressTabState extends ConsumerState<DailyProgressTab> {
       return;
     }
     setState(() {
-      _sectionFilter = dialogSection;
-      _activityFilter = dialogActivity;
-      _selectedDate = dialogDate;
+      _sectionFilter = _sectionSheetValue(sections, dialogSection);
+      _activityFilter = _activitySheetValue(activities, dialogActivity);
+      _fromDate = dialogFromDate;
+      _toDate = dialogToDate;
       _currentPage = 0;
+      _expandedActivities.clear();
       _expandedGroups.clear();
     });
   }
@@ -462,7 +589,7 @@ class _DailyProgressTabState extends ConsumerState<DailyProgressTab> {
       showDragHandle: true,
       builder: (BuildContext sheetContext) {
         return Padding(
-          padding: const EdgeInsets.fromLTRB(12, 0, 12, 16),
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
@@ -504,7 +631,10 @@ class _DailyProgressTabState extends ConsumerState<DailyProgressTab> {
     );
   }
 
-  Widget _tableArea(BuildContext context, List<DailyProgressGroup> groups) {
+  Widget _tableArea(
+    BuildContext context,
+    List<DailyProgressActivityGroup> activityGroups,
+  ) {
     final double tableWidth = math.max(
       _SummaryColumnLayout.totalWidth,
       _DetailColumnLayout.totalWidth + 38,
@@ -534,7 +664,9 @@ class _DailyProgressTabState extends ConsumerState<DailyProgressTab> {
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
                 _summaryHeader(context),
-                for (int index = 0; index < groups.length; index++) ...<Widget>[
+                for (int index = 0;
+                    index < activityGroups.length;
+                    index++) ...<Widget>[
                   if (index > 0)
                     Divider(
                       height: 1,
@@ -546,15 +678,32 @@ class _DailyProgressTabState extends ConsumerState<DailyProgressTab> {
                     ),
                   Builder(
                     builder: (BuildContext context) {
-                      final DailyProgressGroup group = groups[index];
-                      final bool expanded =
-                          _expandedGroups.contains(group.groupKey);
+                      final DailyProgressActivityGroup activity =
+                          activityGroups[index];
+                      final bool activityExpanded =
+                          _expandedActivities.contains(activity.activityKey);
                       return Column(
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: <Widget>[
-                          _summaryRow(context, group, expanded: expanded),
-                          if (expanded) _detailBlock(context, group),
+                          _activitySummaryRow(
+                            context,
+                            activity,
+                            expanded: activityExpanded,
+                          ),
+                          if (activityExpanded)
+                            for (final DailyProgressGroup section
+                                in activity.sections) ...<Widget>[
+                              _sectionSummaryRow(
+                                context,
+                                section,
+                                expanded: _expandedGroups.contains(
+                                  section.groupKey,
+                                ),
+                              ),
+                              if (_expandedGroups.contains(section.groupKey))
+                                _detailBlock(context, section),
+                            ],
                         ],
                       );
                     },
@@ -591,7 +740,7 @@ class _DailyProgressTabState extends ConsumerState<DailyProgressTab> {
           _headerCell('BALANCE (CUM)', _SummaryColumnLayout.balance, alignRight: true),
           _headerCell('ASKING RATE', _SummaryColumnLayout.askingRate, alignRight: true),
           _headerCell(
-            'PROGRESS ON DATE (CUM)',
+            'PROGRESS ON DATE',
             _SummaryColumnLayout.progressOnDate,
             alignRight: true,
           ),
@@ -627,20 +776,96 @@ class _DailyProgressTabState extends ConsumerState<DailyProgressTab> {
     );
   }
 
-  Widget _summaryRow(
+  Widget _activitySummaryRow(
+    BuildContext context,
+    DailyProgressActivityGroup activity, {
+    required bool expanded,
+  }) {
+    return _summaryMetricsRow(
+      context,
+      expanded: expanded,
+      sectionLabel: '—',
+      activityLabel: activity.activity,
+      unit: activity.unit,
+      structureCount: activity.structureCount,
+      scope: activity.scope,
+      completedQty: activity.completedQty,
+      balance: activity.balance,
+      askingRatePerDay: activity.askingRatePerDay,
+      progressOnDate: activity.progressOnDate,
+      tdc: activity.tdc,
+      onToggleExpand: () => setState(() {
+        if (expanded) {
+          _expandedActivities.remove(activity.activityKey);
+          for (final DailyProgressGroup section in activity.sections) {
+            _expandedGroups.remove(section.groupKey);
+          }
+        } else {
+          _expandedActivities.add(activity.activityKey);
+        }
+      }),
+      surfaceTint: 0.28,
+    );
+  }
+
+  Widget _sectionSummaryRow(
     BuildContext context,
     DailyProgressGroup group, {
     required bool expanded,
+  }) {
+    return _summaryMetricsRow(
+      context,
+      expanded: expanded,
+      sectionLabel: group.section,
+      activityLabel: '—',
+      unit: group.unit,
+      structureCount: group.structureCount,
+      scope: group.scope,
+      completedQty: group.completedQty,
+      balance: group.balance,
+      askingRatePerDay: group.askingRatePerDay,
+      progressOnDate: group.progressOnDate,
+      tdc: group.tdc,
+      indentSection: true,
+      onToggleExpand: () => setState(() {
+        if (expanded) {
+          _expandedGroups.remove(group.groupKey);
+        } else {
+          _expandedGroups.add(group.groupKey);
+        }
+      }),
+      surfaceTint: 0.16,
+    );
+  }
+
+  Widget _summaryMetricsRow(
+    BuildContext context, {
+    required bool expanded,
+    required String sectionLabel,
+    required String activityLabel,
+    required String unit,
+    required int structureCount,
+    required double scope,
+    required double completedQty,
+    required double balance,
+    required double? askingRatePerDay,
+    required double progressOnDate,
+    required String tdc,
+    required VoidCallback onToggleExpand,
+    double surfaceTint = 0.28,
+    bool indentSection = false,
   }) {
     final ColorScheme cs = Theme.of(context).colorScheme;
     return Material(
       color: expanded
           ? cs.primaryContainer.withValues(alpha: 0.18)
-          : cs.surfaceContainerHighest.withValues(alpha: 0.28),
+          : cs.surfaceContainerHighest.withValues(alpha: surfaceTint),
       child: Padding(
-        padding: const EdgeInsets.symmetric(
-          vertical: 10,
-          horizontal: _SummaryColumnLayout.horizontalPadding / 2,
+        padding: EdgeInsets.only(
+          left: indentSection ? 18 : 0,
+          top: 10,
+          bottom: 10,
+          right: _SummaryColumnLayout.horizontalPadding / 2,
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
@@ -657,18 +882,20 @@ class _DailyProgressTabState extends ConsumerState<DailyProgressTab> {
                       : Icons.keyboard_arrow_right_rounded,
                   color: cs.primary,
                 ),
-                onPressed: () => setState(() {
-                  if (expanded) {
-                    _expandedGroups.remove(group.groupKey);
-                  } else {
-                    _expandedGroups.add(group.groupKey);
-                  }
-                }),
+                onPressed: onToggleExpand,
               ),
             ),
-            _textCell(group.section, width: _SummaryColumnLayout.section, weight: FontWeight.w700),
-            _textCell(group.activity, width: _SummaryColumnLayout.activity, weight: FontWeight.w700),
-            _textCell(group.unit, width: _SummaryColumnLayout.unit),
+            _textCell(
+              sectionLabel,
+              width: _SummaryColumnLayout.section,
+              weight: indentSection ? FontWeight.w600 : FontWeight.w700,
+            ),
+            _textCell(
+              activityLabel,
+              width: _SummaryColumnLayout.activity,
+              weight: indentSection ? FontWeight.w600 : FontWeight.w700,
+            ),
+            _textCell(unit, width: _SummaryColumnLayout.unit),
             SizedBox(
               width: _SummaryColumnLayout.structures,
               child: Align(
@@ -681,7 +908,7 @@ class _DailyProgressTabState extends ConsumerState<DailyProgressTab> {
                     border: Border.all(color: cs.primary.withValues(alpha: 0.25)),
                   ),
                   child: Text(
-                    '${group.structureCount} Structures',
+                    '$structureCount Structures',
                     style: TextStyle(
                       color: cs.primary,
                       fontWeight: FontWeight.w700,
@@ -692,45 +919,39 @@ class _DailyProgressTabState extends ConsumerState<DailyProgressTab> {
               ),
             ),
             _textCell(
-              _formatQty(group.scope),
+              _formatQty(scope),
               width: _SummaryColumnLayout.scope,
               align: TextAlign.right,
             ),
             _metricCell(
-              _formatQty(group.completedQty),
+              _formatQty(completedQty),
               width: _SummaryColumnLayout.completed,
               background: _metricBackground(context, Colors.green),
               foreground: _metricForeground(context, Colors.green.shade800),
             ),
             _metricCell(
-              _formatQty(group.balance),
+              _formatQty(balance),
               width: _SummaryColumnLayout.balance,
-              background: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.55),
-              foreground: Theme.of(context).colorScheme.primary,
+              background: cs.primaryContainer.withValues(alpha: 0.55),
+              foreground: cs.primary,
             ),
             _textCell(
-              '—',
+              _formatAskingRate(askingRatePerDay),
               width: _SummaryColumnLayout.askingRate,
               align: TextAlign.right,
             ),
             _metricCell(
-              _formatQty(group.progressOnDate),
+              _formatQty(progressOnDate),
               width: _SummaryColumnLayout.progressOnDate,
               background: _metricBackground(context, Colors.deepPurple),
               foreground: _metricForeground(context, Colors.deepPurple.shade700),
             ),
-            _textCell(group.tdc, width: _SummaryColumnLayout.tdc),
+            _textCell(tdc, width: _SummaryColumnLayout.tdc),
             SizedBox(
               width: _SummaryColumnLayout.action,
               child: Center(
                 child: FilledButton(
-                  onPressed: () => setState(() {
-                    if (expanded) {
-                      _expandedGroups.remove(group.groupKey);
-                    } else {
-                      _expandedGroups.add(group.groupKey);
-                    }
-                  }),
+                  onPressed: onToggleExpand,
                   style: FilledButton.styleFrom(
                     minimumSize: const Size(58, 30),
                     padding: const EdgeInsets.symmetric(horizontal: 10),
@@ -970,26 +1191,52 @@ class _DailyProgressTabState extends ConsumerState<DailyProgressTab> {
     required int start,
     required int end,
     required int pageCount,
+    required int activityCount,
+    required int structureCount,
   }) {
-    return AppTablePaginationFooter(
-      total: total,
-      startIndex: start,
-      endIndex: end,
-      currentPage: _currentPage,
-      pageCount: pageCount,
-      pageSize: _pageSize,
-      pageSizeOptions: _pageSizeOptions,
-      onPageSizeChanged: (int value) => setState(() {
-        _pageSize = value;
-        _currentPage = 0;
-      }),
-      onPrevious: _currentPage > 0 ? () => setState(() => _currentPage--) : null,
-      onNext: end < total ? () => setState(() => _currentPage++) : null,
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        if (activityCount > 0)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 6, 12, 0),
+            child: Text(
+              'Showing $activityCount ${activityCount == 1 ? 'activity' : 'activities'}'
+              ' · $structureCount ${structureCount == 1 ? 'structure' : 'structures'}',
+              style: AppTablePaginationStyles.metaTextStyle(context),
+              textAlign: TextAlign.center,
+            ),
+          ),
+        AppTablePaginationFooter(
+          total: total,
+          startIndex: start,
+          endIndex: end,
+          currentPage: _currentPage,
+          pageCount: pageCount,
+          pageSize: _pageSize,
+          pageSizeOptions: _pageSizeOptions,
+          onPageSizeChanged: (int value) => setState(() {
+            _pageSize = value;
+            _currentPage = 0;
+          }),
+          onPrevious:
+              _currentPage > 0 ? () => setState(() => _currentPage--) : null,
+          onNext: end < total ? () => setState(() => _currentPage++) : null,
+        ),
+      ],
     );
   }
 
   String _formatQty(double value) {
     return NumberFormat('#,##0.00', 'en_IN').format(value);
+  }
+
+  String _formatAskingRate(double? value) {
+    if (value == null) {
+      return '—';
+    }
+    return _formatQty(value);
   }
 
   Color _metricBackground(BuildContext context, MaterialColor color) {
@@ -1005,10 +1252,7 @@ class _DailyProgressTabState extends ConsumerState<DailyProgressTab> {
   }
 
   String _exportFileStem() {
-    final String projectPart = widget.projectId.trim().isEmpty
-        ? 'project'
-        : widget.projectId.trim();
-    return 'daily_progress_${projectPart}_$_apiDate';
+    return 'Daily_Progress_$_apiDate';
   }
 
   Future<void> _confirmExportExcel(List<DailyProgressGroup> groups) async {
@@ -1078,7 +1322,7 @@ class _DailyProgressTabState extends ConsumerState<DailyProgressTab> {
       for (final DailyProgressGroup group in groups) {
         summarySheet.appendRow(<CellValue>[
           TextCellValue(widget.projectName),
-          TextCellValue(_displayDate),
+          TextCellValue(_displayReportDate),
           TextCellValue(group.section),
           TextCellValue(group.activity),
           TextCellValue(group.unit),
@@ -1086,7 +1330,11 @@ class _DailyProgressTabState extends ConsumerState<DailyProgressTab> {
           TextCellValue(_formatQty(group.scope)),
           TextCellValue(_formatQty(group.completedQty)),
           TextCellValue(_formatQty(group.balance)),
-          TextCellValue(_exportDash),
+          TextCellValue(
+            group.askingRatePerDay == null
+                ? _exportDash
+                : _formatQty(group.askingRatePerDay!),
+          ),
           TextCellValue(_formatQty(group.progressOnDate)),
           TextCellValue(group.tdc),
         ]);
@@ -1100,7 +1348,7 @@ class _DailyProgressTabState extends ConsumerState<DailyProgressTab> {
         detailsSheet.appendRow(<CellValue>[
           TextCellValue('GROUP'),
           TextCellValue(widget.projectName),
-          TextCellValue(_displayDate),
+          TextCellValue(_displayReportDate),
           TextCellValue(group.section),
           TextCellValue(group.activity),
           TextCellValue('${group.structureCount} structures'),
@@ -1238,7 +1486,9 @@ class _DailyProgressTabState extends ConsumerState<DailyProgressTab> {
               _pdfSafe(_formatQty(group.scope)),
               _pdfSafe(_formatQty(group.completedQty)),
               _pdfSafe(_formatQty(group.balance)),
-              _exportDash,
+              group.askingRatePerDay == null
+                  ? _exportDash
+                  : _pdfSafe(_formatQty(group.askingRatePerDay!)),
               _pdfSafe(_formatQty(group.progressOnDate)),
               _pdfSafe(group.tdc),
             ],
@@ -1262,7 +1512,9 @@ class _DailyProgressTabState extends ConsumerState<DailyProgressTab> {
               pw.Text(
                 'Project: ${_pdfSafe(widget.projectName)} | '
                 'Project ID: ${_pdfSafe(widget.projectId)} | '
-                'Report date: ${_pdfSafe(_displayDate)}',
+                'Report date: ${_pdfSafe(_displayReportDate)}'
+                '  ·  From: ${_pdfSafe(_displayFromDate)}'
+                '  ·  To: ${_pdfSafe(_displayToDate)}',
                 style: const pw.TextStyle(fontSize: 10),
               ),
               pw.SizedBox(height: 12),
