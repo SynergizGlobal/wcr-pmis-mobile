@@ -13,8 +13,14 @@ class RfiLogState with _$RfiLogState {
     @Default('') String searchQuery,
     @Default('') String projectFilter,
     @Default('') String contractFilter,
+    @Default('') String structureTypeFilter,
+    @Default('') String structureFilter,
+    @Default('') String statusFilter,
     @Default([]) List<FilterOption> availableProjects,
     @Default([]) List<FilterOption> availableContracts,
+    @Default([]) List<String> availableStructureTypes,
+    @Default([]) List<String> availableStructures,
+    @Default([]) List<String> availableStatuses,
     @Default(RfiLogDashboardFilter.none)
     RfiLogDashboardFilter dashboardFilter,
     @Default(10) int entriesPerPage,
@@ -43,4 +49,16 @@ class RfiLogState with _$RfiLogState {
 
   bool get filtersFromDataset =>
       dashboardFilter != RfiLogDashboardFilter.none;
+
+  int get activeServerFilterCount {
+    var count = 0;
+    if (projectFilter.trim().isNotEmpty) count++;
+    if (contractFilter.trim().isNotEmpty) count++;
+    if (structureTypeFilter.trim().isNotEmpty) count++;
+    if (structureFilter.trim().isNotEmpty) count++;
+    if (statusFilter.trim().isNotEmpty) count++;
+    return count;
+  }
+
+  bool get hasActiveServerFilters => activeServerFilterCount > 0;
 }

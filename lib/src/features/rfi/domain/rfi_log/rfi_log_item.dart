@@ -10,6 +10,7 @@ class RfiLogItem with _$RfiLogItem {
     required String rfiId,
     required String dateOfSubmission,
     required String structure,
+    String? structureType,
     required String rfiDescription,
     required String rfiRequestedBy,
     required String department,

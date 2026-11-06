@@ -25,6 +25,7 @@ mixin _$RfiLogItem {
   String get rfiId => throw _privateConstructorUsedError;
   String get dateOfSubmission => throw _privateConstructorUsedError;
   String get structure => throw _privateConstructorUsedError;
+  String? get structureType => throw _privateConstructorUsedError;
   String get rfiDescription => throw _privateConstructorUsedError;
   String get rfiRequestedBy => throw _privateConstructorUsedError;
   String get department => throw _privateConstructorUsedError;
@@ -68,6 +69,7 @@ abstract class $RfiLogItemCopyWith<$Res> {
     String rfiId,
     String dateOfSubmission,
     String structure,
+    String? structureType,
     String rfiDescription,
     String rfiRequestedBy,
     String department,
@@ -110,6 +112,7 @@ class _$RfiLogItemCopyWithImpl<$Res, $Val extends RfiLogItem>
     Object? rfiId = null,
     Object? dateOfSubmission = null,
     Object? structure = null,
+    Object? structureType = freezed,
     Object? rfiDescription = null,
     Object? rfiRequestedBy = null,
     Object? department = null,
@@ -149,6 +152,10 @@ class _$RfiLogItemCopyWithImpl<$Res, $Val extends RfiLogItem>
                 ? _value.structure
                 : structure // ignore: cast_nullable_to_non_nullable
                       as String,
+            structureType: freezed == structureType
+                ? _value.structureType
+                : structureType // ignore: cast_nullable_to_non_nullable
+                      as String?,
             rfiDescription: null == rfiDescription
                 ? _value.rfiDescription
                 : rfiDescription // ignore: cast_nullable_to_non_nullable
@@ -249,6 +256,7 @@ abstract class _$$RfiLogItemImplCopyWith<$Res>
     String rfiId,
     String dateOfSubmission,
     String structure,
+    String? structureType,
     String rfiDescription,
     String rfiRequestedBy,
     String department,
@@ -290,6 +298,7 @@ class __$$RfiLogItemImplCopyWithImpl<$Res>
     Object? rfiId = null,
     Object? dateOfSubmission = null,
     Object? structure = null,
+    Object? structureType = freezed,
     Object? rfiDescription = null,
     Object? rfiRequestedBy = null,
     Object? department = null,
@@ -329,6 +338,10 @@ class __$$RfiLogItemImplCopyWithImpl<$Res>
             ? _value.structure
             : structure // ignore: cast_nullable_to_non_nullable
                   as String,
+        structureType: freezed == structureType
+            ? _value.structureType
+            : structureType // ignore: cast_nullable_to_non_nullable
+                  as String?,
         rfiDescription: null == rfiDescription
             ? _value.rfiDescription
             : rfiDescription // ignore: cast_nullable_to_non_nullable
@@ -422,6 +435,7 @@ class _$RfiLogItemImpl implements _RfiLogItem {
     required this.rfiId,
     required this.dateOfSubmission,
     required this.structure,
+    this.structureType,
     required this.rfiDescription,
     required this.rfiRequestedBy,
     required this.department,
@@ -455,6 +469,8 @@ class _$RfiLogItemImpl implements _RfiLogItem {
   final String dateOfSubmission;
   @override
   final String structure;
+  @override
+  final String? structureType;
   @override
   final String rfiDescription;
   @override
@@ -498,7 +514,7 @@ class _$RfiLogItemImpl implements _RfiLogItem {
 
   @override
   String toString() {
-    return 'RfiLogItem(id: $id, rfiId: $rfiId, dateOfSubmission: $dateOfSubmission, structure: $structure, rfiDescription: $rfiDescription, rfiRequestedBy: $rfiRequestedBy, department: $department, person: $person, dateRaised: $dateRaised, dateResponded: $dateResponded, dateRespondedContractor: $dateRespondedContractor, dateRespondedEngineer: $dateRespondedEngineer, enggApproval: $enggApproval, status: $status, notes: $notes, validationStatus: $validationStatus, project: $project, projectId: $projectId, work: $work, contract: $contract, contractId: $contractId, nameOfRepresentative: $nameOfRepresentative, txnId: $txnId, estatus: $estatus)';
+    return 'RfiLogItem(id: $id, rfiId: $rfiId, dateOfSubmission: $dateOfSubmission, structure: $structure, structureType: $structureType, rfiDescription: $rfiDescription, rfiRequestedBy: $rfiRequestedBy, department: $department, person: $person, dateRaised: $dateRaised, dateResponded: $dateResponded, dateRespondedContractor: $dateRespondedContractor, dateRespondedEngineer: $dateRespondedEngineer, enggApproval: $enggApproval, status: $status, notes: $notes, validationStatus: $validationStatus, project: $project, projectId: $projectId, work: $work, contract: $contract, contractId: $contractId, nameOfRepresentative: $nameOfRepresentative, txnId: $txnId, estatus: $estatus)';
   }
 
   @override
@@ -512,6 +528,8 @@ class _$RfiLogItemImpl implements _RfiLogItem {
                 other.dateOfSubmission == dateOfSubmission) &&
             (identical(other.structure, structure) ||
                 other.structure == structure) &&
+            (identical(other.structureType, structureType) ||
+                other.structureType == structureType) &&
             (identical(other.rfiDescription, rfiDescription) ||
                 other.rfiDescription == rfiDescription) &&
             (identical(other.rfiRequestedBy, rfiRequestedBy) ||
@@ -558,6 +576,7 @@ class _$RfiLogItemImpl implements _RfiLogItem {
     rfiId,
     dateOfSubmission,
     structure,
+    structureType,
     rfiDescription,
     rfiRequestedBy,
     department,
@@ -600,6 +619,7 @@ abstract class _RfiLogItem implements RfiLogItem {
     required final String rfiId,
     required final String dateOfSubmission,
     required final String structure,
+    final String? structureType,
     required final String rfiDescription,
     required final String rfiRequestedBy,
     required final String department,
@@ -633,6 +653,8 @@ abstract class _RfiLogItem implements RfiLogItem {
   String get dateOfSubmission;
   @override
   String get structure;
+  @override
+  String? get structureType;
   @override
   String get rfiDescription;
   @override

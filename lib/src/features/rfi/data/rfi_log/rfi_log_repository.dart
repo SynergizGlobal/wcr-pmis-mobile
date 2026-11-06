@@ -3,6 +3,8 @@ import '../../core/providers/dio_provider.dart';
 import '../../core/utils/rfi_file_paths.dart';
 import '../../core/utils/rfi_log_pdf_paths.dart';
 import '../../domain/common/filter_option.dart';
+import '../../domain/rfi_log/rfi_log_filter_body.dart';
+import '../../domain/rfi_log/rfi_log_filter_options.dart';
 import '../../domain/rfi_log/rfi_log_item.dart';
 import '../../domain/rfi_log/rfi_report_details.dart';
 import 'rfi_log_api.dart';
@@ -53,14 +55,16 @@ class RfiLogRepository {
           '-';
 
       final String? respondedContractor = _cleanText(
-        json['dateRespondedContractor'] ??
+        json['conRespondedDate'] ??
+            json['dateRespondedContractor'] ??
             json['contractorSubmittedOn'] ??
             json['contractorDateResponded'] ??
             json['dateRespondedCon'] ??
             json['conDateResponded'],
       );
       final String? respondedEngineer = _cleanText(
-        json['dateRespondedEngineer'] ??
+        json['enggRespondedDate'] ??
+            json['dateRespondedEngineer'] ??
             json['engineerSubmittedOn'] ??
             json['engineerDateResponded'] ??
             json['dateRespondedEng'] ??
@@ -78,16 +82,16 @@ class RfiLogRepository {
         structure: _cleanText(json['structure']) ??
             _cleanText(json['element']) ??
             '-',
-        // Web description cells are usually activity labels.
-        rfiDescription: _cleanText(json['activity']) ??
-            _cleanText(json['rfiDescription']) ??
+        structureType: _cleanText(json['structureType']),
+        rfiDescription: _cleanText(json['rfiDescription']) ??
+            _cleanText(json['activity']) ??
             '-',
         rfiRequestedBy: _cleanText(json['createdBy']) ??
             _cleanText(json['rfiRequestedBy']) ??
             '-',
         department: _cleanText(json['department']) ?? '-',
-        person: _cleanText(json['assignedPersonClient']) ??
-            _cleanText(json['person']) ??
+        person: _cleanText(json['person']) ??
+            _cleanText(json['assignedPersonClient']) ??
             '-',
         dateRaised: raisedDate,
         dateResponded: respondedEngineer ?? respondedContractor,
@@ -212,26 +216,54 @@ class RfiLogRepository {
     }
   }
 
-  Future<List<FilterOption>> getFilterProjects({
+  Future<RfiLogFilterOptions> getFilterOptions({
     String project = '',
     String contract = '',
+    String structureType = '',
+    String structure = '',
+    String status = '',
+    String searchText = '',
+    String rfiId = '',
   }) async {
-    final raw = await api.filterListProjects(
+    final Map<String, dynamic> body = rfiLogFilterRequestBody(
       project: project,
       contract: contract,
+      structureType: structureType,
+      structure: structure,
+      status: status,
+      searchText: searchText,
+      rfiId: rfiId,
     );
-    return FilterOption.parseList(raw, isProject: true);
+
+    final results = await Future.wait(<Future<List<dynamic>>>[
+      api.filterListProjects(body),
+      api.filterListContracts(body),
+      api.filterListStructureTypes(body),
+      api.filterListStructures(body),
+      api.filterListStatuses(body),
+    ]);
+
+    return RfiLogFilterOptions(
+      projects: FilterOption.parseList(results[0], isProject: true),
+      contracts: FilterOption.parseList(results[1], isProject: false),
+      structureTypes: _parseStringList(results[2]),
+      structures: _parseStringList(results[3]),
+      statuses: _parseStringList(results[4]),
+    );
   }
 
-  Future<List<FilterOption>> getFilterContracts({
-    String project = '',
-    String contract = '',
-  }) async {
-    final raw = await api.filterListContracts(
-      project: project,
-      contract: contract,
+  static List<String> _parseStringList(List<dynamic> raw) {
+    final Set<String> seen = <String>{};
+    final List<String> values = <String>[];
+    for (final dynamic entry in raw) {
+      final String text = entry?.toString().trim() ?? '';
+      if (text.isEmpty || !seen.add(text)) continue;
+      values.add(text);
+    }
+    values.sort(
+      (String a, String b) => a.toLowerCase().compareTo(b.toLowerCase()),
     );
-    return FilterOption.parseList(raw, isProject: false);
+    return values;
   }
 
   Future<Map<String, dynamic>> getFilterList() async {

@@ -1,16 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../data/services/pdf_download_service.dart';
-import '../../providers/rfi_log/rfi_log_provider.dart';
+import 'package:wcr_pmis_mobile/src/core/widgets/app_filter_dialog.dart';
+import 'package:wcr_pmis_mobile/src/core/widgets/app_select_sheet_field.dart';
 import 'package:wcr_pmis_mobile/src/features/rfi/presentation/rfi_theme.dart';
+
+import '../../core/providers/dio_provider.dart';
+import '../../core/widgets/error_state_widget.dart';
+import '../../core/widgets/global_alert_dialog.dart';
+import '../../core/widgets/table_pagination_footer.dart';
+import '../../data/services/pdf_download_service.dart';
 import '../../domain/common/filter_option.dart';
 import '../../domain/rfi_log/rfi_log_dashboard_filter.dart';
+import '../../domain/rfi_log/rfi_log_filter_options.dart';
 import '../../domain/rfi_log/rfi_log_item.dart';
-import '../../core/widgets/app_dropdown.dart';
-import '../../core/widgets/error_state_widget.dart';
-import '../../core/widgets/table_pagination_footer.dart';
-import '../../core/widgets/global_alert_dialog.dart';
-import '../../core/providers/dio_provider.dart';
+import '../../providers/rfi_log/rfi_log_provider.dart';
+import '../../providers/rfi_log/rfi_log_state.dart';
 import 'widgets/rfi_preview_dialog.dart';
 
 class RfiLogScreen extends ConsumerStatefulWidget {
@@ -26,6 +30,12 @@ class RfiLogScreen extends ConsumerStatefulWidget {
 }
 
 class _RfiLogScreenState extends ConsumerState<RfiLogScreen> {
+  static const String _allProjects = 'All Projects';
+  static const String _allContracts = 'All Contracts';
+  static const String _allStructureTypes = 'Select structure type';
+  static const String _allStructures = 'Select structure';
+  static const String _allStatuses = 'Select status';
+
   @override
   void initState() {
     super.initState();
@@ -72,8 +82,7 @@ class _RfiLogScreenState extends ConsumerState<RfiLogScreen> {
                               onChanged: notifier.setSearchQuery,
                               style: Theme.of(context).textTheme.bodySmall,
                               decoration: InputDecoration(
-                                hintText:
-                                    'Search by RFI ID, structure, status, name...',
+                                hintText: 'Search RFI..',
                                 prefixIcon: Icon(
                                   Icons.search,
                                   color: scheme.onSurfaceVariant,
@@ -106,63 +115,56 @@ class _RfiLogScreenState extends ConsumerState<RfiLogScreen> {
 
                             const SizedBox(height: 16),
                             Divider(height: 1, color: scheme.outlineVariant),
-                            const SizedBox(height: 16),
-
+                            const SizedBox(height: 12),
                             Row(
-                              children: [
+                              children: <Widget>[
                                 Expanded(
-                                  child: AppDropdown<FilterOption>(
-                                    label: 'Project',
-                                    hint: 'All Projects',
-                                    value: _optionById(
-                                      state.availableProjects,
-                                      state.projectFilter,
+                                  child: OutlinedButton.icon(
+                                    onPressed: state.isLoading
+                                        ? null
+                                        : () => _openFilterDialog(),
+                                    icon: const Icon(
+                                      Icons.filter_alt_rounded,
+                                      size: 18,
                                     ),
-                                    items: state.availableProjects,
-                                    onChanged: (FilterOption? val) =>
-                                        notifier.setProjectFilter(val?.id),
-                                    itemLabel: (FilterOption v) => v.name,
+                                    label: Text(
+                                      state.activeServerFilterCount > 0
+                                          ? 'Filter (${state.activeServerFilterCount})'
+                                          : 'Filter',
+                                    ),
+                                    style: OutlinedButton.styleFrom(
+                                      visualDensity: VisualDensity.compact,
+                                      minimumSize: const Size(0, 40),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                        vertical: 10,
+                                      ),
+                                    ),
                                   ),
                                 ),
-                                const SizedBox(width: 10),
+                                const SizedBox(width: 8),
                                 Expanded(
-                                  child: AppDropdown<FilterOption>(
-                                    label: 'Contract',
-                                    hint: 'All Contracts',
-                                    value: _optionById(
-                                      state.availableContracts,
-                                      state.contractFilter,
+                                  child: OutlinedButton.icon(
+                                    onPressed: state.hasActiveServerFilters
+                                        ? notifier.clearFilters
+                                        : null,
+                                    icon: const Icon(
+                                      Icons.filter_alt_off_rounded,
+                                      size: 18,
                                     ),
-                                    items: state.availableContracts,
-                                    onChanged: (FilterOption? val) =>
-                                        notifier.setContractFilter(val?.id),
-                                    itemLabel: (FilterOption v) => v.name,
+                                    label: const Text('Clear Filters'),
+                                    style: OutlinedButton.styleFrom(
+                                      visualDensity: VisualDensity.compact,
+                                      minimumSize: const Size(0, 40),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                        vertical: 10,
+                                      ),
+                                      foregroundColor: const Color(0xFFD9534F),
+                                    ),
                                   ),
                                 ),
                               ],
-                            ),
-
-                            const SizedBox(height: 16),
-                            Divider(height: 1, color: Colors.grey.shade200),
-                            const SizedBox(height: 12),
-                            Align(
-                              alignment: Alignment.centerRight,
-                              child: TextButton.icon(
-                                onPressed: notifier.clearFilters,
-                                icon: const Icon(Icons.filter_alt_off, size: 16),
-                                label: const Text('Clear Filters',
-                                    style: TextStyle(fontSize: 12)),
-                                style: TextButton.styleFrom(
-                                  foregroundColor: const Color(0xFFD9534F),
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 12, vertical: 6),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                    side: const BorderSide(
-                                        color: Color(0xFFD9534F), width: 0.5),
-                                  ),
-                                ),
-                              ),
                             ),
                           ],
                         ),
@@ -285,7 +287,12 @@ class _RfiLogScreenState extends ConsumerState<RfiLogScreen> {
                                     cells: [
                                       DataCell(Text(_cell(item.rfiId))),
                                       DataCell(Text(_cell(item.dateRaised))),
-                                      DataCell(Text(_cell(item.structure))),
+                                      DataCell(
+                                        Tooltip(
+                                          message: _structureTooltip(item),
+                                          child: Text(_cell(item.structure)),
+                                        ),
+                                      ),
                                       DataCell(
                                           Text(_cell(item.rfiDescription))),
                                       DataCell(
@@ -445,5 +452,209 @@ class _RfiLogScreenState extends ConsumerState<RfiLogScreen> {
       if (option.id == id) return option;
     }
     return null;
+  }
+
+  String _structureTooltip(RfiLogItem item) {
+    final String type = (item.structureType ?? '').trim();
+    final String structure = item.structure.trim();
+    if (type.isEmpty) return structure;
+    if (structure.isEmpty || structure == '-') return type;
+    return '$type\n$structure';
+  }
+
+  String? _stringSheetValue(List<String> options, String current) {
+    final String normalized = current.trim();
+    if (normalized.isEmpty || !options.contains(normalized)) {
+      return null;
+    }
+    return normalized;
+  }
+
+  Future<void> _openFilterDialog() async {
+    final notifier = ref.read(rfiLogNotifierProvider.notifier);
+    final RfiLogState initial = ref.read(rfiLogNotifierProvider);
+
+    String project = initial.projectFilter;
+    String contract = initial.contractFilter;
+    String structureType = initial.structureTypeFilter;
+    String structure = initial.structureFilter;
+    String status = initial.statusFilter;
+
+    RfiLogFilterOptions options = await notifier.loadFilterOptions(
+      project: project,
+      contract: contract,
+      structureType: structureType,
+      structure: structure,
+      status: status,
+    );
+
+    bool loadingOptions = false;
+    bool shouldApply = false;
+
+    if (!mounted) return;
+
+    await showDialog<void>(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setDialogState) {
+            Future<void> reloadOptions() async {
+              setDialogState(() => loadingOptions = true);
+              final RfiLogFilterOptions next =
+                  await notifier.loadFilterOptions(
+                project: project,
+                contract: contract,
+                structureType: structureType,
+                structure: structure,
+                status: status,
+              );
+              if (!context.mounted) return;
+              setDialogState(() {
+                loadingOptions = false;
+                options = next;
+                project = _optionById(next.projects, project)?.id ?? '';
+                contract = _optionById(next.contracts, contract)?.id ?? '';
+                structureType =
+                    _stringSheetValue(next.structureTypes, structureType) ??
+                        '';
+                structure =
+                    _stringSheetValue(next.structures, structure) ?? '';
+                status = _stringSheetValue(next.statuses, status) ?? '';
+              });
+            }
+
+            final bool structureEnabled = structureType.trim().isNotEmpty;
+
+            return AppFilterDialog(
+              title: 'Filter RFI Log',
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: <Widget>[
+                  if (loadingOptions)
+                    const Padding(
+                      padding: EdgeInsets.only(bottom: 12),
+                      child: LinearProgressIndicator(),
+                    ),
+                  AppSelectSheetField<FilterOption>(
+                    label: 'Project',
+                    title: 'Select Project',
+                    compact: true,
+                    placeholderText: _allProjects,
+                    items: options.projects,
+                    value: _optionById(options.projects, project),
+                    itemLabelBuilder: (FilterOption value) => value.name,
+                    onChanged: (FilterOption value) {
+                      project = value.id;
+                      contract = '';
+                      structureType = '';
+                      structure = '';
+                      reloadOptions();
+                    },
+                  ),
+                  const SizedBox(height: 10),
+                  AppSelectSheetField<FilterOption>(
+                    label: 'Contract',
+                    title: 'Select Contract',
+                    compact: true,
+                    placeholderText: _allContracts,
+                    items: options.contracts,
+                    value: _optionById(options.contracts, contract),
+                    itemLabelBuilder: (FilterOption value) => value.name,
+                    onChanged: (FilterOption value) {
+                      contract = value.id;
+                      structureType = '';
+                      structure = '';
+                      reloadOptions();
+                    },
+                  ),
+                  const SizedBox(height: 10),
+                  AppSelectSheetField<String>(
+                    label: 'Structure Type',
+                    title: 'Select Structure Type',
+                    compact: true,
+                    placeholderText: _allStructureTypes,
+                    items: options.structureTypes,
+                    value: _stringSheetValue(
+                      options.structureTypes,
+                      structureType,
+                    ),
+                    itemLabelBuilder: (String value) => value,
+                    onChanged: (String value) {
+                      structureType = value;
+                      structure = '';
+                      reloadOptions();
+                    },
+                  ),
+                  const SizedBox(height: 10),
+                  AppSelectSheetField<String>(
+                    label: 'Structure',
+                    title: 'Select Structure',
+                    compact: true,
+                    enabled: structureEnabled,
+                    placeholderText: _allStructures,
+                    items: options.structures,
+                    value: _stringSheetValue(options.structures, structure),
+                    itemLabelBuilder: (String value) => value,
+                    onChanged: (String value) {
+                      structure = value;
+                      reloadOptions();
+                    },
+                  ),
+                  const SizedBox(height: 10),
+                  AppSelectSheetField<String>(
+                    label: 'Status',
+                    title: 'Select Status',
+                    compact: true,
+                    placeholderText: _allStatuses,
+                    items: options.statuses,
+                    value: _stringSheetValue(options.statuses, status),
+                    itemLabelBuilder: (String value) => value,
+                    onChanged: (String value) {
+                      status = value;
+                      reloadOptions();
+                    },
+                  ),
+                ],
+              ),
+              actions: <Widget>[
+                TextButton(
+                  onPressed: loadingOptions
+                      ? null
+                      : () {
+                          project = '';
+                          contract = '';
+                          structureType = '';
+                          structure = '';
+                          status = '';
+                          reloadOptions();
+                        },
+                  child: const Text('Clear'),
+                ),
+                FilledButton(
+                  onPressed: loadingOptions
+                      ? null
+                      : () {
+                          shouldApply = true;
+                          Navigator.of(context).pop();
+                        },
+                  child: const Text('Apply'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    if (shouldApply) {
+      await notifier.applyServerFilters(
+        project: project,
+        contract: contract,
+        structureType: structureType,
+        structure: structure,
+        status: status,
+      );
+    }
   }
 }

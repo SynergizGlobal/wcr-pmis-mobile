@@ -3,6 +3,8 @@ import 'package:wcr_pmis_mobile/src/core/network/user_friendly_error_message.dar
 import '../../data/rfi_log/rfi_log_repository.dart';
 import '../../domain/common/filter_option.dart';
 import '../../domain/rfi_log/rfi_log_dashboard_filter.dart';
+import '../../domain/rfi_log/rfi_log_filter_body.dart';
+import '../../domain/rfi_log/rfi_log_filter_options.dart';
 import '../../domain/rfi_log/rfi_log_item.dart';
 import 'rfi_log_state.dart';
 
@@ -28,15 +30,53 @@ class RfiLogNotifier extends _$RfiLogNotifier {
     return const RfiLogState();
   }
 
+  Map<String, dynamic> _filterBody({
+    String? project,
+    String? contract,
+    String? structureType,
+    String? structure,
+    String? status,
+    String? searchText,
+  }) {
+    return rfiLogFilterRequestBody(
+      project: project ?? state.projectFilter,
+      contract: contract ?? state.contractFilter,
+      structureType: structureType ?? state.structureTypeFilter,
+      structure: structure ?? state.structureFilter,
+      status: status ?? state.statusFilter,
+      searchText: searchText ?? '',
+    );
+  }
+
   Future<void> applyDashboardFilter(RfiLogDashboardFilter filter) async {
     state = state.copyWith(
       dashboardFilter: filter,
       projectFilter: '',
       contractFilter: '',
+      structureTypeFilter: '',
+      structureFilter: '',
+      statusFilter: '',
       searchQuery: '',
       currentPage: 1,
     );
     await fetchRfiLogs();
+  }
+
+  Future<RfiLogFilterOptions> loadFilterOptions({
+    String project = '',
+    String contract = '',
+    String structureType = '',
+    String structure = '',
+    String status = '',
+  }) async {
+    final logRepo = ref.read(rfiLogRepositoryProvider);
+    return logRepo.getFilterOptions(
+      project: project,
+      contract: contract,
+      structureType: structureType,
+      structure: structure,
+      status: status,
+    );
   }
 
   Future<void> fetchFilterLists({
@@ -46,14 +86,16 @@ class RfiLogNotifier extends _$RfiLogNotifier {
     state = state.copyWith(isLoadingFilters: true);
     try {
       final logRepo = ref.read(rfiLogRepositoryProvider);
-      final List<FilterOption> projects = await logRepo.getFilterProjects(
+      final RfiLogFilterOptions options = await logRepo.getFilterOptions(
         project: state.projectFilter,
         contract: state.contractFilter,
+        structureType: state.structureTypeFilter,
+        structure: state.structureFilter,
+        status: state.statusFilter,
       );
-      final List<FilterOption> contracts = await logRepo.getFilterContracts(
-        project: state.projectFilter,
-        contract: state.contractFilter,
-      );
+
+      List<FilterOption> projects = options.projects;
+      List<FilterOption> contracts = options.contracts;
 
       if (limitProjectIds != null || limitContractIds != null) {
         final List<FilterOption> fallbackProjects =
@@ -64,30 +106,30 @@ class RfiLogNotifier extends _$RfiLogNotifier {
             FilterOption.uniqueFromPairs(
           state.allItems.map((RfiLogItem e) => (e.contractId, e.contract)),
         );
-        state = state.copyWith(
-          isLoadingFilters: false,
-          availableProjects: limitProjectIds == null
-              ? projects
-              : FilterOption.intersectByIds(
-                  apiOptions: projects,
-                  allowedIds: limitProjectIds,
-                  fallback: fallbackProjects,
-                ),
-          availableContracts: limitContractIds == null
-              ? contracts
-              : FilterOption.intersectByIds(
-                  apiOptions: contracts,
-                  allowedIds: limitContractIds,
-                  fallback: fallbackContracts,
-                ),
-        );
-      } else {
-        state = state.copyWith(
-          isLoadingFilters: false,
-          availableProjects: projects,
-          availableContracts: contracts,
-        );
+        if (limitProjectIds != null) {
+          projects = FilterOption.intersectByIds(
+            apiOptions: projects,
+            allowedIds: limitProjectIds,
+            fallback: fallbackProjects,
+          );
+        }
+        if (limitContractIds != null) {
+          contracts = FilterOption.intersectByIds(
+            apiOptions: contracts,
+            allowedIds: limitContractIds,
+            fallback: fallbackContracts,
+          );
+        }
       }
+
+      state = state.copyWith(
+        isLoadingFilters: false,
+        availableProjects: projects,
+        availableContracts: contracts,
+        availableStructureTypes: options.structureTypes,
+        availableStructures: options.structures,
+        availableStatuses: options.statuses,
+      );
     } catch (_) {
       state = state.copyWith(isLoadingFilters: false);
     }
@@ -102,16 +144,13 @@ class RfiLogNotifier extends _$RfiLogNotifier {
     try {
       final repository = ref.read(rfiLogRepositoryProvider);
       final List<RfiLogItem> rawItems = await repository.getAllRfiLogDetails(
-        <String, dynamic>{
-          'project': '',
-          'contract': '',
-        },
+        _filterBody(),
       );
       final List<RfiLogItem> scoped = _applyDashboardStatusFilter(rawItems);
 
       state = state.copyWith(
         allItems: scoped,
-        filteredItems: _applyClientFilters(scoped),
+        filteredItems: _applySearch(scoped, state.searchQuery),
       );
 
       if (state.filtersFromDataset) {
@@ -152,130 +191,39 @@ class RfiLogNotifier extends _$RfiLogNotifier {
     state = state.copyWith(
       searchQuery: query,
       currentPage: 1,
-      filteredItems: _applyClientFilters(state.allItems, searchOverride: query),
+      filteredItems: _applySearch(state.allItems, query),
     );
   }
 
-  Future<void> setProjectFilter(String? projectId) async {
-    final String value = projectId ?? '';
+  Future<void> applyServerFilters({
+    required String project,
+    required String contract,
+    required String structureType,
+    required String structure,
+    required String status,
+  }) async {
     state = state.copyWith(
-      projectFilter: value,
-      contractFilter: '',
+      projectFilter: project,
+      contractFilter: contract,
+      structureTypeFilter: structureType,
+      structureFilter: structure,
+      statusFilter: status,
       currentPage: 1,
     );
-
-    if (state.filtersFromDataset) {
-      final List<RfiLogItem> base = value.isEmpty
-          ? state.allItems
-          : state.allItems
-              .where((RfiLogItem item) => rfiLogProjectFilterId(item) == value)
-              .toList();
-      state = state.copyWith(
-        filteredItems: _applyClientFilters(
-          state.allItems,
-          projectOverride: value,
-          contractOverride: '',
-        ),
-      );
-      await fetchFilterLists(
-        limitProjectIds: _idsInItems(state.allItems, isProject: true),
-        limitContractIds: _idsInItems(base, isProject: false),
-      );
-      return;
-    }
-
-    try {
-      final logRepo = ref.read(rfiLogRepositoryProvider);
-      final contracts = await logRepo.getFilterContracts(project: value);
-      final projects = await logRepo.getFilterProjects(contract: '');
-      state = state.copyWith(
-        availableProjects: projects,
-        availableContracts: contracts,
-        filteredItems: _applyClientFilters(state.allItems),
-      );
-    } catch (_) {
-      state = state.copyWith(
-        filteredItems: _applyClientFilters(state.allItems),
-      );
-    }
-  }
-
-  Future<void> setContractFilter(String? contractId) async {
-    final String value = contractId ?? '';
-    state = state.copyWith(
-      contractFilter: value,
-      currentPage: 1,
-    );
-
-    if (state.filtersFromDataset) {
-      state = state.copyWith(
-        filteredItems: _applyClientFilters(
-          state.allItems,
-          contractOverride: value,
-        ),
-      );
-      final List<RfiLogItem> forProjects = value.isEmpty
-          ? state.allItems
-          : state.allItems
-              .where(
-                (RfiLogItem item) => rfiLogContractFilterId(item) == value,
-              )
-              .toList();
-      final List<RfiLogItem> forContracts = state.projectFilter.isEmpty
-          ? state.allItems
-          : state.allItems
-              .where(
-                (RfiLogItem item) =>
-                    rfiLogProjectFilterId(item) == state.projectFilter,
-              )
-              .toList();
-      await fetchFilterLists(
-        limitProjectIds: _idsInItems(forProjects, isProject: true),
-        limitContractIds: _idsInItems(forContracts, isProject: false),
-      );
-      return;
-    }
-
-    try {
-      final logRepo = ref.read(rfiLogRepositoryProvider);
-      final projects = await logRepo.getFilterProjects(
-        project: state.projectFilter,
-        contract: value,
-      );
-      final contracts = await logRepo.getFilterContracts(
-        project: state.projectFilter,
-        contract: value,
-      );
-      state = state.copyWith(
-        availableProjects: projects,
-        availableContracts: contracts,
-        filteredItems: _applyClientFilters(state.allItems),
-      );
-    } catch (_) {
-      state = state.copyWith(
-        filteredItems: _applyClientFilters(state.allItems),
-      );
-    }
+    await fetchRfiLogs();
   }
 
   Future<void> clearFilters() async {
     state = state.copyWith(
       projectFilter: '',
       contractFilter: '',
+      structureTypeFilter: '',
+      structureFilter: '',
+      statusFilter: '',
       searchQuery: '',
       currentPage: 1,
-      filteredItems: _applySearch(state.allItems, ''),
     );
-
-    if (state.filtersFromDataset) {
-      await fetchFilterLists(
-        limitProjectIds: _idsInItems(state.allItems, isProject: true),
-        limitContractIds: _idsInItems(state.allItems, isProject: false),
-      );
-      return;
-    }
-
-    await fetchFilterLists();
+    await fetchRfiLogs();
   }
 
   List<RfiLogItem> _applyDashboardStatusFilter(List<RfiLogItem> items) {
@@ -324,31 +272,6 @@ class RfiLogNotifier extends _$RfiLogNotifier {
     return false;
   }
 
-  List<RfiLogItem> _applyClientFilters(
-    List<RfiLogItem> items, {
-    String? projectOverride,
-    String? contractOverride,
-    String? searchOverride,
-  }) {
-    final String project = projectOverride ?? state.projectFilter;
-    final String contract = contractOverride ?? state.contractFilter;
-    Iterable<RfiLogItem> filtered = items;
-    if (project.isNotEmpty) {
-      filtered = filtered.where(
-        (RfiLogItem item) => rfiLogProjectFilterId(item) == project,
-      );
-    }
-    if (contract.isNotEmpty) {
-      filtered = filtered.where(
-        (RfiLogItem item) => rfiLogContractFilterId(item) == contract,
-      );
-    }
-    return _applySearch(
-      filtered.toList(),
-      searchOverride ?? state.searchQuery,
-    );
-  }
-
   List<RfiLogItem> _applySearch(List<RfiLogItem> items, String query) {
     if (query.isEmpty) return items;
     final lowerQuery = query.toLowerCase();
@@ -356,6 +279,7 @@ class RfiLogNotifier extends _$RfiLogNotifier {
     return items.where((item) {
       return item.rfiId.toLowerCase().contains(lowerQuery) ||
           item.structure.toLowerCase().contains(lowerQuery) ||
+          (item.structureType?.toLowerCase().contains(lowerQuery) ?? false) ||
           item.rfiDescription.toLowerCase().contains(lowerQuery) ||
           item.rfiRequestedBy.toLowerCase().contains(lowerQuery) ||
           item.department.toLowerCase().contains(lowerQuery) ||

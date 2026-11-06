@@ -6,7 +6,7 @@ part of 'update_rfi_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$updateRfiFormHash() => r'b7d3bfe7bfa7b01d00513c1bc869059b612fb54f';
+String _$updateRfiFormHash() => r'c3a018aacdaeb1918502440c71d38d68131e738c';
 
 /// See also [UpdateRfiForm].
 @ProviderFor(UpdateRfiForm)
