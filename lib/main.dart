@@ -5,7 +5,7 @@ import 'package:wcr_pmis_mobile/src/core/config/environment.dart';
 import 'package:wcr_pmis_mobile/src/core/constants/legal_constants.dart';
 
 Future<void> main() async {
-  Environment.init(Env.qa);
+  Environment.init(Env.prod);
 
   await bootstrap(
     AppConfig(
