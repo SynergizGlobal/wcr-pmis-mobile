@@ -280,6 +280,7 @@ class _AddQualityInspectionFormPageState
     }
     return _hasRequiredSelections &&
         _locationCtrl.text.trim().isNotEmpty &&
+        _lotBatchCtrl.text.trim().isNotEmpty &&
         _hasRequiredParameters &&
         _hasRequiredFollowUp;
   }
@@ -388,6 +389,7 @@ class _AddQualityInspectionFormPageState
       _savedInspectionId = editId;
     }
     _locationCtrl.addListener(_onFormChanged);
+    _lotBatchCtrl.addListener(_onFormChanged);
     _correctiveActionCtrl.addListener(_onFormChanged);
     _correctiveActionTakenCtrl.addListener(_onFormChanged);
     _commentsCtrl.addListener(_onFormChanged);
@@ -399,6 +401,7 @@ class _AddQualityInspectionFormPageState
   @override
   void dispose() {
     _locationCtrl.removeListener(_onFormChanged);
+    _lotBatchCtrl.removeListener(_onFormChanged);
     _correctiveActionCtrl.removeListener(_onFormChanged);
     _correctiveActionTakenCtrl.removeListener(_onFormChanged);
     _commentsCtrl.removeListener(_onFormChanged);
@@ -1143,15 +1146,18 @@ class _AddQualityInspectionFormPageState
       if (finalAttachment.isNotEmpty) {
         _finalAttachmentName = finalAttachment.split('/').last;
       }
+      // Applied after parameter rows load: loading rows resets
+      // _isCorrectionRequired, which would drop the saved answer.
       final String correctionFlag =
           _str(data['is_correction_required']).toLowerCase();
+      bool? savedCorrectionRequired;
       if (correctionFlag == 'yes') {
-        _isCorrectionRequired = true;
+        savedCorrectionRequired = true;
       } else if (correctionFlag == 'no') {
-        _isCorrectionRequired = false;
+        savedCorrectionRequired = false;
       } else if (_correctiveActionCtrl.text.trim().isNotEmpty ||
           _targetDate != null) {
-        _isCorrectionRequired = true;
+        savedCorrectionRequired = true;
       }
 
       final String projectId = _str(data['project_id_fk']);
@@ -1160,13 +1166,18 @@ class _AddQualityInspectionFormPageState
         projectId,
         _str(data['project_name']),
       );
+      // Saved inspector wins over the project's default (logged-in user),
+      // matching the web form's "Inspection Created By".
+      final String savedInspectorFk = _str(data['inspected_by_fk']);
+      final String savedInspectorName = _str(data['inspected_by_name']);
       _applyInspectionByFromProject(_project);
-      _inspectedByFk = _str(data['inspected_by_fk']);
-      if (_inspectionByCtrl.text.isEmpty) {
-        _inspectionByCtrl.text = _str(data['inspected_by_name']);
-        if (_inspectionByCtrl.text.isEmpty) {
-          _inspectionByCtrl.text = _inspectedByFk;
-        }
+      if (savedInspectorFk.isNotEmpty) {
+        _inspectedByFk = savedInspectorFk;
+      }
+      if (savedInspectorName.isNotEmpty) {
+        _inspectionByCtrl.text = savedInspectorName;
+      } else if (_inspectionByCtrl.text.isEmpty) {
+        _inspectionByCtrl.text = _inspectedByFk;
       }
       final String loadedId = _str(data['inspection_id']);
       if (loadedId.isNotEmpty) {
@@ -1275,6 +1286,9 @@ class _AddQualityInspectionFormPageState
         await _loadTestParameters();
       }
 
+      if (savedCorrectionRequired != null) {
+        _isCorrectionRequired = savedCorrectionRequired;
+      }
       _syncCorrectionRequiredFromParameters();
       if (mounted) {
         setState(() {});
@@ -1629,6 +1643,9 @@ class _AddQualityInspectionFormPageState
     }
     if (_locationCtrl.text.trim().isEmpty) {
       return 'Please enter location.';
+    }
+    if (_lotBatchCtrl.text.trim().isEmpty) {
+      return 'Please enter lot/batch number.';
     }
     if (_parameterRows.isEmpty) {
       return 'Test parameters are required for the selected item.';
@@ -2212,7 +2229,7 @@ class _AddQualityInspectionFormPageState
                               const SizedBox(height: 10),
                               AppTextFormField(
                                 controller: _inspectionByCtrl,
-                                label: 'Inspection By',
+                                label: 'Inspection Created By',
                                 hintText: _project == null
                                     ? 'Select project first'
                                     : '—',
@@ -2222,7 +2239,7 @@ class _AddQualityInspectionFormPageState
                               const SizedBox(height: 10),
                               AppTextFormField(
                                 controller: _lotBatchCtrl,
-                                label: 'Lot/Batch No.',
+                                label: 'Lot/Batch No. *',
                                 hintText: 'Enter lot or batch number',
                                 readOnly: !_canEditInspectionMetadata,
                                 enabled: _canEditInspectionMetadata,
